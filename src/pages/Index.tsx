@@ -6,6 +6,7 @@ import { ShoppingListSection } from "@/components/ShoppingListSection";
 import { FamilyPreferencesSection } from "@/components/FamilyPreferencesSection";
 import { PantrySection } from "@/components/PantrySection";
 import { Footer } from "@/components/Footer";
+import { PrintButton } from "@/components/PrintButton";
 import { useToast } from "@/hooks/use-toast";
 import { 
   Meal, 
@@ -99,6 +100,10 @@ const Index = () => {
       <Header />
       
       <main className="flex-1">
+        <div className="container mx-auto px-4 py-4 flex justify-end">
+          <PrintButton meals={meals} groceryItems={groceryItems} />
+        </div>
+        
         <MealPlanSection meals={meals} onEditMeal={handleEditMeal} />
         
         <ShoppingListSection 
