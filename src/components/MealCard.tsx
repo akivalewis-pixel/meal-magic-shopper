@@ -3,15 +3,16 @@ import React from "react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ExternalLink } from "lucide-react";
+import { ExternalLink, Star, StarHalf } from "lucide-react";
 import { Meal, DietaryPreference } from "@/types";
 
 interface MealCardProps {
   meal: Meal;
   onEdit: (meal: Meal) => void;
+  onRate: (meal: Meal) => void;
 }
 
-export const MealCard = ({ meal, onEdit }: MealCardProps) => {
+export const MealCard = ({ meal, onEdit, onRate }: MealCardProps) => {
   const dietLabels: Record<DietaryPreference, string> = {
     'vegetarian': 'bg-leaf text-white',
     'vegan': 'bg-leaf-dark text-white',
@@ -45,6 +46,18 @@ export const MealCard = ({ meal, onEdit }: MealCardProps) => {
             {meal.ingredients.length > 3 && <li>+ {meal.ingredients.length - 3} more</li>}
           </ul>
         </div>
+        
+        {meal.rating && (
+          <div className="mt-2 flex items-center">
+            <div className="flex text-yellow-400">
+              {[...Array(Math.floor(meal.rating))].map((_, i) => (
+                <Star key={i} className="h-4 w-4" />
+              ))}
+              {meal.rating % 1 >= 0.5 && <StarHalf className="h-4 w-4" />}
+            </div>
+          </div>
+        )}
+        
         {meal.notes && (
           <div className="mt-2 text-sm">
             <h4 className="font-medium">Notes:</h4>
@@ -53,9 +66,14 @@ export const MealCard = ({ meal, onEdit }: MealCardProps) => {
         )}
       </CardContent>
       <CardFooter className="flex justify-between pt-2">
-        <Button variant="ghost" size="sm" onClick={() => onEdit(meal)}>
-          Edit
-        </Button>
+        <div className="flex gap-1">
+          <Button variant="ghost" size="sm" onClick={() => onEdit(meal)}>
+            Edit
+          </Button>
+          <Button variant="ghost" size="sm" onClick={() => onRate(meal)}>
+            Rate
+          </Button>
+        </div>
         {meal.recipeUrl && (
           <Button variant="outline" size="sm" className="gap-1" asChild>
             <a href={meal.recipeUrl} target="_blank" rel="noopener noreferrer">

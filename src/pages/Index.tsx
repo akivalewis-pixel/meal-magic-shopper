@@ -29,15 +29,39 @@ const Index = () => {
 
   // Initialize with sample data
   useEffect(() => {
-    const sampleMeals = generateSampleMealPlan();
-    setMeals(sampleMeals);
-    setPantryItems(samplePantryItems);
-    setFamilyPreferences(sampleFamilyPreferences);
+    // Try to load from localStorage first
+    const savedMeals = localStorage.getItem('mealPlannerMeals');
+    const savedPantryItems = localStorage.getItem('mealPlannerPantryItems');
+    const savedFamilyPreferences = localStorage.getItem('mealPlannerFamilyPreferences');
+    
+    // Use saved data if it exists, otherwise use sample data
+    const initialMeals = savedMeals ? JSON.parse(savedMeals) : generateSampleMealPlan();
+    const initialPantryItems = savedPantryItems ? JSON.parse(savedPantryItems) : samplePantryItems;
+    const initialFamilyPreferences = savedFamilyPreferences 
+      ? JSON.parse(savedFamilyPreferences) 
+      : sampleFamilyPreferences;
+    
+    setMeals(initialMeals);
+    setPantryItems(initialPantryItems);
+    setFamilyPreferences(initialFamilyPreferences);
     
     // Generate initial shopping list
-    const shoppingList = generateShoppingList(sampleMeals, samplePantryItems);
+    const shoppingList = generateShoppingList(initialMeals, initialPantryItems);
     setGroceryItems(shoppingList);
   }, []);
+
+  // Save to localStorage when state changes
+  useEffect(() => {
+    if (meals.length > 0) {
+      localStorage.setItem('mealPlannerMeals', JSON.stringify(meals));
+    }
+    if (pantryItems.length > 0) {
+      localStorage.setItem('mealPlannerPantryItems', JSON.stringify(pantryItems));
+    }
+    if (familyPreferences.length > 0) {
+      localStorage.setItem('mealPlannerFamilyPreferences', JSON.stringify(familyPreferences));
+    }
+  }, [meals, pantryItems, familyPreferences]);
 
   // Update shopping list when meals or pantry changes
   useEffect(() => {
@@ -52,6 +76,58 @@ const Index = () => {
     toast({
       title: "Edit Meal",
       description: `You've selected to edit ${meal.title} for ${meal.day}`,
+    });
+  };
+
+  const handleRateMeal = (meal: Meal, rating: number, notes: string) => {
+    setMeals(prevMeals => 
+      prevMeals.map(m => 
+        m.id === meal.id 
+          ? { ...m, rating, notes, lastUsed: new Date() }
+          : m
+      )
+    );
+    
+    toast({
+      title: "Meal Rated",
+      description: `You've rated ${meal.title} ${rating}/5 stars`,
+    });
+  };
+
+  const handleAddMealToDay = (meal: Meal, day: string) => {
+    // Check if the day already has a meal
+    const dayHasMeal = meals.some(m => m.day === day);
+    
+    if (dayHasMeal) {
+      // Replace the meal for that day
+      setMeals(prevMeals =>
+        prevMeals.map(m =>
+          m.day === day
+            ? {
+                ...meal,
+                id: `${day}-${Date.now()}`, // Generate a new ID
+                day, // Set the day
+                lastUsed: new Date(),
+              }
+            : m
+        )
+      );
+    } else {
+      // Add a new meal for that day
+      setMeals(prevMeals => [
+        ...prevMeals,
+        {
+          ...meal,
+          id: `${day}-${Date.now()}`, // Generate a new ID
+          day, // Set the day
+          lastUsed: new Date(),
+        },
+      ]);
+    }
+    
+    toast({
+      title: "Meal Added",
+      description: `${meal.title} has been added to ${day}`,
     });
   };
 
@@ -104,7 +180,12 @@ const Index = () => {
           <PrintButton meals={meals} groceryItems={groceryItems} />
         </div>
         
-        <MealPlanSection meals={meals} onEditMeal={handleEditMeal} />
+        <MealPlanSection 
+          meals={meals} 
+          onEditMeal={handleEditMeal} 
+          onRateMeal={handleRateMeal}
+          onAddMealToDay={handleAddMealToDay}
+        />
         
         <ShoppingListSection 
           groceryItems={groceryItems} 

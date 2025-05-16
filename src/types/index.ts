@@ -28,6 +28,8 @@ export interface Meal {
   ingredients: string[];
   dietaryPreferences: DietaryPreference[];
   notes?: string;
+  rating?: number; // 1-5 star rating
+  lastUsed?: Date; // When this meal was last used
 }
 
 export interface FamilyPreference {

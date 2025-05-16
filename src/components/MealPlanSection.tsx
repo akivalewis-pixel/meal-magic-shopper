@@ -1,6 +1,8 @@
 
 import React, { useState } from "react";
 import { MealCard } from "./MealCard";
+import { MealRatingDialog } from "./MealRatingDialog";
+import { MealRecommendations } from "./MealRecommendations";
 import { Meal, DietaryPreference } from "@/types";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
@@ -9,10 +11,18 @@ import { daysOfWeek, dietaryOptions, filterMealsByDiet } from "@/utils/mealPlann
 interface MealPlanSectionProps {
   meals: Meal[];
   onEditMeal: (meal: Meal) => void;
+  onRateMeal: (meal: Meal, rating: number, notes: string) => void;
+  onAddMealToDay: (meal: Meal, day: string) => void;
 }
 
-export const MealPlanSection = ({ meals, onEditMeal }: MealPlanSectionProps) => {
+export const MealPlanSection = ({ 
+  meals, 
+  onEditMeal, 
+  onRateMeal,
+  onAddMealToDay 
+}: MealPlanSectionProps) => {
   const [dietFilter, setDietFilter] = useState<DietaryPreference>("none");
+  const [mealToRate, setMealToRate] = useState<Meal | null>(null);
   
   const filteredMeals = dietFilter === "none" 
     ? meals 
@@ -20,6 +30,30 @@ export const MealPlanSection = ({ meals, onEditMeal }: MealPlanSectionProps) => 
 
   const getMealForDay = (day: string) => {
     return filteredMeals.find(meal => meal.day === day) || null;
+  };
+
+  const handleOpenRatingDialog = (meal: Meal) => {
+    setMealToRate(meal);
+  };
+
+  const handleCloseRatingDialog = () => {
+    setMealToRate(null);
+  };
+
+  const handleSaveRating = (meal: Meal, rating: number, notes: string) => {
+    onRateMeal(meal, rating, notes);
+    setMealToRate(null);
+  };
+
+  const handleSelectRecommendation = (meal: Meal) => {
+    // Find the first day without a meal
+    const dayWithoutMeal = daysOfWeek.find(day => !meals.some(m => m.day === day));
+    if (dayWithoutMeal) {
+      onAddMealToDay(meal, dayWithoutMeal);
+    } else {
+      // If all days have meals, suggest replacing Sunday's meal
+      onAddMealToDay(meal, 'Sunday');
+    }
   };
 
   return (
@@ -51,6 +85,11 @@ export const MealPlanSection = ({ meals, onEditMeal }: MealPlanSectionProps) => 
           </div>
         </div>
 
+        <MealRecommendations 
+          meals={meals}
+          onSelectMeal={handleSelectRecommendation}
+        />
+
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3 lg:grid-cols-7">
           {daysOfWeek.map((day) => {
             const meal = getMealForDay(day);
@@ -58,7 +97,11 @@ export const MealPlanSection = ({ meals, onEditMeal }: MealPlanSectionProps) => 
               <div key={day} className="flex flex-col">
                 <h3 className="mb-2 text-center font-semibold">{day}</h3>
                 {meal ? (
-                  <MealCard meal={meal} onEdit={onEditMeal} />
+                  <MealCard 
+                    meal={meal} 
+                    onEdit={onEditMeal} 
+                    onRate={handleOpenRatingDialog}
+                  />
                 ) : (
                   <div className="meal-card flex h-full flex-col items-center justify-center p-4 text-center text-muted-foreground">
                     <p className="mb-2">No meal planned</p>
@@ -72,6 +115,15 @@ export const MealPlanSection = ({ meals, onEditMeal }: MealPlanSectionProps) => 
             );
           })}
         </div>
+        
+        {mealToRate && (
+          <MealRatingDialog 
+            meal={mealToRate}
+            isOpen={true}
+            onClose={handleCloseRatingDialog}
+            onSaveRating={handleSaveRating}
+          />
+        )}
       </div>
     </section>
   );
