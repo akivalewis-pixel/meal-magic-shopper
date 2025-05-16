@@ -8,7 +8,10 @@ export const Header = () => {
       <div className="container mx-auto flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Utensils className="h-6 w-6" />
-          <h1 className="text-xl font-bold">Family Meal Planner</h1>
+          <div>
+            <h1 className="text-xl font-bold">NomNom Navigator</h1>
+            <p className="text-xs opacity-80">vibes for your weekly eats</p>
+          </div>
         </div>
         <nav className="hidden md:block">
           <ul className="flex gap-6">
