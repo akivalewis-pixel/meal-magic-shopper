@@ -29,51 +29,89 @@ export const PrintButton = ({ meals, groceryItems }: PrintButtonProps) => {
         <style>
           body {
             font-family: Arial, sans-serif;
-            line-height: 1.6;
+            line-height: 1.4;
             color: #333;
             max-width: 800px;
             margin: 0 auto;
-            padding: 20px;
+            padding: 10px;
+            font-size: 11px;
           }
-          h1, h2, h3 {
+          h1 {
             color: #2e7d32;
-            margin-top: 1em;
+            margin-top: 0.5em;
+            margin-bottom: 0.5em;
+            font-size: 18px;
+            text-align: center;
+          }
+          h2, h3 {
+            color: #2e7d32;
+            margin-top: 0.5em;
+            margin-bottom: 0.5em;
+            font-size: 14px;
+          }
+          .meal-plan-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 5px;
+            margin-bottom: 10px;
           }
           .meal-day {
-            page-break-inside: avoid;
-            margin-bottom: 15px;
-            padding-bottom: 15px;
-            border-bottom: 1px solid #eee;
+            break-inside: avoid;
+            padding: 5px;
+            border: 1px solid #eee;
+            border-radius: 4px;
           }
           .page-break {
             page-break-before: always;
           }
           .category {
-            margin-top: 20px;
+            margin-top: 10px;
+            padding-bottom: 3px;
             border-bottom: 1px solid #ccc;
           }
+          .grocery-columns {
+            column-count: 2;
+            column-gap: 20px;
+          }
           .item {
-            margin: 5px 0;
-            padding: 3px 0;
+            margin: 2px 0;
+            padding: 1px 0;
+            break-inside: avoid;
           }
           .day-title {
             font-weight: bold;
             color: #333;
+            font-size: 12px;
+            margin: 0;
+            padding: 0;
+            text-align: center;
           }
           .meal-title {
             font-weight: bold;
+            margin: 3px 0;
           }
           .notes {
             font-style: italic;
             color: #555;
+            margin: 2px 0;
+          }
+          a {
+            color: #1a73e8;
+            text-decoration: none;
+            font-size: 10px;
+          }
+          p {
+            margin: 2px 0;
           }
         </style>
       </head>
       <body>
-        <h1>Weekly Meal Plan</h1>
+        <h1>NomNom Navigator: Weekly Meal Plan</h1>
     `);
 
     // Add meal plan content
+    printWindow.document.write('<div class="meal-plan-grid">');
+    
     daysOfWeek.forEach(day => {
       const meal = meals.find(m => m.day === day);
       
@@ -89,13 +127,16 @@ export const PrintButton = ({ meals, groceryItems }: PrintButtonProps) => {
         
         if (meal.recipeUrl) {
           printWindow.document.write(`
-            <p>Recipe: <a href="${meal.recipeUrl}" target="_blank">${meal.recipeUrl}</a></p>
+            <p>Recipe: <a href="${meal.recipeUrl}" target="_blank">${meal.recipeUrl.substring(0, 25)}${meal.recipeUrl.length > 25 ? '...' : ''}</a></p>
           `);
         }
         
         if (meal.notes) {
+          const notesText = meal.notes.length > 50 
+            ? `${meal.notes.substring(0, 50)}...` 
+            : meal.notes;
           printWindow.document.write(`
-            <p class="notes">Notes: ${meal.notes}</p>
+            <p class="notes">${notesText}</p>
           `);
         }
         
@@ -110,11 +151,13 @@ export const PrintButton = ({ meals, groceryItems }: PrintButtonProps) => {
       
       printWindow.document.write(`</div>`);
     });
+    
+    printWindow.document.write('</div>');
 
     // Add page break and shopping list
     printWindow.document.write(`
       <div class="page-break"></div>
-      <h1>Shopping List</h1>
+      <h1>NomNom Navigator: Shopping List</h1>
     `);
 
     // Group grocery items by category
@@ -125,6 +168,9 @@ export const PrintButton = ({ meals, groceryItems }: PrintButtonProps) => {
       acc[item.category].push(item);
       return acc;
     }, {} as Record<string, GroceryItem[]>);
+
+    // Create two columns for shopping list
+    printWindow.document.write('<div class="grocery-columns">');
 
     // Print each category and its items
     Object.entries(itemsByCategory).forEach(([category, items]) => {
@@ -148,6 +194,8 @@ export const PrintButton = ({ meals, groceryItems }: PrintButtonProps) => {
       
       printWindow.document.write(`</div>`);
     });
+    
+    printWindow.document.write('</div>'); // Close grocery-columns
 
     // Close the HTML
     printWindow.document.write(`
@@ -174,3 +222,4 @@ export const PrintButton = ({ meals, groceryItems }: PrintButtonProps) => {
     </Button>
   );
 };
+
