@@ -1,12 +1,124 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+
+import React, { useState, useEffect } from "react";
+import { Header } from "@/components/Header";
+import { MealPlanSection } from "@/components/MealPlanSection";
+import { ShoppingListSection } from "@/components/ShoppingListSection";
+import { FamilyPreferencesSection } from "@/components/FamilyPreferencesSection";
+import { PantrySection } from "@/components/PantrySection";
+import { Footer } from "@/components/Footer";
+import { useToast } from "@/hooks/use-toast";
+import { 
+  Meal, 
+  FamilyPreference, 
+  GroceryItem 
+} from "@/types";
+import { 
+  generateSampleMealPlan, 
+  samplePantryItems, 
+  sampleFamilyPreferences,
+  generateShoppingList
+} from "@/utils/mealPlannerUtils";
 
 const Index = () => {
+  const { toast } = useToast();
+  const [meals, setMeals] = useState<Meal[]>([]);
+  const [pantryItems, setPantryItems] = useState<string[]>([]);
+  const [familyPreferences, setFamilyPreferences] = useState<FamilyPreference[]>([]);
+  const [groceryItems, setGroceryItems] = useState<GroceryItem[]>([]);
+
+  // Initialize with sample data
+  useEffect(() => {
+    const sampleMeals = generateSampleMealPlan();
+    setMeals(sampleMeals);
+    setPantryItems(samplePantryItems);
+    setFamilyPreferences(sampleFamilyPreferences);
+    
+    // Generate initial shopping list
+    const shoppingList = generateShoppingList(sampleMeals, samplePantryItems);
+    setGroceryItems(shoppingList);
+  }, []);
+
+  // Update shopping list when meals or pantry changes
+  useEffect(() => {
+    if (meals.length > 0) {
+      const shoppingList = generateShoppingList(meals, pantryItems);
+      setGroceryItems(shoppingList);
+    }
+  }, [meals, pantryItems]);
+
+  const handleEditMeal = (meal: Meal) => {
+    // This would open a meal editing modal in a full implementation
+    toast({
+      title: "Edit Meal",
+      description: `You've selected to edit ${meal.title} for ${meal.day}`,
+    });
+  };
+
+  const handleEditFamilyPreference = (preference: FamilyPreference) => {
+    // This would open a preference editing modal in a full implementation
+    toast({
+      title: "Edit Preferences",
+      description: `You've selected to edit preferences for ${preference.familyMember}`,
+    });
+  };
+
+  const handleToggleGroceryItem = (id: string) => {
+    setGroceryItems(
+      groceryItems.map((item) =>
+        item.id === id ? { ...item, checked: !item.checked } : item
+      )
+    );
+  };
+
+  const handleAddPantryItem = (item: string) => {
+    if (!pantryItems.includes(item)) {
+      setPantryItems([...pantryItems, item]);
+      toast({
+        title: "Pantry Updated",
+        description: `Added ${item} to your pantry`,
+      });
+    } else {
+      toast({
+        title: "Item already exists",
+        description: `${item} is already in your pantry`,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleRemovePantryItem = (item: string) => {
+    setPantryItems(pantryItems.filter((i) => i !== item));
+    toast({
+      title: "Pantry Updated",
+      description: `Removed ${item} from your pantry`,
+    });
+  };
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">Welcome to Your Blank App</h1>
-        <p className="text-xl text-gray-600">Start building your amazing project here!</p>
-      </div>
+    <div className="min-h-screen flex flex-col">
+      <Header />
+      
+      <main className="flex-1">
+        <MealPlanSection meals={meals} onEditMeal={handleEditMeal} />
+        
+        <ShoppingListSection 
+          groceryItems={groceryItems} 
+          onToggleItem={handleToggleGroceryItem} 
+        />
+        
+        <FamilyPreferencesSection 
+          preferences={familyPreferences}
+          onEditPreference={handleEditFamilyPreference}
+        />
+        
+        <PantrySection 
+          pantryItems={pantryItems}
+          onAddItem={handleAddPantryItem}
+          onRemoveItem={handleRemovePantryItem}
+        />
+      </main>
+      
+      <Footer />
     </div>
   );
 };

@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -61,6 +62,35 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
+				},
+				// Custom color scheme for our meal planner
+				leaf: {
+					DEFAULT: '#4CAF50',
+					light: '#81C784',
+					dark: '#2E7D32',
+					foreground: '#FFFFFF',
+				},
+				carrot: {
+					DEFAULT: '#FF9800',
+					light: '#FFB74D',
+					dark: '#F57C00',
+					foreground: '#FFFFFF',
+				},
+				tomato: {
+					DEFAULT: '#E57373',
+					light: '#EF9A9A',
+					dark: '#C62828',
+					foreground: '#FFFFFF',
+				},
+				grocery: {
+					produce: '#DCEDC8',
+					dairy: '#FFF9C4',
+					meat: '#FFCCBC',
+					grains: '#FFE0B2',
+					frozen: '#B3E5FC',
+					pantry: '#D7CCC8',
+					spices: '#F8BBD0',
+					other: '#E1BEE7',
 				}
 			},
 			borderRadius: {
