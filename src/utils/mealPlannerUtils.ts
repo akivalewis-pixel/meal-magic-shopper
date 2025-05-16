@@ -205,7 +205,7 @@ export const sampleFamilyPreferences = [
     likes: ['pizza', 'pasta', 'chicken nuggets', 'mac and cheese', 'tacos'],
     dislikes: ['brussels sprouts', 'mushrooms', 'spicy food'],
     allergies: [],
-    dietaryPreferences: ['none']
+    dietaryPreferences: ['none'] as DietaryPreference[]
   },
   {
     id: '2',
@@ -213,6 +213,6 @@ export const sampleFamilyPreferences = [
     likes: ['salmon', 'curry', 'stir fry', 'salad', 'roasted vegetables'],
     dislikes: [],
     allergies: [],
-    dietaryPreferences: ['none']
+    dietaryPreferences: ['none'] as DietaryPreference[]
   }
 ];
