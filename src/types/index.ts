@@ -18,6 +18,9 @@ export interface GroceryItem {
   quantity: string;
   checked: boolean;
   meal?: string;
+  recurring?: boolean;
+  store?: string;
+  department?: string;
 }
 
 export interface Meal {
@@ -30,6 +33,7 @@ export interface Meal {
   notes?: string;
   rating?: number; // 1-5 star rating
   lastUsed?: Date; // When this meal was last used
+  weekId?: string; // To track which week this meal belongs to
 }
 
 export interface FamilyPreference {
@@ -46,4 +50,11 @@ export interface PantryItem {
   name: string;
   quantity: string;
   category: GroceryCategory;
+}
+
+export interface WeeklyMealPlan {
+  id: string;
+  weekStartDate: string; // ISO date string for the start of the week
+  name: string; // Optional name/label for the week
+  meals: Meal[];
 }

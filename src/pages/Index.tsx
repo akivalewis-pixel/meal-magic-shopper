@@ -1,22 +1,26 @@
+
 import React, { useState, useEffect } from "react";
 import { Header } from "@/components/Header";
 import { MealPlanSection } from "@/components/MealPlanSection";
 import { ShoppingListSection } from "@/components/ShoppingListSection";
 import { FamilyPreferencesSection } from "@/components/FamilyPreferencesSection";
 import { PantrySection } from "@/components/PantrySection";
+import { WeeklyMealPlansSection } from "@/components/WeeklyMealPlansSection";
 import { Footer } from "@/components/Footer";
 import { PrintButton } from "@/components/PrintButton";
 import { useToast } from "@/hooks/use-toast";
 import { 
   Meal, 
   FamilyPreference, 
-  GroceryItem 
+  GroceryItem,
+  WeeklyMealPlan
 } from "@/types";
 import { 
   generateSampleMealPlan, 
   samplePantryItems, 
   sampleFamilyPreferences,
-  generateShoppingList
+  generateShoppingList,
+  getCurrentWeekStart
 } from "@/utils/mealPlannerUtils";
 
 const Index = () => {
@@ -25,6 +29,9 @@ const Index = () => {
   const [pantryItems, setPantryItems] = useState<string[]>([]);
   const [familyPreferences, setFamilyPreferences] = useState<FamilyPreference[]>([]);
   const [groceryItems, setGroceryItems] = useState<GroceryItem[]>([]);
+  const [weeklyPlans, setWeeklyPlans] = useState<WeeklyMealPlan[]>([]);
+  const [availableStores, setAvailableStores] = useState<string[]>(["Any Store", "Supermarket", "Farmers Market", "Specialty Store"]);
+  const [recurringItems, setRecurringItems] = useState<GroceryItem[]>([]);
 
   // Initialize with sample data
   useEffect(() => {
@@ -32,6 +39,9 @@ const Index = () => {
     const savedMeals = localStorage.getItem('mealPlannerMeals');
     const savedPantryItems = localStorage.getItem('mealPlannerPantryItems');
     const savedFamilyPreferences = localStorage.getItem('mealPlannerFamilyPreferences');
+    const savedWeeklyPlans = localStorage.getItem('mealPlannerWeeklyPlans');
+    const savedRecurringItems = localStorage.getItem('mealPlannerRecurringItems');
+    const savedStores = localStorage.getItem('mealPlannerStores');
     
     // Use saved data if it exists, otherwise use sample data
     const initialMeals = savedMeals ? JSON.parse(savedMeals) : generateSampleMealPlan();
@@ -39,13 +49,19 @@ const Index = () => {
     const initialFamilyPreferences = savedFamilyPreferences 
       ? JSON.parse(savedFamilyPreferences) 
       : sampleFamilyPreferences;
+    const initialWeeklyPlans = savedWeeklyPlans ? JSON.parse(savedWeeklyPlans) : [];
+    const initialRecurringItems = savedRecurringItems ? JSON.parse(savedRecurringItems) : [];
+    const initialStores = savedStores ? JSON.parse(savedStores) : ["Any Store", "Supermarket", "Farmers Market", "Specialty Store"];
     
     setMeals(initialMeals);
     setPantryItems(initialPantryItems);
     setFamilyPreferences(initialFamilyPreferences);
+    setWeeklyPlans(initialWeeklyPlans);
+    setRecurringItems(initialRecurringItems);
+    setAvailableStores(initialStores);
     
     // Generate initial shopping list
-    const shoppingList = generateShoppingList(initialMeals, initialPantryItems);
+    const shoppingList = generateShoppingList(initialMeals, initialPantryItems, initialRecurringItems);
     setGroceryItems(shoppingList);
   }, []);
 
@@ -60,17 +76,26 @@ const Index = () => {
     if (familyPreferences.length > 0) {
       localStorage.setItem('mealPlannerFamilyPreferences', JSON.stringify(familyPreferences));
     }
-  }, [meals, pantryItems, familyPreferences]);
+    if (weeklyPlans.length > 0) {
+      localStorage.setItem('mealPlannerWeeklyPlans', JSON.stringify(weeklyPlans));
+    }
+    if (recurringItems.length > 0) {
+      localStorage.setItem('mealPlannerRecurringItems', JSON.stringify(recurringItems));
+    }
+    if (availableStores.length > 0) {
+      localStorage.setItem('mealPlannerStores', JSON.stringify(availableStores));
+    }
+  }, [meals, pantryItems, familyPreferences, weeklyPlans, recurringItems, availableStores]);
 
   // Update shopping list when meals or pantry changes
   useEffect(() => {
     if (meals.length > 0) {
       // Only include meals that have a day assigned
       const activeMeals = meals.filter(meal => meal.day && meal.day !== "");
-      const shoppingList = generateShoppingList(activeMeals, pantryItems);
+      const shoppingList = generateShoppingList(activeMeals, pantryItems, recurringItems);
       setGroceryItems(shoppingList);
     }
-  }, [meals, pantryItems]);
+  }, [meals, pantryItems, recurringItems]);
 
   const handleEditMeal = (meal: Meal) => {
     // This would open a meal editing modal in a full implementation
@@ -195,17 +220,39 @@ const Index = () => {
     );
   };
 
-  const handleEditFamilyPreference = (preference: FamilyPreference) => {
-    // This event is handled inside the FamilyPreferencesSection
-    // Just leaving this here for backward compatibility
-  };
-
   const handleToggleGroceryItem = (id: string) => {
-    setGroceryItems(
-      groceryItems.map((item) =>
+    setGroceryItems(prevItems =>
+      prevItems.map((item) =>
         item.id === id ? { ...item, checked: !item.checked } : item
       )
     );
+  };
+
+  const handleUpdateGroceryItem = (updatedItem: GroceryItem) => {
+    setGroceryItems(prevItems =>
+      prevItems.map(item =>
+        item.id === updatedItem.id ? updatedItem : item
+      )
+    );
+    
+    // If the item is marked as recurring, add/update it in the recurring items list
+    if (updatedItem.recurring) {
+      setRecurringItems(prevItems => {
+        const existingItem = prevItems.find(item => item.id === updatedItem.id);
+        if (existingItem) {
+          return prevItems.map(item =>
+            item.id === updatedItem.id ? updatedItem : item
+          );
+        } else {
+          return [...prevItems, updatedItem];
+        }
+      });
+    } else {
+      // If the item is marked as not recurring, remove it from recurring items
+      setRecurringItems(prevItems =>
+        prevItems.filter(item => item.id !== updatedItem.id)
+      );
+    }
   };
 
   const handleAddPantryItem = (item: string) => {
@@ -232,6 +279,36 @@ const Index = () => {
     });
   };
 
+  const handleSaveWeeklyPlan = (name: string) => {
+    // Create a new weekly plan with the current meals
+    const newPlan: WeeklyMealPlan = {
+      id: Date.now().toString(),
+      name,
+      weekStartDate: getCurrentWeekStart(),
+      meals: [...meals]
+    };
+    
+    setWeeklyPlans([...weeklyPlans, newPlan]);
+    
+    toast({
+      title: "Weekly Plan Saved",
+      description: `"${name}" has been saved for future reference.`,
+    });
+  };
+
+  const handleLoadWeeklyPlan = (plan: WeeklyMealPlan) => {
+    // Replace current meals with the selected plan
+    setMeals(plan.meals.map(meal => ({
+      ...meal,
+      lastUsed: new Date() // Update the last used date
+    })));
+    
+    toast({
+      title: "Weekly Plan Loaded",
+      description: `"${plan.name}" has been loaded.`,
+    });
+  };
+
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
@@ -250,12 +327,21 @@ const Index = () => {
         
         <ShoppingListSection 
           groceryItems={groceryItems} 
-          onToggleItem={handleToggleGroceryItem} 
+          onToggleItem={handleToggleGroceryItem}
+          onUpdateItem={handleUpdateGroceryItem}
+          availableStores={availableStores}
+        />
+        
+        <WeeklyMealPlansSection
+          weeklyPlans={weeklyPlans}
+          currentMeals={meals}
+          onSaveCurrentPlan={handleSaveWeeklyPlan}
+          onLoadPlan={handleLoadWeeklyPlan}
         />
         
         <FamilyPreferencesSection 
           preferences={familyPreferences}
-          onEditPreference={handleEditFamilyPreference}
+          onEditPreference={() => {}}
           onAddPreference={handleAddFamilyMember}
           onRemovePreference={handleRemoveFamilyMember}
           onUpdatePreference={handleUpdateFamilyPreference}

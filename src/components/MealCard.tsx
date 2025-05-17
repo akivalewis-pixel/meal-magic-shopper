@@ -3,7 +3,7 @@ import React from "react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ExternalLink, Star, StarHalf, Trash } from "lucide-react";
+import { ExternalLink, Star, StarHalf, Trash, Edit, Heart } from "lucide-react";
 import { Meal, DietaryPreference } from "@/types";
 
 interface MealCardProps {
@@ -66,30 +66,40 @@ export const MealCard = ({ meal, onEdit, onRate, onRemove }: MealCardProps) => {
           </div>
         )}
       </CardContent>
-      <CardFooter className="flex justify-between pt-2">
-        <div className="flex gap-1">
-          <Button variant="ghost" size="sm" onClick={() => onEdit(meal)}>
+      <CardFooter className="flex flex-wrap justify-between gap-1 pt-2">
+        <div className="flex flex-wrap gap-1">
+          <Button variant="ghost" size="sm" className="h-8 px-2 text-xs" onClick={() => onEdit(meal)}>
+            <Edit className="h-3 w-3 mr-1" />
             Edit
           </Button>
-          <Button variant="ghost" size="sm" onClick={() => onRate(meal)}>
+          <Button variant="ghost" size="sm" className="h-8 px-2 text-xs" onClick={() => onRate(meal)}>
+            <Star className="h-3 w-3 mr-1" />
             Rate
           </Button>
+        </div>
+        <div className="flex gap-1">
+          {meal.recipeUrl && (
+            <Button variant="outline" size="sm" className="h-8 px-2 text-xs" asChild>
+              <a href={meal.recipeUrl} target="_blank" rel="noopener noreferrer">
+                <ExternalLink className="h-3 w-3 mr-1" />
+                Recipe
+              </a>
+            </Button>
+          )}
           {onRemove && (
-            <Button variant="ghost" size="sm" onClick={(e) => {
-              e.stopPropagation();
-              onRemove(meal);
-            }}>
-              <Trash className="h-4 w-4 text-red-500" />
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="h-8 w-8 p-0" 
+              onClick={(e) => {
+                e.stopPropagation();
+                onRemove(meal);
+              }}
+            >
+              <Trash className="h-3 w-3 text-red-500" />
             </Button>
           )}
         </div>
-        {meal.recipeUrl && (
-          <Button variant="outline" size="sm" className="gap-1" asChild>
-            <a href={meal.recipeUrl} target="_blank" rel="noopener noreferrer">
-              Recipe <ExternalLink className="h-3 w-3" />
-            </a>
-          </Button>
-        )}
       </CardFooter>
     </Card>
   );

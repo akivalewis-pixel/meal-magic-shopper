@@ -1,4 +1,4 @@
-import { GroceryItem, Meal, GroceryCategory, DietaryPreference } from "@/types";
+import { GroceryItem, Meal, GroceryCategory, DietaryPreference, WeeklyMealPlan } from "@/types";
 
 export const daysOfWeek = [
   "Sunday",
@@ -32,7 +32,23 @@ export const groceryCategories: { label: string; value: GroceryCategory }[] = [
   { label: "Other", value: "other" },
 ];
 
-export const generateShoppingList = (meals: Meal[], pantryItems: string[]): GroceryItem[] => {
+export const departments = [
+  "Produce",
+  "Dairy",
+  "Meat & Seafood",
+  "Bakery",
+  "Frozen Foods",
+  "Canned Goods",
+  "Dry Goods",
+  "Beverages",
+  "Snacks",
+  "International",
+  "Health & Beauty",
+  "Household",
+  "Other"
+];
+
+export const generateShoppingList = (meals: Meal[], pantryItems: string[], recurringItems: GroceryItem[] = []): GroceryItem[] => {
   // Get all ingredients from meals
   const allIngredients = meals.flatMap(meal => 
     meal.ingredients.map(ingredient => ({
@@ -41,7 +57,10 @@ export const generateShoppingList = (meals: Meal[], pantryItems: string[]): Groc
       category: determineCategory(ingredient),
       quantity: "1", // Default quantity, could be improved with ingredient parsing
       checked: false,
-      meal: meal.title
+      meal: meal.title,
+      recurring: false,
+      store: "",
+      department: ""
     }))
   );
   
@@ -69,10 +88,24 @@ export const generateShoppingList = (meals: Meal[], pantryItems: string[]): Groc
     return acc;
   }, [] as GroceryItem[]);
   
+  // Add recurring items that are not already in the list
+  recurringItems.forEach(recurringItem => {
+    if (!uniqueIngredients.some(item => item.name.toLowerCase() === recurringItem.name.toLowerCase())) {
+      uniqueIngredients.push({
+        ...recurringItem,
+        checked: false
+      });
+    }
+  });
+  
   // Sort by category
   return uniqueIngredients.sort((a, b) => {
     const categoryOrder = groceryCategories.map(cat => cat.value);
-    return categoryOrder.indexOf(a.category) - categoryOrder.indexOf(b.category);
+    if (a.store && b.store && a.store === b.store) {
+      return (a.department || "").localeCompare(b.department || "");
+    }
+    return (a.store || "").localeCompare(b.store || "") || 
+           categoryOrder.indexOf(a.category) - categoryOrder.indexOf(b.category);
   });
 };
 
@@ -216,3 +249,88 @@ export const sampleFamilyPreferences = [
     dietaryPreferences: ['none'] as DietaryPreference[]
   }
 ];
+
+// Function to get an ISO string for the start of the current week (Sunday)
+export const getCurrentWeekStart = (): string => {
+  const today = new Date();
+  const day = today.getDay(); // 0 for Sunday, 1 for Monday, etc.
+  const diff = today.getDate() - day;
+  const startOfWeek = new Date(today.setDate(diff));
+  startOfWeek.setHours(0, 0, 0, 0);
+  return startOfWeek.toISOString();
+};
+
+// Function to format a date to show as week range (e.g., "Feb 2 - Feb 8, 2025")
+export const formatWeekRange = (weekStartISO: string): string => {
+  const weekStart = new Date(weekStartISO);
+  const weekEnd = new Date(weekStart);
+  weekEnd.setDate(weekEnd.getDate() + 6);
+  
+  const options: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric' };
+  const yearOptions: Intl.DateTimeFormatOptions = { year: 'numeric' };
+  
+  const startStr = weekStart.toLocaleDateString('en-US', options);
+  const endStr = weekEnd.toLocaleDateString('en-US', options);
+  const yearStr = weekEnd.toLocaleDateString('en-US', yearOptions);
+  
+  return `${startStr} - ${endStr}, ${yearStr}`;
+};
+
+// Function to convert ISO week start to a more readable format
+export const formatWeekStartDate = (isoString: string): string => {
+  const date = new Date(isoString);
+  return date.toLocaleDateString('en-US', { 
+    year: 'numeric', 
+    month: 'short', 
+    day: 'numeric' 
+  });
+};
+
+// Function to search meals across all saved weekly plans
+export const searchMealsByTitle = (weeklyPlans: WeeklyMealPlan[], searchTerm: string): Meal[] => {
+  if (!searchTerm) return [];
+  
+  const allMeals: Meal[] = [];
+  weeklyPlans.forEach(plan => {
+    plan.meals
+      .filter(meal => meal.title.toLowerCase().includes(searchTerm.toLowerCase()))
+      .forEach(meal => {
+        allMeals.push({
+          ...meal,
+          weekId: plan.id
+        });
+      });
+  });
+  
+  return allMeals.sort((a, b) => {
+    if (a.lastUsed && b.lastUsed) {
+      return new Date(b.lastUsed).getTime() - new Date(a.lastUsed).getTime();
+    }
+    return 0;
+  });
+};
+
+// Function to find the most recent use of a meal
+export const findLastUsedDate = (weeklyPlans: WeeklyMealPlan[], mealTitle: string): Date | null => {
+  let lastUsed: Date | null = null;
+  
+  for (const plan of weeklyPlans) {
+    for (const meal of plan.meals) {
+      if (meal.title === mealTitle && meal.lastUsed) {
+        const mealDate = new Date(meal.lastUsed);
+        if (!lastUsed || mealDate > lastUsed) {
+          lastUsed = mealDate;
+        }
+      }
+    }
+  }
+  
+  return lastUsed;
+};
+
+// Function to count how many times a meal has been used
+export const countMealUsage = (weeklyPlans: WeeklyMealPlan[], mealTitle: string): number => {
+  return weeklyPlans.reduce((count, plan) => {
+    return count + plan.meals.filter(meal => meal.title === mealTitle).length;
+  }, 0);
+};
