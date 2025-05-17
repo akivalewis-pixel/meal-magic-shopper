@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Header } from "@/components/Header";
 import { MealPlanSection } from "@/components/MealPlanSection";
@@ -66,7 +65,9 @@ const Index = () => {
   // Update shopping list when meals or pantry changes
   useEffect(() => {
     if (meals.length > 0) {
-      const shoppingList = generateShoppingList(meals, pantryItems);
+      // Only include meals that have a day assigned
+      const activeMeals = meals.filter(meal => meal.day && meal.day !== "");
+      const shoppingList = generateShoppingList(activeMeals, pantryItems);
       setGroceryItems(shoppingList);
     }
   }, [meals, pantryItems]);
@@ -95,6 +96,23 @@ const Index = () => {
   };
 
   const handleAddMealToDay = (meal: Meal, day: string) => {
+    // If day is empty, remove the meal from the weekly plan but keep it in the collection
+    if (!day) {
+      setMeals(prevMeals =>
+        prevMeals.map(m =>
+          m.id === meal.id
+            ? { ...m, day: "" }
+            : m
+        )
+      );
+      
+      toast({
+        title: "Meal Removed",
+        description: `${meal.title} has been removed from the meal plan`,
+      });
+      return;
+    }
+    
     // Check if the day already has a meal
     const dayHasMeal = meals.some(m => m.day === day);
     
@@ -105,7 +123,7 @@ const Index = () => {
           m.day === day
             ? {
                 ...meal,
-                id: `${day}-${Date.now()}`, // Generate a new ID
+                id: `${day}-${Date.now()}`, // Generate a new ID if needed
                 day, // Set the day
                 lastUsed: new Date(),
               }
@@ -113,16 +131,30 @@ const Index = () => {
         )
       );
     } else {
-      // Add a new meal for that day
-      setMeals(prevMeals => [
-        ...prevMeals,
-        {
-          ...meal,
-          id: `${day}-${Date.now()}`, // Generate a new ID
-          day, // Set the day
-          lastUsed: new Date(),
-        },
-      ]);
+      // Add a new meal for that day if it doesn't already exist
+      const existingMeal = meals.find(m => m.id === meal.id);
+      
+      if (existingMeal) {
+        // Update existing meal
+        setMeals(prevMeals =>
+          prevMeals.map(m =>
+            m.id === meal.id
+              ? { ...m, day, lastUsed: new Date() }
+              : m
+          )
+        );
+      } else {
+        // Add a completely new meal
+        setMeals(prevMeals => [
+          ...prevMeals,
+          {
+            ...meal,
+            id: meal.id || `${day}-${Date.now()}`, // Use existing ID or generate new one
+            day, // Set the day
+            lastUsed: new Date(),
+          },
+        ]);
+      }
     }
     
     toast({
@@ -131,12 +163,41 @@ const Index = () => {
     });
   };
 
-  const handleEditFamilyPreference = (preference: FamilyPreference) => {
-    // This would open a preference editing modal in a full implementation
+  const handleAddFamilyMember = (preference: FamilyPreference) => {
+    setFamilyPreferences(prevPreferences => [...prevPreferences, preference]);
+    
     toast({
-      title: "Edit Preferences",
-      description: `You've selected to edit preferences for ${preference.familyMember}`,
+      title: "Family Member Added",
+      description: `Preferences for ${preference.familyMember} have been added`,
     });
+  };
+
+  const handleRemoveFamilyMember = (id: string) => {
+    const memberToRemove = familyPreferences.find(p => p.id === id);
+    
+    if (memberToRemove) {
+      setFamilyPreferences(prevPreferences => 
+        prevPreferences.filter(p => p.id !== id)
+      );
+      
+      toast({
+        title: "Family Member Removed",
+        description: `${memberToRemove.familyMember} has been removed`,
+      });
+    }
+  };
+
+  const handleUpdateFamilyPreference = (updatedPreference: FamilyPreference) => {
+    setFamilyPreferences(prevPreferences =>
+      prevPreferences.map(p =>
+        p.id === updatedPreference.id ? updatedPreference : p
+      )
+    );
+  };
+
+  const handleEditFamilyPreference = (preference: FamilyPreference) => {
+    // This event is handled inside the FamilyPreferencesSection
+    // Just leaving this here for backward compatibility
   };
 
   const handleToggleGroceryItem = (id: string) => {
@@ -195,6 +256,9 @@ const Index = () => {
         <FamilyPreferencesSection 
           preferences={familyPreferences}
           onEditPreference={handleEditFamilyPreference}
+          onAddPreference={handleAddFamilyMember}
+          onRemovePreference={handleRemoveFamilyMember}
+          onUpdatePreference={handleUpdateFamilyPreference}
         />
         
         <PantrySection 

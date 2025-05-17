@@ -3,16 +3,17 @@ import React from "react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ExternalLink, Star, StarHalf } from "lucide-react";
+import { ExternalLink, Star, StarHalf, Trash } from "lucide-react";
 import { Meal, DietaryPreference } from "@/types";
 
 interface MealCardProps {
   meal: Meal;
   onEdit: (meal: Meal) => void;
   onRate: (meal: Meal) => void;
+  onRemove?: (meal: Meal) => void;
 }
 
-export const MealCard = ({ meal, onEdit, onRate }: MealCardProps) => {
+export const MealCard = ({ meal, onEdit, onRate, onRemove }: MealCardProps) => {
   const dietLabels: Record<DietaryPreference, string> = {
     'vegetarian': 'bg-leaf text-white',
     'vegan': 'bg-leaf-dark text-white',
@@ -73,6 +74,14 @@ export const MealCard = ({ meal, onEdit, onRate }: MealCardProps) => {
           <Button variant="ghost" size="sm" onClick={() => onRate(meal)}>
             Rate
           </Button>
+          {onRemove && (
+            <Button variant="ghost" size="sm" onClick={(e) => {
+              e.stopPropagation();
+              onRemove(meal);
+            }}>
+              <Trash className="h-4 w-4 text-red-500" />
+            </Button>
+          )}
         </div>
         {meal.recipeUrl && (
           <Button variant="outline" size="sm" className="gap-1" asChild>
