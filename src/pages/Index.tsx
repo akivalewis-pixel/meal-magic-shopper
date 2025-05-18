@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Header } from "@/components/Header";
 import { MealPlanSection } from "@/components/MealPlanSection";
@@ -138,48 +137,29 @@ const Index = () => {
       return;
     }
     
-    // Check if the day already has a meal
-    const dayHasMeal = meals.some(m => m.day === day);
+    // For adding a new meal to a day (allowing multiple meals per day)
+    const existingMeal = meals.find(m => m.id === meal.id);
     
-    if (dayHasMeal) {
-      // Replace the meal for that day
+    if (existingMeal) {
+      // Update existing meal
       setMeals(prevMeals =>
         prevMeals.map(m =>
-          m.day === day
-            ? {
-                ...meal,
-                id: `${day}-${Date.now()}`, // Generate a new ID if needed
-                day, // Set the day
-                lastUsed: new Date(),
-              }
+          m.id === meal.id
+            ? { ...m, day, lastUsed: new Date() }
             : m
         )
       );
     } else {
-      // Add a new meal for that day if it doesn't already exist
-      const existingMeal = meals.find(m => m.id === meal.id);
-      
-      if (existingMeal) {
-        // Update existing meal
-        setMeals(prevMeals =>
-          prevMeals.map(m =>
-            m.id === meal.id
-              ? { ...m, day, lastUsed: new Date() }
-              : m
-          )
-        );
-      } else {
-        // Add a completely new meal
-        setMeals(prevMeals => [
-          ...prevMeals,
-          {
-            ...meal,
-            id: meal.id || `${day}-${Date.now()}`, // Use existing ID or generate new one
-            day, // Set the day
-            lastUsed: new Date(),
-          },
-        ]);
-      }
+      // Add a completely new meal
+      setMeals(prevMeals => [
+        ...prevMeals,
+        {
+          ...meal,
+          id: meal.id || `${day}-${Date.now()}`, // Use existing ID or generate new one
+          day, // Set the day
+          lastUsed: new Date(),
+        },
+      ]);
     }
     
     toast({
@@ -253,6 +233,14 @@ const Index = () => {
         prevItems.filter(item => item.id !== updatedItem.id)
       );
     }
+  };
+
+  const handleUpdateStores = (stores: string[]) => {
+    setAvailableStores(stores);
+    toast({
+      title: "Stores Updated",
+      description: `Your store list has been updated`,
+    });
   };
 
   const handleAddPantryItem = (item: string) => {
@@ -330,6 +318,7 @@ const Index = () => {
           onToggleItem={handleToggleGroceryItem}
           onUpdateItem={handleUpdateGroceryItem}
           availableStores={availableStores}
+          onUpdateStores={handleUpdateStores}
         />
         
         <WeeklyMealPlansSection

@@ -28,7 +28,7 @@ const ItemTypes = {
   MEAL: 'meal'
 };
 
-// Draggable day component
+// Draggable meal component
 const DraggableMeal = ({ meal, day, onEdit, onRate, onMove, onRemove }) => {
   const [{ isDragging }, drag] = useDrag(() => ({
     type: ItemTypes.MEAL,
@@ -41,7 +41,7 @@ const DraggableMeal = ({ meal, day, onEdit, onRate, onMove, onRemove }) => {
   return (
     <div 
       ref={drag} 
-      className={`${isDragging ? 'opacity-50' : 'opacity-100'}`}
+      className={`${isDragging ? 'opacity-50' : 'opacity-100'} mb-2 last:mb-0`}
     >
       <MealCard 
         meal={meal} 
@@ -54,13 +54,11 @@ const DraggableMeal = ({ meal, day, onEdit, onRate, onMove, onRemove }) => {
 };
 
 // Droppable day component
-const DroppableDay = ({ day, meal, onDrop, onEdit, onRate, onMove, onAddMeal, onRemove }) => {
+const DroppableDay = ({ day, meals, onDrop, onEdit, onRate, onMove, onAddMeal, onRemove }) => {
   const [{ isOver }, drop] = useDrop(() => ({
     accept: ItemTypes.MEAL,
     drop: (item: { id: string, day: string, meal: Meal }) => {
-      if (item.day !== day) {
-        onMove(item.meal, item.day, day);
-      }
+      onMove(item.meal, item.day, day);
       return { name: day };
     },
     collect: (monitor) => ({
@@ -71,29 +69,44 @@ const DroppableDay = ({ day, meal, onDrop, onEdit, onRate, onMove, onAddMeal, on
   return (
     <div 
       ref={drop} 
-      className={`flex flex-col ${isOver ? 'bg-gray-100' : ''}`}
+      className={`flex flex-col ${isOver ? 'bg-gray-100' : ''} h-full`}
     >
       <h3 className="mb-2 text-center font-semibold">{day}</h3>
-      {meal ? (
-        <DraggableMeal 
-          meal={meal} 
-          day={day} 
-          onEdit={onEdit} 
-          onRate={onRate}
-          onMove={onMove}
-          onRemove={() => onRemove(meal)}
-        />
-      ) : (
-        <div 
-          className="meal-card flex h-full flex-col items-center justify-center p-4 text-center text-muted-foreground cursor-pointer"
+      <div className="flex-1 flex flex-col">
+        {meals && meals.length > 0 ? (
+          meals.map(meal => (
+            <DraggableMeal 
+              key={meal.id}
+              meal={meal} 
+              day={day} 
+              onEdit={onEdit} 
+              onRate={onRate}
+              onMove={onMove}
+              onRemove={() => onRemove(meal)}
+            />
+          ))
+        ) : (
+          <div 
+            className="meal-card flex h-full flex-col items-center justify-center p-4 text-center text-muted-foreground cursor-pointer"
+            onClick={() => onAddMeal(day)}
+          >
+            <p className="mb-2">No meals planned</p>
+            <p className="text-sm">
+              Click to add a meal
+            </p>
+          </div>
+        )}
+      </div>
+      <div className="mt-2 flex justify-center">
+        <Button 
+          variant="outline" 
+          size="sm" 
+          className="w-full"
           onClick={() => onAddMeal(day)}
         >
-          <p className="mb-2">No meal planned</p>
-          <p className="text-sm">
-            Click to add a meal
-          </p>
-        </div>
-      )}
+          <Plus className="h-4 w-4 mr-1" /> Add Meal
+        </Button>
+      </div>
     </div>
   );
 };
@@ -114,8 +127,9 @@ export const MealPlanSection = ({
     ? meals 
     : filterMealsByDiet(meals, dietFilter);
 
-  const getMealForDay = (day: string) => {
-    return filteredMeals.find(meal => meal.day === day) || null;
+  // Get meals for a specific day
+  const getMealsForDay = (day: string) => {
+    return filteredMeals.filter(meal => meal.day === day);
   };
 
   const handleOpenRatingDialog = (meal: Meal) => {
@@ -137,7 +151,7 @@ export const MealPlanSection = ({
     if (dayWithoutMeal) {
       onAddMealToDay(meal, dayWithoutMeal);
     } else {
-      // If all days have meals, suggest replacing Sunday's meal
+      // If all days have meals, suggest adding to Sunday
       onAddMealToDay(meal, 'Sunday');
     }
   };
@@ -146,15 +160,7 @@ export const MealPlanSection = ({
     // Create a copy of the meal with the new day
     const updatedMeal = { ...meal, day: toDay };
     
-    // Check if there's already a meal on the target day
-    const existingMeal = getMealForDay(toDay);
-    
-    if (existingMeal) {
-      // If there is, swap them
-      const swappedMeal = { ...existingMeal, day: fromDay };
-      onAddMealToDay(swappedMeal, fromDay);
-    }
-    
+    // Add to the new day without removing anything from the original day
     onAddMealToDay(updatedMeal, toDay);
   };
 
@@ -248,7 +254,7 @@ export const MealPlanSection = ({
                 </div>
               </div>
               <Button onClick={() => {
-                setSelectedDay(daysOfWeek.find(day => !getMealForDay(day)) || 'Sunday');
+                setSelectedDay(daysOfWeek.find(day => !getMealsForDay(day).length) || 'Sunday');
                 setShowAddRecipe(true);
               }}>
                 <Plus className="mr-1 h-4 w-4" /> Add Recipe
@@ -264,14 +270,8 @@ export const MealPlanSection = ({
                       key={meal.id} 
                       className="bg-white rounded border p-3 cursor-pointer hover:bg-slate-100"
                       onClick={() => {
-                        setSelectedDay(daysOfWeek.find(day => !getMealForDay(day)) || 'Sunday');
-                        const dayWithoutMeal = daysOfWeek.find(day => !getMealForDay(day));
-                        if (dayWithoutMeal) {
-                          onAddMealToDay({...meal, id: `${dayWithoutMeal}-${Date.now()}`}, dayWithoutMeal);
-                        } else {
-                          setSelectedDay('Sunday');
-                          setShowAddRecipe(true);
-                        }
+                        const dayWithoutMeal = daysOfWeek.find(day => !getMealsForDay(day).length);
+                        onAddMealToDay({...meal, id: `${dayWithoutMeal || 'Sunday'}-${Date.now()}`}, dayWithoutMeal || 'Sunday');
                       }}
                     >
                       <h4 className="font-medium">{meal.title}</h4>
@@ -295,7 +295,7 @@ export const MealPlanSection = ({
               <DroppableDay 
                 key={day} 
                 day={day} 
-                meal={getMealForDay(day)}
+                meals={getMealsForDay(day)}
                 onDrop={handleMoveMeal}
                 onEdit={onEditMeal}
                 onRate={handleOpenRatingDialog}

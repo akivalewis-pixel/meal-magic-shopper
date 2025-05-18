@@ -13,13 +13,15 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select";
-import { Repeat } from "lucide-react";
+import { Repeat, Plus, X, Edit } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 
 interface ShoppingListSectionProps {
   groceryItems: GroceryItem[];
   onToggleItem: (id: string) => void;
   onUpdateItem: (updatedItem: GroceryItem) => void;
   availableStores: string[];
+  onUpdateStores?: (stores: string[]) => void;
 }
 
 export const ShoppingListSection = ({
@@ -27,13 +29,17 @@ export const ShoppingListSection = ({
   onToggleItem,
   onUpdateItem,
   availableStores = ["Any Store", "Supermarket", "Farmers Market", "Specialty Store"],
+  onUpdateStores
 }: ShoppingListSectionProps) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [showChecked, setShowChecked] = useState(true);
   const [selectedStore, setSelectedStore] = useState<string>("all");
   const [groupByStore, setGroupByStore] = useState<boolean>(true);
+  const [isEditingStores, setIsEditingStores] = useState(false);
+  const [storeInput, setStoreInput] = useState("");
+  const [editableStores, setEditableStores] = useState<string[]>([...availableStores]);
 
-  // Get category label - MOVED THIS FUNCTION BEFORE IT'S USED
+  // Get category label
   const getCategoryLabel = (category: GroceryCategory): string => {
     return groceryCategories.find(c => c.value === category)?.label || "Other";
   };
@@ -108,11 +114,40 @@ export const ShoppingListSection = ({
   const toggleRecurring = (item: GroceryItem) => {
     onUpdateItem({ ...item, recurring: !item.recurring });
   };
+  
+  const handleAddStore = () => {
+    if (storeInput.trim() && !editableStores.includes(storeInput.trim())) {
+      const updatedStores = [...editableStores, storeInput.trim()];
+      setEditableStores(updatedStores);
+      setStoreInput("");
+    }
+  };
+  
+  const handleRemoveStore = (store: string) => {
+    const updatedStores = editableStores.filter(s => s !== store);
+    setEditableStores(updatedStores);
+  };
+  
+  const handleSaveStores = () => {
+    if (onUpdateStores) {
+      onUpdateStores(editableStores);
+    }
+    setIsEditingStores(false);
+  };
 
   return (
     <section id="shopping-list" className="py-8 bg-gray-50">
       <div className="container mx-auto">
-        <h2 className="text-2xl font-bold text-carrot-dark mb-6">Shopping List</h2>
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4">
+          <h2 className="text-2xl font-bold text-carrot-dark mb-4 sm:mb-0">Shopping List</h2>
+          <Button 
+            variant="outline" 
+            onClick={() => setIsEditingStores(true)}
+          >
+            <Edit className="mr-2 h-4 w-4" />
+            Customize Stores
+          </Button>
+        </div>
         
         <div className="flex flex-col md:flex-row gap-4 mb-6">
           <div className="flex-1">
@@ -244,6 +279,54 @@ export const ShoppingListSection = ({
           )}
         </div>
       </div>
+
+      {/* Edit Stores Dialog */}
+      <Dialog open={isEditingStores} onOpenChange={setIsEditingStores}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Customize Store Names</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <div className="flex items-end gap-2 mb-4">
+              <div className="flex-1">
+                <Label htmlFor="new-store">Add New Store</Label>
+                <Input 
+                  id="new-store" 
+                  value={storeInput}
+                  onChange={(e) => setStoreInput(e.target.value)}
+                  placeholder="Enter store name"
+                />
+              </div>
+              <Button onClick={handleAddStore}>
+                <Plus className="h-4 w-4 mr-1" /> Add
+              </Button>
+            </div>
+            
+            <div className="space-y-2">
+              <Label>Current Stores</Label>
+              {editableStores.map(store => (
+                <div key={store} className="flex items-center justify-between bg-gray-50 p-2 rounded">
+                  <span>{store}</span>
+                  <Button variant="ghost" size="sm" onClick={() => handleRemoveStore(store)}>
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
+              {editableStores.length === 0 && (
+                <p className="text-sm text-gray-500 py-2">No stores added yet</p>
+              )}
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsEditingStores(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleSaveStores}>
+              Save Changes
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </section>
   );
 };
