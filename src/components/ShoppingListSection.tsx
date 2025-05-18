@@ -33,6 +33,16 @@ export const ShoppingListSection = ({
   const [selectedStore, setSelectedStore] = useState<string>("all");
   const [groupByStore, setGroupByStore] = useState<boolean>(true);
 
+  // Get category label - MOVED THIS FUNCTION BEFORE IT'S USED
+  const getCategoryLabel = (category: GroceryCategory): string => {
+    return groceryCategories.find(c => c.value === category)?.label || "Other";
+  };
+
+  // Get category background color
+  const getCategoryColor = (category: GroceryCategory): string => {
+    return `bg-grocery-${category}`;
+  };
+
   // Group items by store if groupByStore is true, otherwise by category
   const groupedItems = React.useMemo(() => {
     let filteredItems = groceryItems.filter(item => {
@@ -82,16 +92,6 @@ export const ShoppingListSection = ({
       return { "All Stores": byCategory };
     }
   }, [groceryItems, searchTerm, showChecked, selectedStore, groupByStore]);
-
-  // Get category label
-  const getCategoryLabel = (category: GroceryCategory): string => {
-    return groceryCategories.find(c => c.value === category)?.label || "Other";
-  };
-
-  // Get category background color
-  const getCategoryColor = (category: GroceryCategory): string => {
-    return `bg-grocery-${category}`;
-  };
 
   const handleQuantityChange = (item: GroceryItem, newQuantity: string) => {
     onUpdateItem({ ...item, quantity: newQuantity });
