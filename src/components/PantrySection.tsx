@@ -21,8 +21,18 @@ export const PantrySection = ({
 
   const handleAddItem = () => {
     if (newItem.trim() !== "") {
-      onAddItem(newItem.trim());
-      setNewItem("");
+      // Check for case-insensitive duplicates
+      const isDuplicate = pantryItems.some(
+        item => item.toLowerCase() === newItem.trim().toLowerCase()
+      );
+      
+      if (!isDuplicate) {
+        onAddItem(newItem.trim());
+        setNewItem("");
+      } else {
+        // Item already exists - could add toast notification here
+        console.log("Item already exists in pantry");
+      }
     }
   };
 

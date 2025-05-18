@@ -13,8 +13,14 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select";
-import { Repeat, Plus, X, Edit } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Repeat, Plus, X, Edit, List, Store } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 
 interface ShoppingListSectionProps {
   groceryItems: GroceryItem[];
@@ -23,6 +29,16 @@ interface ShoppingListSectionProps {
   availableStores: string[];
   onUpdateStores?: (stores: string[]) => void;
 }
+
+// Helper functions declared before they're used to avoid initialization errors
+const getCategoryLabel = (category: GroceryCategory): string => {
+  return groceryCategories.find(c => c.value === category)?.label || "Other";
+};
+
+// Get category background color
+const getCategoryColor = (category: GroceryCategory): string => {
+  return `bg-grocery-${category}`;
+};
 
 export const ShoppingListSection = ({
   groceryItems,
@@ -38,16 +54,7 @@ export const ShoppingListSection = ({
   const [isEditingStores, setIsEditingStores] = useState(false);
   const [storeInput, setStoreInput] = useState("");
   const [editableStores, setEditableStores] = useState<string[]>([...availableStores]);
-
-  // Get category label
-  const getCategoryLabel = (category: GroceryCategory): string => {
-    return groceryCategories.find(c => c.value === category)?.label || "Other";
-  };
-
-  // Get category background color
-  const getCategoryColor = (category: GroceryCategory): string => {
-    return `bg-grocery-${category}`;
-  };
+  const [sortBy, setSortBy] = useState<"store" | "department" | "category">("store");
 
   // Group items by store if groupByStore is true, otherwise by category
   const groupedItems = React.useMemo(() => {
@@ -67,37 +74,49 @@ export const ShoppingListSection = ({
       
       filteredItems.forEach(item => {
         const store = item.store || "Unassigned";
-        const category = item.department || getCategoryLabel(item.category);
+        let secondaryKey;
+        
+        if (sortBy === "department") {
+          secondaryKey = item.department || "Unassigned";
+        } else {
+          secondaryKey = getCategoryLabel(item.category);
+        }
         
         if (!byStore[store]) {
           byStore[store] = {};
         }
         
-        if (!byStore[store][category]) {
-          byStore[store][category] = [];
+        if (!byStore[store][secondaryKey]) {
+          byStore[store][secondaryKey] = [];
         }
         
-        byStore[store][category].push(item);
+        byStore[store][secondaryKey].push(item);
       });
       
       return byStore;
     } else {
-      // Group by category only
-      const byCategory: Record<string, GroceryItem[]> = {};
+      // Group by category or department
+      const byPrimary: Record<string, GroceryItem[]> = {};
       
       filteredItems.forEach(item => {
-        const category = getCategoryLabel(item.category);
+        let primaryKey;
         
-        if (!byCategory[category]) {
-          byCategory[category] = [];
+        if (sortBy === "department") {
+          primaryKey = item.department || "Unassigned";
+        } else {
+          primaryKey = getCategoryLabel(item.category);
         }
         
-        byCategory[category].push(item);
+        if (!byPrimary[primaryKey]) {
+          byPrimary[primaryKey] = [];
+        }
+        
+        byPrimary[primaryKey].push(item);
       });
       
-      return { "All Stores": byCategory };
+      return { "All Stores": byPrimary };
     }
-  }, [groceryItems, searchTerm, showChecked, selectedStore, groupByStore]);
+  }, [groceryItems, searchTerm, showChecked, selectedStore, groupByStore, sortBy]);
 
   const handleQuantityChange = (item: GroceryItem, newQuantity: string) => {
     onUpdateItem({ ...item, quantity: newQuantity });
@@ -135,18 +154,44 @@ export const ShoppingListSection = ({
     setIsEditingStores(false);
   };
 
+  const handleSortChange = (value: "store" | "department" | "category") => {
+    setSortBy(value);
+  };
+
   return (
     <section id="shopping-list" className="py-8 bg-gray-50">
       <div className="container mx-auto">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4">
           <h2 className="text-2xl font-bold text-carrot-dark mb-4 sm:mb-0">Shopping List</h2>
-          <Button 
-            variant="outline" 
-            onClick={() => setIsEditingStores(true)}
-          >
-            <Edit className="mr-2 h-4 w-4" />
-            Customize Stores
-          </Button>
+          <div className="flex gap-2">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline">
+                  <List className="mr-2 h-4 w-4" />
+                  Sort By: {sortBy === "store" ? "Store" : sortBy === "department" ? "Department" : "Category"}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => handleSortChange("store")}>
+                  <Store className="mr-2 h-4 w-4" /> Store
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleSortChange("department")}>
+                  <List className="mr-2 h-4 w-4" /> Department
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleSortChange("category")}>
+                  <List className="mr-2 h-4 w-4" /> Category
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            
+            <Button 
+              variant="outline" 
+              onClick={() => setIsEditingStores(true)}
+            >
+              <Edit className="mr-2 h-4 w-4" />
+              Customize Stores
+            </Button>
+          </div>
         </div>
         
         <div className="flex flex-col md:flex-row gap-4 mb-6">
@@ -235,6 +280,9 @@ export const ShoppingListSection = ({
                               {item.recurring && (
                                 <Repeat className="h-4 w-4 text-blue-500" />
                               )}
+                              {item.meal && (
+                                <span className="text-xs text-gray-500">({item.meal})</span>
+                              )}
                             </div>
                           </Label>
                           
@@ -285,6 +333,9 @@ export const ShoppingListSection = ({
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
             <DialogTitle>Customize Store Names</DialogTitle>
+            <DialogDescription>
+              Add, edit or remove stores to organize your shopping list.
+            </DialogDescription>
           </DialogHeader>
           <div className="py-4">
             <div className="flex items-end gap-2 mb-4">
@@ -295,6 +346,7 @@ export const ShoppingListSection = ({
                   value={storeInput}
                   onChange={(e) => setStoreInput(e.target.value)}
                   placeholder="Enter store name"
+                  onKeyDown={(e) => e.key === "Enter" && handleAddStore()}
                 />
               </div>
               <Button onClick={handleAddStore}>

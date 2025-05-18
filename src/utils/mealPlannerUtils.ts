@@ -48,6 +48,30 @@ export const departments = [
   "Other"
 ];
 
+export const extractIngredientsFromRecipeUrl = async (recipeUrl: string): Promise<string[]> => {
+  try {
+    console.log('Fetching recipe from URL:', recipeUrl);
+    const response = await fetch(`https://recipe-parser-api.vercel.app/api/parse?url=${encodeURIComponent(recipeUrl)}`);
+    
+    if (!response.ok) {
+      console.error('Failed to fetch recipe:', response.status, response.statusText);
+      return [];
+    }
+    
+    const data = await response.json();
+    
+    if (data.ingredients && Array.isArray(data.ingredients)) {
+      const ingredients = data.ingredients.map((ingredient: any) => ingredient.name || ingredient);
+      return ingredients;
+    }
+    
+    return [];
+  } catch (error) {
+    console.error('Error extracting ingredients:', error);
+    return [];
+  }
+};
+
 export const generateShoppingList = (meals: Meal[], pantryItems: string[], recurringItems: GroceryItem[] = []): GroceryItem[] => {
   // Get all ingredients from meals
   const allIngredients = meals.flatMap(meal => 
@@ -67,11 +91,12 @@ export const generateShoppingList = (meals: Meal[], pantryItems: string[], recur
   // Filter out ingredients that are already in the pantry
   const filteredIngredients = allIngredients.filter(
     item => !pantryItems.some(pantryItem => 
+      item.name.toLowerCase().includes(pantryItem.toLowerCase()) || 
       pantryItem.toLowerCase().includes(item.name.toLowerCase())
     )
   );
   
-  // Remove duplicates by combining quantities
+  // Remove duplicates by combining quantities and meals
   const uniqueIngredients = filteredIngredients.reduce((acc, item) => {
     const existingItem = acc.find(i => i.name.toLowerCase() === item.name.toLowerCase());
     if (existingItem) {
@@ -81,7 +106,10 @@ export const generateShoppingList = (meals: Meal[], pantryItems: string[], recur
       if (!isNaN(numQuantity) && !isNaN(newNumQuantity)) {
         existingItem.quantity = (numQuantity + newNumQuantity).toString();
       }
-      existingItem.meal = `${existingItem.meal}, ${item.meal}`;
+      // Update meal reference to show all recipes using this ingredient
+      if (!existingItem.meal.includes(item.meal)) {
+        existingItem.meal = existingItem.meal ? `${existingItem.meal}, ${item.meal}` : item.meal;
+      }
     } else {
       acc.push(item);
     }
@@ -333,4 +361,18 @@ export const countMealUsage = (weeklyPlans: WeeklyMealPlan[], mealTitle: string)
   return weeklyPlans.reduce((count, plan) => {
     return count + plan.meals.filter(meal => meal.title === mealTitle).length;
   }, 0);
+};
+
+// Expose a new function to clean and normalize ingredient names
+export const cleanIngredientName = (ingredient: string): string => {
+  // Remove quantities and units
+  const cleanedName = ingredient
+    .replace(/^\d+\s*\/\s*\d+\s+/, '') // Remove fractions like "1/2 "
+    .replace(/^\d+\s+/, '')            // Remove leading numbers like "2 "
+    .replace(/^a\s+/i, '')             // Remove leading "a "
+    .replace(/^an\s+/i, '')            // Remove leading "an "
+    .replace(/\(.*?\)/g, '')           // Remove parenthetical text
+    .trim();
+  
+  return cleanedName;
 };

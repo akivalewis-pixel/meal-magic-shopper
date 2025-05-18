@@ -19,7 +19,8 @@ import {
   samplePantryItems, 
   sampleFamilyPreferences,
   generateShoppingList,
-  getCurrentWeekStart
+  getCurrentWeekStart,
+  extractIngredientsFromRecipeUrl
 } from "@/utils/mealPlannerUtils";
 
 const Index = () => {
@@ -119,7 +120,7 @@ const Index = () => {
     });
   };
 
-  const handleAddMealToDay = (meal: Meal, day: string) => {
+  const handleAddMealToDay = async (meal: Meal, day: string) => {
     // If day is empty, remove the meal from the weekly plan but keep it in the collection
     if (!day) {
       setMeals(prevMeals =>
@@ -137,6 +138,39 @@ const Index = () => {
       return;
     }
     
+    // If the meal has a recipeUrl but no ingredients, try to fetch them
+    let mealToAdd = { ...meal };
+    if (meal.recipeUrl && (!meal.ingredients || meal.ingredients.length === 0)) {
+      toast({
+        title: "Fetching Ingredients",
+        description: "Attempting to get ingredients from recipe URL...",
+      });
+      
+      try {
+        const ingredients = await extractIngredientsFromRecipeUrl(meal.recipeUrl);
+        if (ingredients.length > 0) {
+          mealToAdd.ingredients = ingredients;
+          toast({
+            title: "Ingredients Found",
+            description: `Found ${ingredients.length} ingredients for ${meal.title}`,
+          });
+        } else {
+          toast({
+            title: "No Ingredients Found",
+            description: "Couldn't extract ingredients from the URL. Please add them manually.",
+            variant: "destructive",
+          });
+        }
+      } catch (error) {
+        console.error("Error fetching ingredients:", error);
+        toast({
+          title: "Error",
+          description: "Failed to fetch ingredients. Please add them manually.",
+          variant: "destructive",
+        });
+      }
+    }
+    
     // For adding a new meal to a day (allowing multiple meals per day)
     const existingMeal = meals.find(m => m.id === meal.id);
     
@@ -145,7 +179,7 @@ const Index = () => {
       setMeals(prevMeals =>
         prevMeals.map(m =>
           m.id === meal.id
-            ? { ...m, day, lastUsed: new Date() }
+            ? { ...mealToAdd, day, lastUsed: new Date() }
             : m
         )
       );
@@ -154,7 +188,7 @@ const Index = () => {
       setMeals(prevMeals => [
         ...prevMeals,
         {
-          ...meal,
+          ...mealToAdd,
           id: meal.id || `${day}-${Date.now()}`, // Use existing ID or generate new one
           day, // Set the day
           lastUsed: new Date(),
