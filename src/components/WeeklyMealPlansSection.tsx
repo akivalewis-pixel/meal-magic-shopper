@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { 
   WeeklyMealPlan, 
@@ -35,7 +34,7 @@ export const WeeklyMealPlansSection = ({
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
   const [planName, setPlanName] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
-  const [searchType, setSearchType] = useState<"week" | "meal">("meal");
+  const [searchType, setSearchType] = useState<"week" | "meal">("week");
   const [selectedPlan, setSelectedPlan] = useState<WeeklyMealPlan | null>(null);
   const [mealSearchResults, setMealSearchResults] = useState<Meal[]>([]);
   const [selectedMeal, setSelectedMeal] = useState<string | null>(null);

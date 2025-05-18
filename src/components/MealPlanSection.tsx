@@ -11,10 +11,33 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { X, Search, Plus } from "lucide-react";
+import { X, Plus, Loader2 } from "lucide-react";
 import { Form, FormField, FormItem, FormLabel, FormControl } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import { daysOfWeek, dietaryOptions, filterMealsByDiet } from "@/utils/mealPlannerUtils";
+import { useToast } from "@/hooks/use-toast";
+
+// Function to extract ingredients from a recipe URL
+const fetchIngredientsFromUrl = async (url: string): Promise<string[]> => {
+  // In a real implementation, this would use a recipe API or scraping service
+  // For now, we'll simulate a fetch with some placeholder data
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      // Simulate some common ingredients based on the URL
+      if (url.includes("pasta") || url.includes("spaghetti")) {
+        resolve(["pasta", "tomatoes", "garlic", "onion", "olive oil", "basil"]);
+      } else if (url.includes("chicken")) {
+        resolve(["chicken breast", "salt", "pepper", "olive oil", "garlic powder", "herbs"]);
+      } else if (url.includes("salad")) {
+        resolve(["lettuce", "cucumber", "tomatoes", "bell pepper", "olive oil", "vinegar"]);
+      } else if (url.includes("soup")) {
+        resolve(["broth", "onion", "carrots", "celery", "salt", "pepper", "herbs"]);
+      } else {
+        resolve(["ingredients could not be automatically detected"]);
+      }
+    }, 1000);
+  });
+};
 
 interface MealPlanSectionProps {
   meals: Meal[];
@@ -117,11 +140,12 @@ export const MealPlanSection = ({
   onRateMeal,
   onAddMealToDay 
 }: MealPlanSectionProps) => {
+  const { toast } = useToast();
   const [dietFilter, setDietFilter] = useState<DietaryPreference>("none");
   const [mealToRate, setMealToRate] = useState<Meal | null>(null);
-  const [searchTerm, setSearchTerm] = useState("");
   const [showAddRecipe, setShowAddRecipe] = useState(false);
   const [selectedDay, setSelectedDay] = useState("");
+  const [isFetchingIngredients, setIsFetchingIngredients] = useState(false);
   
   const filteredMeals = dietFilter === "none" 
     ? meals 
@@ -184,6 +208,30 @@ export const MealPlanSection = ({
     }
   });
 
+  // Function to handle recipe URL change and auto-fetch ingredients
+  const handleRecipeUrlChange = async (url: string) => {
+    if (!url || url.trim() === "") return;
+    
+    try {
+      setIsFetchingIngredients(true);
+      const ingredients = await fetchIngredientsFromUrl(url);
+      form.setValue('ingredients', ingredients.join(', '));
+      
+      toast({
+        title: "Ingredients detected",
+        description: "Recipe ingredients have been automatically added.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error fetching ingredients",
+        description: "Could not automatically detect ingredients.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsFetchingIngredients(false);
+    }
+  };
+
   const onSubmitNewRecipe = (data) => {
     const newMeal: Meal = {
       id: `${selectedDay}-${Date.now()}`,
@@ -201,14 +249,6 @@ export const MealPlanSection = ({
     setShowAddRecipe(false);
     form.reset();
   };
-
-  // Get previously used meals (not currently in the meal plan)
-  const previousMeals = meals
-    .filter(meal => !meal.day || meal.day === "")
-    .filter(meal => 
-      searchTerm === "" || 
-      meal.title.toLowerCase().includes(searchTerm.toLowerCase())
-    );
 
   return (
     <DndProvider backend={HTML5Backend}>
@@ -240,49 +280,13 @@ export const MealPlanSection = ({
             </div>
           </div>
 
-          <div className="mb-6">
-            <div className="flex flex-col sm:flex-row gap-3">
-              <div className="flex-1">
-                <div className="relative">
-                  <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Search recipes..."
-                    className="pl-8"
-                    value={searchTerm}
-                    onChange={e => setSearchTerm(e.target.value)}
-                  />
-                </div>
-              </div>
-              <Button onClick={() => {
-                setSelectedDay(daysOfWeek.find(day => !getMealsForDay(day).length) || 'Sunday');
-                setShowAddRecipe(true);
-              }}>
-                <Plus className="mr-1 h-4 w-4" /> Add Recipe
-              </Button>
-            </div>
-
-            {searchTerm && previousMeals.length > 0 && (
-              <div className="mt-4 bg-slate-50 p-4 rounded-lg">
-                <h3 className="font-semibold mb-2">Previous Recipes</h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-                  {previousMeals.slice(0, 6).map(meal => (
-                    <div 
-                      key={meal.id} 
-                      className="bg-white rounded border p-3 cursor-pointer hover:bg-slate-100"
-                      onClick={() => {
-                        const dayWithoutMeal = daysOfWeek.find(day => !getMealsForDay(day).length);
-                        onAddMealToDay({...meal, id: `${dayWithoutMeal || 'Sunday'}-${Date.now()}`}, dayWithoutMeal || 'Sunday');
-                      }}
-                    >
-                      <h4 className="font-medium">{meal.title}</h4>
-                      {meal.recipeUrl && (
-                        <p className="text-xs text-blue-600 truncate">{meal.recipeUrl}</p>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
+          <div className="mb-6 flex justify-end">
+            <Button onClick={() => {
+              setSelectedDay(daysOfWeek.find(day => !getMealsForDay(day).length) || 'Sunday');
+              setShowAddRecipe(true);
+            }}>
+              <Plus className="mr-1 h-4 w-4" /> Add Recipe
+            </Button>
           </div>
 
           <MealRecommendations 
@@ -343,12 +347,37 @@ export const MealPlanSection = ({
                       <FormItem>
                         <FormLabel>Recipe URL (optional)</FormLabel>
                         <FormControl>
-                          <Input 
-                            placeholder="https://cooking.nytimes.com/..." 
-                            type="url"
-                            {...field} 
-                          />
+                          <div className="flex gap-2">
+                            <Input 
+                              placeholder="https://cooking.nytimes.com/..." 
+                              type="url"
+                              {...field} 
+                              onChange={(e) => {
+                                field.onChange(e);
+                                // Don't auto-fetch on every keystroke, only when the field loses focus
+                              }}
+                              onBlur={(e) => {
+                                field.onBlur();
+                                if (e.target.value) {
+                                  handleRecipeUrlChange(e.target.value);
+                                }
+                              }}
+                            />
+                            <Button 
+                              type="button" 
+                              variant="outline" 
+                              onClick={() => handleRecipeUrlChange(field.value)}
+                              disabled={isFetchingIngredients || !field.value}
+                            >
+                              {isFetchingIngredients ? (
+                                <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                              ) : (
+                                "Fetch"
+                              )}
+                            </Button>
+                          </div>
                         </FormControl>
+                        {isFetchingIngredients && <p className="text-xs text-muted-foreground mt-1">Fetching ingredients...</p>}
                       </FormItem>
                     )}
                   />
@@ -412,3 +441,4 @@ export const MealPlanSection = ({
     </DndProvider>
   );
 };
+
