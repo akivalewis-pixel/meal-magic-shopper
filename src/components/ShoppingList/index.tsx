@@ -1,7 +1,6 @@
-
 import React, { useState, useEffect } from "react";
 import { GroceryItem, GroceryCategory } from "@/types";
-import { groceryCategories } from "@/utils/mealPlannerUtils";
+import { groceryCategories } from "@/utils/constants";
 import { ShoppingListHeader } from "./ShoppingListHeader";
 import { ShoppingListFilters } from "./ShoppingListFilters";
 import { ShoppingListGroup } from "./ShoppingListGroup";

@@ -1,9 +1,8 @@
-
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Printer } from "lucide-react";
 import { Meal, GroceryItem } from "@/types";
-import { daysOfWeek } from "@/utils/mealPlannerUtils";
+import { daysOfWeek } from "@/utils/constants";
 
 interface PrintButtonProps {
   meals: Meal[];
@@ -222,4 +221,3 @@ export const PrintButton = ({ meals, groceryItems }: PrintButtonProps) => {
     </Button>
   );
 };
-

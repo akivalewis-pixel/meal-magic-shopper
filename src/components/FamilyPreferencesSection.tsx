@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { FamilyPreference, DietaryPreference } from "@/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Plus, Trash, ArrowRight, X } from "lucide-react";
 import { DndProvider, useDrag, useDrop } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
-import { dietaryOptions } from "@/utils/mealPlannerUtils";
+import { dietaryOptions } from "@/utils/constants";
 
 interface FamilyPreferencesSectionProps {
   preferences: FamilyPreference[];

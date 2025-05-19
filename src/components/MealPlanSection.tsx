@@ -14,7 +14,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { X, Plus, Loader2 } from "lucide-react";
 import { Form, FormField, FormItem, FormLabel, FormControl } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
-import { daysOfWeek, dietaryOptions, filterMealsByDiet } from "@/utils/mealPlannerUtils";
+import { daysOfWeek, dietaryOptions } from "@/utils/constants";
+import { filterMealsByDiet } from "@/utils/mealUtils";
 import { useToast } from "@/hooks/use-toast";
 
 // Function to extract ingredients from a recipe URL

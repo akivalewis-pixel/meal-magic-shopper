@@ -9,7 +9,10 @@ import { AddRecipeDialog } from "./AddRecipeDialog";
 import { Meal, DietaryPreference } from "@/types";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { daysOfWeek, dietaryOptions, filterMealsByDiet, extractIngredientsFromRecipeUrl } from "@/utils/mealPlannerUtils";
+import { daysOfWeek } from "@/utils/constants";
+import { dietaryOptions } from "@/utils/constants";
+import { filterMealsByDiet } from "@/utils/mealUtils";
+import { extractIngredientsFromRecipeUrl } from "@/utils/recipeUtils";
 import { 
   Select, 
   SelectContent, 
