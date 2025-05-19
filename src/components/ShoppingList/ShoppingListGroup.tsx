@@ -10,6 +10,7 @@ interface ShoppingListGroupProps {
   onQuantityChange: (item: GroceryItem, quantity: string) => void;
   onStoreChange: (item: GroceryItem, store: string) => void;
   onToggleRecurring: (item: GroceryItem) => void;
+  onNameChange?: (item: GroceryItem, name: string) => void;
   availableStores: string[];
 }
 
@@ -20,6 +21,7 @@ export const ShoppingListGroup = ({
   onQuantityChange,
   onStoreChange,
   onToggleRecurring,
+  onNameChange,
   availableStores
 }: ShoppingListGroupProps) => {
   return (
@@ -34,6 +36,7 @@ export const ShoppingListGroup = ({
             onQuantityChange={onQuantityChange}
             onStoreChange={onStoreChange}
             onToggleRecurring={onToggleRecurring}
+            onNameChange={onNameChange}
             availableStores={availableStores}
           />
         ))}

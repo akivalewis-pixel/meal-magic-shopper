@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Printer } from "lucide-react";
@@ -102,6 +103,22 @@ export const PrintButton = ({ meals, groceryItems }: PrintButtonProps) => {
           p {
             margin: 2px 0;
           }
+          .store-section {
+            margin-bottom: 15px;
+            break-inside: avoid;
+          }
+          .store-title {
+            font-weight: bold;
+            font-size: 13px;
+            margin-bottom: 5px;
+            padding-bottom: 2px;
+            border-bottom: 1px solid #333;
+          }
+          .department {
+            font-weight: bold;
+            margin-top: 8px;
+            margin-bottom: 3px;
+          }
         </style>
       </head>
       <body>
@@ -159,36 +176,66 @@ export const PrintButton = ({ meals, groceryItems }: PrintButtonProps) => {
       <h1>NomNom Navigator: Shopping List</h1>
     `);
 
-    // Group grocery items by category
-    const itemsByCategory = groceryItems.reduce((acc, item) => {
-      if (!acc[item.category]) {
-        acc[item.category] = [];
+    // Sort by store first, then by department
+    // Create a sorted copy of grocery items that's sorted by store and department
+    const sortedItems = [...groceryItems].sort((a, b) => {
+      // First sort by store
+      const storeA = a.store || "Unassigned";
+      const storeB = b.store || "Unassigned";
+      
+      if (storeA !== storeB) {
+        return storeA.localeCompare(storeB);
       }
-      acc[item.category].push(item);
-      return acc;
-    }, {} as Record<string, GroceryItem[]>);
+      
+      // If same store, sort by department
+      const deptA = a.department || "Unassigned";
+      const deptB = b.department || "Unassigned";
+      
+      return deptA.localeCompare(deptB);
+    });
+
+    // Group items by store and department
+    const groupedByStore: Record<string, Record<string, GroceryItem[]>> = {};
+    
+    sortedItems.forEach(item => {
+      const store = item.store || "Unassigned";
+      const department = item.department || "Unassigned";
+      
+      if (!groupedByStore[store]) {
+        groupedByStore[store] = {};
+      }
+      
+      if (!groupedByStore[store][department]) {
+        groupedByStore[store][department] = [];
+      }
+      
+      groupedByStore[store][department].push(item);
+    });
 
     // Create two columns for shopping list
     printWindow.document.write('<div class="grocery-columns">');
 
-    // Print each category and its items
-    Object.entries(itemsByCategory).forEach(([category, items]) => {
-      // Capitalize the category name
-      const categoryName = category.charAt(0).toUpperCase() + category.slice(1);
-      
+    // Print each store and its departments
+    Object.entries(groupedByStore).forEach(([store, departments]) => {
       printWindow.document.write(`
-        <div class="category">
-          <h3>${categoryName}</h3>
+        <div class="store-section">
+          <div class="store-title">${store}</div>
       `);
       
-      items.forEach(item => {
+      Object.entries(departments).forEach(([department, items]) => {
         printWindow.document.write(`
-          <div class="item">
-            <span>${item.name}</span>
-            <span> - ${item.quantity}</span>
-            ${item.meal ? `<span> (${item.meal})</span>` : ''}
-          </div>
+          <div class="department">${department}</div>
         `);
+        
+        items.forEach(item => {
+          printWindow.document.write(`
+            <div class="item">
+              <span>${item.name}</span>
+              <span> - ${item.quantity}</span>
+              ${item.meal ? `<span> (${item.meal})</span>` : ''}
+            </div>
+          `);
+        });
       });
       
       printWindow.document.write(`</div>`);

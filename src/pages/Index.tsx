@@ -43,7 +43,9 @@ const Index = () => {
     availableStores,
     handleToggleGroceryItem,
     handleUpdateGroceryItem,
-    handleUpdateStores
+    handleUpdateStores,
+    handleAddGroceryItem,
+    handleArchiveItem
   } = useShoppingList(meals, pantryItems);
 
   return (
@@ -68,6 +70,8 @@ const Index = () => {
           onUpdateItem={handleUpdateGroceryItem}
           availableStores={availableStores}
           onUpdateStores={handleUpdateStores}
+          onAddItem={handleAddGroceryItem}
+          onArchiveItem={handleArchiveItem}
         />
         
         <WeeklyMealPlansSection

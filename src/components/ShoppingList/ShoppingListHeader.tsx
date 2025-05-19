@@ -1,30 +1,43 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { Edit, List } from "lucide-react";
+import { Edit, List, Plus, Store } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Store } from "lucide-react";
 
 interface ShoppingListHeaderProps {
   onEditStores: () => void;
   onSortChange: (value: "store" | "department" | "category") => void;
   sortBy: "store" | "department" | "category";
+  onAddItem?: () => void;
+  canAddItem?: boolean;
 }
 
 export const ShoppingListHeader = ({ 
   onEditStores, 
   onSortChange,
-  sortBy 
+  sortBy,
+  onAddItem,
+  canAddItem = false
 }: ShoppingListHeaderProps) => {
   return (
     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4">
       <h2 className="text-2xl font-bold text-carrot-dark mb-4 sm:mb-0">Shopping List</h2>
       <div className="flex gap-2">
+        {canAddItem && onAddItem && (
+          <Button 
+            variant="outline" 
+            onClick={onAddItem}
+          >
+            <Plus className="mr-2 h-4 w-4" />
+            Add Item
+          </Button>
+        )}
+        
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline">

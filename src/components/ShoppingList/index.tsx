@@ -5,11 +5,14 @@ import { ShoppingListHeader } from "./ShoppingListHeader";
 import { ShoppingListFilters } from "./ShoppingListFilters";
 import { ShoppingListGroup } from "./ShoppingListGroup";
 import { StoreManagementDialog } from "./StoreManagementDialog";
+import { AddItemForm } from "./AddItemForm";
 
 interface ShoppingListSectionProps {
   groceryItems: GroceryItem[];
   onToggleItem: (id: string) => void;
   onUpdateItem: (updatedItem: GroceryItem) => void;
+  onAddItem?: (item: GroceryItem) => void;
+  onArchiveItem?: (id: string) => void;
   availableStores: string[];
   onUpdateStores?: (stores: string[]) => void;
 }
@@ -23,6 +26,8 @@ export const ShoppingListSection = ({
   groceryItems,
   onToggleItem,
   onUpdateItem,
+  onAddItem,
+  onArchiveItem,
   availableStores = ["Any Store", "Supermarket", "Farmers Market", "Specialty Store"],
   onUpdateStores
 }: ShoppingListSectionProps) => {
@@ -32,6 +37,21 @@ export const ShoppingListSection = ({
   const [groupByStore, setGroupByStore] = useState<boolean>(true);
   const [isEditingStores, setIsEditingStores] = useState(false);
   const [sortBy, setSortBy] = useState<"store" | "department" | "category">("store");
+  const [isAddingItem, setIsAddingItem] = useState(false);
+
+  // Modified toggle handler to archive checked items
+  const handleToggle = (id: string) => {
+    const item = groceryItems.find(item => item.id === id);
+    if (item) {
+      // If item is being checked, archive it
+      if (!item.checked && onArchiveItem) {
+        onArchiveItem(id);
+      } else {
+        // Otherwise just toggle it
+        onToggleItem(id);
+      }
+    }
+  };
 
   // Group items by store if groupByStore is true, otherwise by category
   const groupedItems = React.useMemo(() => {
@@ -112,6 +132,10 @@ export const ShoppingListSection = ({
       onUpdateStores(updatedStores);
     }
   };
+  
+  const handleNameChange = (item: GroceryItem, name: string) => {
+    onUpdateItem({ ...item, name });
+  };
 
   return (
     <section id="shopping-list" className="py-8 bg-gray-50">
@@ -120,6 +144,8 @@ export const ShoppingListSection = ({
           onEditStores={() => setIsEditingStores(true)} 
           onSortChange={setSortBy}
           sortBy={sortBy}
+          onAddItem={() => setIsAddingItem(true)}
+          canAddItem={!!onAddItem}
         />
         
         <ShoppingListFilters 
@@ -152,10 +178,11 @@ export const ShoppingListSection = ({
                     key={`${storeName}-${categoryName}`}
                     categoryName={categoryName}
                     items={items}
-                    onToggle={onToggleItem}
+                    onToggle={handleToggle}
                     onQuantityChange={handleQuantityChange}
                     onStoreChange={handleStoreChange}
                     onToggleRecurring={handleToggleRecurring}
+                    onNameChange={handleNameChange}
                     availableStores={availableStores}
                   />
                 ))}
@@ -171,6 +198,15 @@ export const ShoppingListSection = ({
         stores={availableStores}
         onSaveStores={handleSaveStores}
       />
+      
+      {onAddItem && (
+        <AddItemForm
+          open={isAddingItem}
+          onOpenChange={setIsAddingItem}
+          availableStores={availableStores}
+          onAddItem={onAddItem}
+        />
+      )}
     </section>
   );
 };

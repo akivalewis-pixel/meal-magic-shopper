@@ -11,6 +11,7 @@ export function useShoppingList(meals: Meal[], pantryItems: string[]) {
   const { toast } = useToast();
   const [groceryItems, setGroceryItems] = useState<GroceryItem[]>([]);
   const [recurringItems, setRecurringItems] = useState<GroceryItem[]>([]);
+  const [archivedItems, setArchivedItems] = useState<GroceryItem[]>([]);
   const [availableStores, setAvailableStores] = useState<string[]>([
     "Any Store", "Supermarket", "Farmers Market", "Specialty Store"
   ]);
@@ -19,12 +20,15 @@ export function useShoppingList(meals: Meal[], pantryItems: string[]) {
   useEffect(() => {
     const savedRecurringItems = localStorage.getItem('mealPlannerRecurringItems');
     const savedStores = localStorage.getItem('mealPlannerStores');
+    const savedArchivedItems = localStorage.getItem('mealPlannerArchivedItems');
     
     const initialRecurringItems = savedRecurringItems ? JSON.parse(savedRecurringItems) : [];
     const initialStores = savedStores ? JSON.parse(savedStores) : ["Any Store", "Supermarket", "Farmers Market", "Specialty Store"];
+    const initialArchivedItems = savedArchivedItems ? JSON.parse(savedArchivedItems) : [];
     
     setRecurringItems(initialRecurringItems);
     setAvailableStores(initialStores);
+    setArchivedItems(initialArchivedItems);
   }, []);
 
   // Update shopping list when meals or pantry changes
@@ -33,9 +37,18 @@ export function useShoppingList(meals: Meal[], pantryItems: string[]) {
       // Only include meals that have a day assigned
       const activeMeals = meals.filter(meal => meal.day && meal.day !== "");
       const shoppingList = generateShoppingList(activeMeals, pantryItems, recurringItems);
-      setGroceryItems(shoppingList);
+      
+      // Filter out any items that are in the archived list
+      const filteredShoppingList = shoppingList.filter(item => 
+        !archivedItems.some(archivedItem => 
+          archivedItem.name.toLowerCase() === item.name.toLowerCase() && 
+          (!item.meal || archivedItem.meal === item.meal)
+        )
+      );
+      
+      setGroceryItems(filteredShoppingList);
     }
-  }, [meals, pantryItems, recurringItems]);
+  }, [meals, pantryItems, recurringItems, archivedItems]);
 
   // Save to localStorage when state changes
   useEffect(() => {
@@ -45,7 +58,10 @@ export function useShoppingList(meals: Meal[], pantryItems: string[]) {
     if (availableStores.length > 0) {
       localStorage.setItem('mealPlannerStores', JSON.stringify(availableStores));
     }
-  }, [recurringItems, availableStores]);
+    if (archivedItems.length > 0) {
+      localStorage.setItem('mealPlannerArchivedItems', JSON.stringify(archivedItems));
+    }
+  }, [recurringItems, availableStores, archivedItems]);
 
   const handleToggleGroceryItem = (id: string) => {
     setGroceryItems(prevItems =>
@@ -90,12 +106,39 @@ export function useShoppingList(meals: Meal[], pantryItems: string[]) {
       description: `Your store list has been updated`,
     });
   };
+  
+  const handleAddGroceryItem = (newItem: GroceryItem) => {
+    setGroceryItems(prevItems => [...prevItems, newItem]);
+    toast({
+      title: "Item Added",
+      description: `${newItem.name} has been added to your shopping list`,
+    });
+  };
+  
+  const handleArchiveItem = (id: string) => {
+    const itemToArchive = groceryItems.find(item => item.id === id);
+    if (!itemToArchive) return;
+    
+    // Add the item to the archive
+    setArchivedItems(prev => [...prev, itemToArchive]);
+    
+    // Remove the item from the current list
+    setGroceryItems(prev => prev.filter(item => item.id !== id));
+    
+    toast({
+      title: "Item Archived",
+      description: `${itemToArchive.name} has been archived`,
+    });
+  };
 
   return {
     groceryItems,
     availableStores,
     handleToggleGroceryItem,
     handleUpdateGroceryItem,
-    handleUpdateStores
+    handleUpdateStores,
+    handleAddGroceryItem,
+    handleArchiveItem,
+    archivedItems
   };
 }
