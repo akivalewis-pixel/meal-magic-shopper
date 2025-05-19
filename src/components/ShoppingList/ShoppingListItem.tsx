@@ -54,6 +54,7 @@ export const ShoppingListItem = ({
   // Handle keydown event to apply changes on Enter
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
+      handleQuantityBlur();
       e.currentTarget.blur();
     }
   };
