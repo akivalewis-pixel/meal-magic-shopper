@@ -9,8 +9,8 @@ export const Header = () => {
         <div className="flex items-center gap-2">
           <Utensils className="h-6 w-6" />
           <div>
-            <h1 className="text-xl font-bold">NomNom Navigator</h1>
-            <p className="text-xs opacity-80">vibes for your weekly eats</p>
+            <h1 className="text-xl font-bold">Pantry Pilot</h1>
+            <p className="text-xs opacity-80">navigating your meals with precision</p>
           </div>
         </div>
         <nav className="hidden md:block">
