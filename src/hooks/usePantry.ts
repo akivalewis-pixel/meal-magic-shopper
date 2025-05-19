@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { samplePantryItems } from "@/utils/mealPlannerUtils";
+import { samplePantryItems } from "@/utils/constants";
 
 export function usePantry() {
   const { toast } = useToast();

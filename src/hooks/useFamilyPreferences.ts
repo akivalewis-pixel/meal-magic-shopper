@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { FamilyPreference } from "@/types";
-import { sampleFamilyPreferences } from "@/utils/mealPlannerUtils";
+import { sampleFamilyPreferences } from "@/utils/constants";
 
 export function useFamilyPreferences() {
   const { toast } = useToast();

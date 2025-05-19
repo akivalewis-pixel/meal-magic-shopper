@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { 
@@ -6,10 +7,10 @@ import {
   GroceryItem
 } from "@/types";
 import { 
-  generateSampleMealPlan, 
-  getCurrentWeekStart,
-  extractIngredientsFromRecipeUrl
-} from "@/utils/mealPlannerUtils";
+  generateSampleMealPlan,
+  getCurrentWeekStart
+} from "@/utils";
+import { extractIngredientsFromRecipeUrl } from "@/utils/recipeUtils";
 
 export function useMealPlan() {
   const { toast } = useToast();

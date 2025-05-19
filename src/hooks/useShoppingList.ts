@@ -5,7 +5,7 @@ import {
   GroceryItem,
   Meal
 } from "@/types";
-import { generateShoppingList } from "@/utils/mealPlannerUtils";
+import { generateShoppingList } from "@/utils/groceryUtils";
 
 export function useShoppingList(meals: Meal[], pantryItems: string[]) {
   const { toast } = useToast();

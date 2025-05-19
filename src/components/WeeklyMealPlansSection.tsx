@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { 
   WeeklyMealPlan, 
@@ -15,7 +16,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { MealCard } from "./MealCard";
-import { formatWeekRange, formatWeekStartDate, searchMealsByTitle, countMealUsage, findLastUsedDate } from "@/utils/mealPlannerUtils";
+import { 
+  formatWeekRange, 
+  formatWeekStartDate 
+} from "@/utils/dateUtils";
+import { 
+  searchMealsByTitle, 
+  countMealUsage 
+} from "@/utils/mealUtils";
+import { findLastUsedDate } from "@/utils/dateUtils";
 import { Search, Calendar } from "lucide-react";
 
 interface WeeklyMealPlansSectionProps {

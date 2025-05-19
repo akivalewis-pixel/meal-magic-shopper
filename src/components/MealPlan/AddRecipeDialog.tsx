@@ -19,7 +19,7 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select";
-import { dietaryOptions } from "@/utils/mealPlannerUtils";
+import { dietaryOptions } from "@/utils/constants";
 import { DietaryPreference } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 
