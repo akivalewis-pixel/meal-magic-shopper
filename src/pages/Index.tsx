@@ -147,12 +147,19 @@ const Index = () => {
       });
       
       try {
-        const ingredients = await extractIngredientsFromRecipeUrl(meal.recipeUrl);
-        if (ingredients.length > 0) {
-          mealToAdd.ingredients = ingredients;
+        const recipeData = await extractIngredientsFromRecipeUrl(meal.recipeUrl);
+        
+        if (recipeData.ingredients.length > 0) {
+          mealToAdd.ingredients = recipeData.ingredients;
+          
+          // If we got a title and the meal doesn't have one yet, use it
+          if (recipeData.title && (!meal.title || meal.title === "New Recipe")) {
+            mealToAdd.title = recipeData.title;
+          }
+          
           toast({
             title: "Ingredients Found",
-            description: `Found ${ingredients.length} ingredients for ${meal.title}`,
+            description: `Found ${recipeData.ingredients.length} ingredients for ${meal.title}`,
           });
         } else {
           toast({
@@ -243,6 +250,7 @@ const Index = () => {
   };
 
   const handleUpdateGroceryItem = (updatedItem: GroceryItem) => {
+    // Important: preserve all properties, especially store information
     setGroceryItems(prevItems =>
       prevItems.map(item =>
         item.id === updatedItem.id ? updatedItem : item

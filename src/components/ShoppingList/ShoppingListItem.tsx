@@ -31,6 +31,33 @@ export const ShoppingListItem = ({
   onToggleRecurring,
   availableStores
 }: ShoppingListItemProps) => {
+  // Local state to track input value for better UX
+  const [quantityValue, setQuantityValue] = React.useState(item.quantity);
+
+  // Update local state when item.quantity changes
+  React.useEffect(() => {
+    setQuantityValue(item.quantity);
+  }, [item.quantity]);
+
+  // Handle quantity change
+  const handleQuantityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setQuantityValue(e.target.value);
+  };
+
+  // Handle blur event to apply changes
+  const handleQuantityBlur = () => {
+    if (quantityValue !== item.quantity) {
+      onQuantityChange(item, quantityValue);
+    }
+  };
+
+  // Handle keydown event to apply changes on Enter
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      e.currentTarget.blur();
+    }
+  };
+
   return (
     <li className="flex items-center gap-3 flex-wrap">
       <Checkbox
@@ -58,8 +85,10 @@ export const ShoppingListItem = ({
       <div className="flex items-center gap-2 ml-auto sm:ml-0">
         <Input
           className="w-[80px] h-8 text-sm"
-          value={item.quantity}
-          onChange={(e) => onQuantityChange(item, e.target.value)}
+          value={quantityValue}
+          onChange={handleQuantityChange}
+          onBlur={handleQuantityBlur}
+          onKeyDown={handleKeyDown}
           onClick={(e) => e.stopPropagation()}
         />
         

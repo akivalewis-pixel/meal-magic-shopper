@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { 
   Dialog, 
   DialogContent, 
@@ -28,7 +28,11 @@ interface AddRecipeDialogProps {
   onClose: () => void;
   onAddRecipe: (recipeData: any) => void;
   selectedDay: string;
-  onFetchIngredients: (url: string) => Promise<string[]>;
+  onFetchIngredients: (url: string) => Promise<{
+    title?: string;
+    ingredients: string[];
+    quantities?: Record<string, string>;
+  }>;
 }
 
 export const AddRecipeDialog = ({
@@ -51,7 +55,7 @@ export const AddRecipeDialog = ({
   });
 
   // Reset form when dialog opens/closes
-  React.useEffect(() => {
+  useEffect(() => {
     if (isOpen) {
       form.reset({
         title: "",
@@ -68,13 +72,36 @@ export const AddRecipeDialog = ({
     
     try {
       setIsFetchingIngredients(true);
-      const ingredients = await onFetchIngredients(url);
-      form.setValue('ingredients', ingredients.join(', '));
+      const recipeData = await onFetchIngredients(url);
       
-      toast({
-        title: "Ingredients detected",
-        description: "Recipe ingredients have been automatically added.",
-      });
+      // If a title was extracted, set it (but don't overwrite an existing title)
+      if (recipeData.title && !form.getValues('title')) {
+        form.setValue('title', recipeData.title);
+      }
+      
+      // Format ingredients with quantities if available
+      if (recipeData.ingredients.length > 0) {
+        if (recipeData.quantities) {
+          const formattedIngredients = recipeData.ingredients.map(ing => {
+            const quantity = recipeData.quantities?.[ing] || "";
+            return quantity ? `${quantity} ${ing}` : ing;
+          });
+          form.setValue('ingredients', formattedIngredients.join(', '));
+        } else {
+          form.setValue('ingredients', recipeData.ingredients.join(', '));
+        }
+        
+        toast({
+          title: "Recipe details extracted",
+          description: "Title and ingredients have been automatically added.",
+        });
+      } else {
+        toast({
+          title: "No ingredients found",
+          description: "Couldn't extract ingredients from the URL. Please add them manually.",
+          variant: "destructive"
+        });
+      }
     } catch (error) {
       toast({
         title: "Error fetching ingredients",
@@ -104,23 +131,10 @@ export const AddRecipeDialog = ({
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField
               control={form.control}
-              name="title"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Recipe Title</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Enter recipe name" {...field} required />
-                  </FormControl>
-                </FormItem>
-              )}
-            />
-            
-            <FormField
-              control={form.control}
               name="recipeUrl"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Recipe URL (optional)</FormLabel>
+                  <FormLabel>Recipe URL</FormLabel>
                   <FormControl>
                     <div className="flex gap-2">
                       <Input 
@@ -152,7 +166,20 @@ export const AddRecipeDialog = ({
                       </Button>
                     </div>
                   </FormControl>
-                  {isFetchingIngredients && <p className="text-xs text-muted-foreground mt-1">Fetching ingredients...</p>}
+                  {isFetchingIngredients && <p className="text-xs text-muted-foreground mt-1">Fetching recipe data...</p>}
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+              control={form.control}
+              name="title"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Recipe Title</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Enter recipe name" {...field} required />
+                  </FormControl>
                 </FormItem>
               )}
             />
@@ -165,7 +192,7 @@ export const AddRecipeDialog = ({
                   <FormLabel>Ingredients (comma separated)</FormLabel>
                   <FormControl>
                     <Input 
-                      placeholder="onions, garlic, tomatoes..." 
+                      placeholder="1 lb onions, 2 cloves garlic, 3 tomatoes..." 
                       {...field} 
                       required
                     />
