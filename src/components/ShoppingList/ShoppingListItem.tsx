@@ -49,20 +49,10 @@ export const ShoppingListItem = ({
 
   // Handle quantity change
   const handleQuantityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setQuantityValue(e.target.value);
-  };
-
-  // Apply quantity change on blur
-  const handleQuantityBlur = () => {
-    onQuantityChange(item, quantityValue);
-  };
-
-  // Handle keydown event to apply changes on Enter
-  const handleQuantityKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter") {
-      onQuantityChange(item, quantityValue);
-      e.currentTarget.blur();
-    }
+    const newValue = e.target.value;
+    setQuantityValue(newValue);
+    // Apply quantity change immediately
+    onQuantityChange(item, newValue);
   };
   
   // Start editing name
@@ -143,8 +133,6 @@ export const ShoppingListItem = ({
           className="w-[80px] h-8 text-sm"
           value={quantityValue}
           onChange={handleQuantityChange}
-          onBlur={handleQuantityBlur}
-          onKeyDown={handleQuantityKeyDown}
           onClick={(e) => e.stopPropagation()}
           disabled={isArchiveView}
         />
