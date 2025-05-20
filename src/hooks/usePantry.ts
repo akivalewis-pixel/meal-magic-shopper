@@ -1,16 +1,18 @@
 
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { samplePantryItems } from "@/utils/constants";
+
+// Default empty array since we removed samplePantryItems from constants
+const defaultPantryItems: string[] = [];
 
 export function usePantry() {
   const { toast } = useToast();
   const [pantryItems, setPantryItems] = useState<string[]>([]);
 
-  // Initialize with sample data or saved data
+  // Initialize with saved data or empty array
   useEffect(() => {
     const savedPantryItems = localStorage.getItem('mealPlannerPantryItems');
-    const initialPantryItems = savedPantryItems ? JSON.parse(savedPantryItems) : samplePantryItems;
+    const initialPantryItems = savedPantryItems ? JSON.parse(savedPantryItems) : defaultPantryItems;
     setPantryItems(initialPantryItems);
   }, []);
 

@@ -2,18 +2,20 @@
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { FamilyPreference } from "@/types";
-import { sampleFamilyPreferences } from "@/utils/constants";
+
+// Default empty array since we removed sampleFamilyPreferences from constants
+const defaultFamilyPreferences: FamilyPreference[] = [];
 
 export function useFamilyPreferences() {
   const { toast } = useToast();
   const [familyPreferences, setFamilyPreferences] = useState<FamilyPreference[]>([]);
 
-  // Initialize with sample data or saved data
+  // Initialize with saved data or empty array
   useEffect(() => {
     const savedFamilyPreferences = localStorage.getItem('mealPlannerFamilyPreferences');
     const initialFamilyPreferences = savedFamilyPreferences 
       ? JSON.parse(savedFamilyPreferences) 
-      : sampleFamilyPreferences;
+      : defaultFamilyPreferences;
     
     setFamilyPreferences(initialFamilyPreferences);
   }, []);
