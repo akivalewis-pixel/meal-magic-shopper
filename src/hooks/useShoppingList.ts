@@ -64,11 +64,10 @@ export function useShoppingList(meals: Meal[], pantryItems: string[]) {
   }, [recurringItems, availableStores, archivedItems]);
 
   const handleToggleGroceryItem = (id: string) => {
-    setGroceryItems(prevItems =>
-      prevItems.map((item) =>
-        item.id === id ? { ...item, checked: !item.checked } : item
-      )
+    const updatedItems = groceryItems.map((item) =>
+      item.id === id ? { ...item, checked: !item.checked } : item
     );
+    setGroceryItems(updatedItems);
   };
 
   const handleUpdateGroceryItem = (updatedItem: GroceryItem) => {
@@ -108,6 +107,22 @@ export function useShoppingList(meals: Meal[], pantryItems: string[]) {
   };
   
   const handleAddGroceryItem = (newItem: GroceryItem) => {
+    // Check if this item was previously archived
+    const matchingArchivedItem = archivedItems.find(item => 
+      item.name.toLowerCase() === newItem.name.toLowerCase()
+    );
+
+    if (matchingArchivedItem) {
+      // Remove from archived items
+      setArchivedItems(prev => 
+        prev.filter(item => item.id !== matchingArchivedItem.id)
+      );
+      
+      // Use some properties from the archived item
+      newItem.category = matchingArchivedItem.category;
+      if (matchingArchivedItem.store) newItem.store = matchingArchivedItem.store;
+    }
+    
     setGroceryItems(prevItems => [...prevItems, newItem]);
     toast({
       title: "Item Added",
@@ -119,15 +134,15 @@ export function useShoppingList(meals: Meal[], pantryItems: string[]) {
     const itemToArchive = groceryItems.find(item => item.id === id);
     if (!itemToArchive) return;
     
-    // Add the item to the archive
-    setArchivedItems(prev => [...prev, itemToArchive]);
+    // Add the item to the archive with checked state
+    setArchivedItems(prev => [...prev, {...itemToArchive, checked: true}]);
     
     // Remove the item from the current list
     setGroceryItems(prev => prev.filter(item => item.id !== id));
     
     toast({
       title: "Item Archived",
-      description: `${itemToArchive.name} has been archived`,
+      description: `${itemToArchive.name} has been moved to archive`,
     });
   };
 

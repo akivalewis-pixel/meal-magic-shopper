@@ -74,8 +74,8 @@ export const AddRecipeDialog = ({
       setIsFetchingIngredients(true);
       const recipeData = await onFetchIngredients(url);
       
-      // If a title was extracted, set it (but don't overwrite an existing title)
-      if (recipeData.title && !form.getValues('title')) {
+      // If a title was extracted, set it
+      if (recipeData.title) {
         form.setValue('title', recipeData.title);
       }
       
@@ -141,16 +141,6 @@ export const AddRecipeDialog = ({
                         placeholder="https://cooking.nytimes.com/..." 
                         type="url"
                         {...field} 
-                        onChange={(e) => {
-                          field.onChange(e);
-                          // Don't auto-fetch on every keystroke
-                        }}
-                        onBlur={(e) => {
-                          field.onBlur();
-                          if (e.target.value) {
-                            handleRecipeUrlChange(e.target.value);
-                          }
-                        }}
                       />
                       <Button 
                         type="button" 

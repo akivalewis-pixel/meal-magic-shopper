@@ -12,6 +12,7 @@ interface ShoppingListGroupProps {
   onToggleRecurring: (item: GroceryItem) => void;
   onNameChange?: (item: GroceryItem, name: string) => void;
   availableStores: string[];
+  isArchiveView?: boolean;
 }
 
 export const ShoppingListGroup = ({
@@ -22,7 +23,8 @@ export const ShoppingListGroup = ({
   onStoreChange,
   onToggleRecurring,
   onNameChange,
-  availableStores
+  availableStores,
+  isArchiveView = false
 }: ShoppingListGroupProps) => {
   return (
     <div className="mb-6 last:mb-0">
@@ -38,6 +40,7 @@ export const ShoppingListGroup = ({
             onToggleRecurring={onToggleRecurring}
             onNameChange={onNameChange}
             availableStores={availableStores}
+            isArchiveView={isArchiveView}
           />
         ))}
       </ul>

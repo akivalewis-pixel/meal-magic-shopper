@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { GroceryItem, GroceryCategory } from "@/types";
 import { groceryCategories } from "@/utils/constants";
@@ -15,6 +16,7 @@ interface ShoppingListSectionProps {
   onArchiveItem?: (id: string) => void;
   availableStores: string[];
   onUpdateStores?: (stores: string[]) => void;
+  archivedItems?: GroceryItem[];
 }
 
 // Helper functions
@@ -29,7 +31,8 @@ export const ShoppingListSection = ({
   onAddItem,
   onArchiveItem,
   availableStores = ["Any Store", "Supermarket", "Farmers Market", "Specialty Store"],
-  onUpdateStores
+  onUpdateStores,
+  archivedItems = []
 }: ShoppingListSectionProps) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [showChecked, setShowChecked] = useState(true);
@@ -38,24 +41,23 @@ export const ShoppingListSection = ({
   const [isEditingStores, setIsEditingStores] = useState(false);
   const [sortBy, setSortBy] = useState<"store" | "department" | "category">("store");
   const [isAddingItem, setIsAddingItem] = useState(false);
+  const [searchArchivedItems, setSearchArchivedItems] = useState(false);
 
-  // Modified toggle handler to archive checked items
+  // Handle the toggle to immediately archive checked items
   const handleToggle = (id: string) => {
-    const item = groceryItems.find(item => item.id === id);
-    if (item) {
-      // If item is being checked, archive it
-      if (!item.checked && onArchiveItem) {
-        onArchiveItem(id);
-      } else {
-        // Otherwise just toggle it
-        onToggleItem(id);
-      }
+    if (onArchiveItem) {
+      onArchiveItem(id);
+    } else {
+      onToggleItem(id);
     }
   };
 
   // Group items by store if groupByStore is true, otherwise by category
   const groupedItems = React.useMemo(() => {
-    let filteredItems = groceryItems.filter(item => {
+    // Select which items array to use based on search mode
+    const itemsToProcess = searchArchivedItems ? archivedItems : groceryItems;
+    
+    let filteredItems = itemsToProcess.filter(item => {
       const matchesSearch = searchTerm === "" || 
         item.name.toLowerCase().includes(searchTerm.toLowerCase());
       const shouldShow = showChecked || !item.checked;
@@ -113,7 +115,7 @@ export const ShoppingListSection = ({
       
       return { "All Stores": byPrimary };
     }
-  }, [groceryItems, searchTerm, showChecked, selectedStore, groupByStore, sortBy]);
+  }, [groceryItems, searchTerm, showChecked, selectedStore, groupByStore, sortBy, archivedItems, searchArchivedItems]);
 
   const handleQuantityChange = (item: GroceryItem, newQuantity: string) => {
     onUpdateItem({ ...item, quantity: newQuantity });
@@ -144,7 +146,10 @@ export const ShoppingListSection = ({
           onEditStores={() => setIsEditingStores(true)} 
           onSortChange={setSortBy}
           sortBy={sortBy}
-          onAddItem={() => setIsAddingItem(true)}
+          onAddItem={() => {
+            setSearchArchivedItems(false);
+            setIsAddingItem(true);
+          }}
           canAddItem={!!onAddItem}
         />
         
@@ -163,7 +168,7 @@ export const ShoppingListSection = ({
         <div className="bg-white rounded-lg shadow p-4">
           {Object.keys(groupedItems).length === 0 ? (
             <div className="text-center py-10 text-gray-500">
-              <p>No items in your shopping list</p>
+              <p>No items in your {searchArchivedItems ? "archive" : "shopping list"}</p>
               {searchTerm && <p className="text-sm mt-2">Try a different search term</p>}
             </div>
           ) : (
@@ -184,6 +189,7 @@ export const ShoppingListSection = ({
                     onToggleRecurring={handleToggleRecurring}
                     onNameChange={handleNameChange}
                     availableStores={availableStores}
+                    isArchiveView={searchArchivedItems}
                   />
                 ))}
               </div>
@@ -205,6 +211,9 @@ export const ShoppingListSection = ({
           onOpenChange={setIsAddingItem}
           availableStores={availableStores}
           onAddItem={onAddItem}
+          archivedItems={archivedItems}
+          onSearchArchivedItems={setSearchArchivedItems}
+          isSearchingArchived={searchArchivedItems}
         />
       )}
     </section>
