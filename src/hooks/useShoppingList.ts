@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { 
@@ -6,7 +7,7 @@ import {
 } from "@/types";
 import { generateShoppingList } from "@/utils/groceryUtils";
 
-export function useShoppingList(meals: Meal[], pantryItems: string[]) {
+export function useShoppingList(meals: Meal[], pantryItems: string[] = []) {
   const { toast } = useToast();
   const [groceryItems, setGroceryItems] = useState<GroceryItem[]>([]);
   const [recurringItems, setRecurringItems] = useState<GroceryItem[]>([]);

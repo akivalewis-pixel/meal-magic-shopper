@@ -25,16 +25,6 @@ export const Header = () => {
                 Shopping List
               </a>
             </li>
-            <li>
-              <a href="#family-preferences" className="hover:underline">
-                Family Preferences
-              </a>
-            </li>
-            <li>
-              <a href="#pantry" className="hover:underline">
-                Pantry
-              </a>
-            </li>
           </ul>
         </nav>
       </div>

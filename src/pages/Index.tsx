@@ -3,31 +3,14 @@ import React from "react";
 import { Header } from "@/components/Header";
 import { MealPlanSection } from "@/components/MealPlan";
 import { ShoppingListSection } from "@/components/ShoppingList";
-import { FamilyPreferencesSection } from "@/components/FamilyPreferencesSection";
-import { PantrySection } from "@/components/PantrySection";
 import { WeeklyMealPlansSection } from "@/components/WeeklyMealPlansSection";
 import { Footer } from "@/components/Footer";
 import { PrintButton } from "@/components/PrintButton";
 import { useMealPlan } from "@/hooks/useMealPlan";
 import { useShoppingList } from "@/hooks/useShoppingList";
-import { usePantry } from "@/hooks/usePantry";
-import { useFamilyPreferences } from "@/hooks/useFamilyPreferences";
 
 const Index = () => {
   // Custom hooks for state management
-  const { 
-    pantryItems,
-    handleAddPantryItem,
-    handleRemovePantryItem
-  } = usePantry();
-  
-  const {
-    familyPreferences,
-    handleAddFamilyMember,
-    handleRemoveFamilyMember,
-    handleUpdateFamilyPreference
-  } = useFamilyPreferences();
-  
   const {
     meals,
     weeklyPlans,
@@ -48,7 +31,7 @@ const Index = () => {
     handleAddGroceryItem,
     handleArchiveItem,
     resetShoppingList
-  } = useShoppingList(meals, pantryItems);
+  } = useShoppingList(meals, []);
 
   // Handle resetting both meal plan and shopping list
   const handleResetAll = () => {
@@ -88,20 +71,6 @@ const Index = () => {
           currentMeals={meals}
           onSaveCurrentPlan={handleSaveWeeklyPlan}
           onLoadPlan={handleLoadWeeklyPlan}
-        />
-        
-        <FamilyPreferencesSection 
-          preferences={familyPreferences}
-          onEditPreference={() => {}}
-          onAddPreference={handleAddFamilyMember}
-          onRemovePreference={handleRemoveFamilyMember}
-          onUpdatePreference={handleUpdateFamilyPreference}
-        />
-        
-        <PantrySection 
-          pantryItems={pantryItems}
-          onAddItem={handleAddPantryItem}
-          onRemoveItem={handleRemovePantryItem}
         />
       </main>
       
