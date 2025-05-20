@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { 
@@ -47,20 +46,22 @@ export function useShoppingList(meals: Meal[], pantryItems: string[]) {
       );
       
       setGroceryItems(filteredShoppingList);
+    } else {
+      // If no meals, only show recurring items that aren't archived
+      const recurringOnlyList = recurringItems.filter(item => 
+        !archivedItems.some(archivedItem => 
+          archivedItem.name.toLowerCase() === item.name.toLowerCase()
+        )
+      );
+      setGroceryItems(recurringOnlyList);
     }
   }, [meals, pantryItems, recurringItems, archivedItems]);
 
   // Save to localStorage when state changes
   useEffect(() => {
-    if (recurringItems.length > 0) {
-      localStorage.setItem('mealPlannerRecurringItems', JSON.stringify(recurringItems));
-    }
-    if (availableStores.length > 0) {
-      localStorage.setItem('mealPlannerStores', JSON.stringify(availableStores));
-    }
-    if (archivedItems.length > 0) {
-      localStorage.setItem('mealPlannerArchivedItems', JSON.stringify(archivedItems));
-    }
+    localStorage.setItem('mealPlannerRecurringItems', JSON.stringify(recurringItems));
+    localStorage.setItem('mealPlannerStores', JSON.stringify(availableStores));
+    localStorage.setItem('mealPlannerArchivedItems', JSON.stringify(archivedItems));
   }, [recurringItems, availableStores, archivedItems]);
 
   const handleToggleGroceryItem = (id: string) => {
@@ -146,6 +147,17 @@ export function useShoppingList(meals: Meal[], pantryItems: string[]) {
     });
   };
 
+  // New function to reset the shopping list
+  const resetShoppingList = () => {
+    // Keep recurring items but remove non-recurring items
+    setGroceryItems(groceryItems.filter(item => item.recurring));
+    
+    toast({
+      title: "Shopping List Reset",
+      description: "Your shopping list has been reset. Recurring items kept.",
+    });
+  };
+
   return {
     groceryItems,
     availableStores,
@@ -154,6 +166,7 @@ export function useShoppingList(meals: Meal[], pantryItems: string[]) {
     handleUpdateStores,
     handleAddGroceryItem,
     handleArchiveItem,
-    archivedItems
+    archivedItems,
+    resetShoppingList
   };
 }

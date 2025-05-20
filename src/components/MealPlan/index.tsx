@@ -20,20 +20,22 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select";
-import { Plus } from "lucide-react";
+import { Plus, RefreshCw } from "lucide-react";
 
 interface MealPlanSectionProps {
   meals: Meal[];
   onEditMeal: (meal: Meal) => void;
   onRateMeal: (meal: Meal, rating: number, notes: string) => void;
   onAddMealToDay: (meal: Meal, day: string) => void;
+  onResetMealPlan?: () => void;
 }
 
 export const MealPlanSection = ({ 
   meals, 
   onEditMeal, 
   onRateMeal,
-  onAddMealToDay 
+  onAddMealToDay,
+  onResetMealPlan 
 }: MealPlanSectionProps) => {
   const [dietFilter, setDietFilter] = useState<DietaryPreference>("none");
   const [mealToRate, setMealToRate] = useState<Meal | null>(null);
@@ -139,13 +141,19 @@ export const MealPlanSection = ({
             </div>
           </div>
 
-          <div className="mb-6 flex justify-end">
+          <div className="mb-6 flex flex-wrap justify-between gap-2">
             <Button onClick={() => {
               setSelectedDay(daysOfWeek.find(day => !getMealsForDay(day).length) || 'Sunday');
               setShowAddRecipe(true);
             }}>
               <Plus className="mr-1 h-4 w-4" /> Add Recipe
             </Button>
+            
+            {onResetMealPlan && (
+              <Button variant="outline" onClick={onResetMealPlan}>
+                <RefreshCw className="mr-1 h-4 w-4" /> Reset Meal Plan
+              </Button>
+            )}
           </div>
 
           <MealRecommendations 

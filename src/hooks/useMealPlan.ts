@@ -7,7 +7,6 @@ import {
   GroceryItem
 } from "@/types";
 import { 
-  generateSampleMealPlan,
   getCurrentWeekStart
 } from "@/utils";
 import { extractIngredientsFromRecipeUrl } from "@/utils/recipeUtils";
@@ -17,12 +16,12 @@ export function useMealPlan() {
   const [meals, setMeals] = useState<Meal[]>([]);
   const [weeklyPlans, setWeeklyPlans] = useState<WeeklyMealPlan[]>([]);
 
-  // Initialize with sample data or saved data
+  // Initialize with saved data only (no sample data)
   useEffect(() => {
     const savedMeals = localStorage.getItem('mealPlannerMeals');
     const savedWeeklyPlans = localStorage.getItem('mealPlannerWeeklyPlans');
     
-    const initialMeals = savedMeals ? JSON.parse(savedMeals) : generateSampleMealPlan();
+    const initialMeals = savedMeals ? JSON.parse(savedMeals) : [];
     const initialWeeklyPlans = savedWeeklyPlans ? JSON.parse(savedWeeklyPlans) : [];
     
     setMeals(initialMeals);
@@ -31,12 +30,8 @@ export function useMealPlan() {
 
   // Save to localStorage when state changes
   useEffect(() => {
-    if (meals.length > 0) {
-      localStorage.setItem('mealPlannerMeals', JSON.stringify(meals));
-    }
-    if (weeklyPlans.length > 0) {
-      localStorage.setItem('mealPlannerWeeklyPlans', JSON.stringify(weeklyPlans));
-    }
+    localStorage.setItem('mealPlannerMeals', JSON.stringify(meals));
+    localStorage.setItem('mealPlannerWeeklyPlans', JSON.stringify(weeklyPlans));
   }, [meals, weeklyPlans]);
 
   const handleEditMeal = (meal: Meal) => {
@@ -180,6 +175,16 @@ export function useMealPlan() {
     });
   };
 
+  // New function to reset the meal plan
+  const handleResetMealPlan = () => {
+    setMeals([]);
+    
+    toast({
+      title: "Meal Plan Reset",
+      description: "Your meal plan has been reset. Start fresh!",
+    });
+  };
+
   return {
     meals,
     weeklyPlans,
@@ -188,6 +193,7 @@ export function useMealPlan() {
     handleAddMealToDay,
     handleSaveWeeklyPlan,
     handleLoadWeeklyPlan,
+    handleResetMealPlan,
     setMeals
   };
 }

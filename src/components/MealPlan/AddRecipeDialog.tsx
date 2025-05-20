@@ -5,7 +5,8 @@ import {
   DialogContent, 
   DialogHeader, 
   DialogTitle, 
-  DialogFooter 
+  DialogFooter,
+  DialogDescription
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -126,9 +127,13 @@ export const AddRecipeDialog = ({
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>Add Recipe for {selectedDay}</DialogTitle>
+          <DialogDescription>
+            Enter a recipe URL to automatically extract ingredients, or add them manually.
+          </DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            {/* URL field - placed at the top for emphasis */}
             <FormField
               control={form.control}
               name="recipeUrl"

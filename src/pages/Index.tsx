@@ -1,7 +1,7 @@
 
 import React from "react";
 import { Header } from "@/components/Header";
-import { MealPlanSection } from "@/components/MealPlanSection";
+import { MealPlanSection } from "@/components/MealPlan";
 import { ShoppingListSection } from "@/components/ShoppingList";
 import { FamilyPreferencesSection } from "@/components/FamilyPreferencesSection";
 import { PantrySection } from "@/components/PantrySection";
@@ -35,7 +35,8 @@ const Index = () => {
     handleRateMeal,
     handleAddMealToDay,
     handleSaveWeeklyPlan,
-    handleLoadWeeklyPlan
+    handleLoadWeeklyPlan,
+    handleResetMealPlan
   } = useMealPlan();
   
   const {
@@ -45,8 +46,15 @@ const Index = () => {
     handleUpdateGroceryItem,
     handleUpdateStores,
     handleAddGroceryItem,
-    handleArchiveItem
+    handleArchiveItem,
+    resetShoppingList
   } = useShoppingList(meals, pantryItems);
+
+  // Handle resetting both meal plan and shopping list
+  const handleResetAll = () => {
+    handleResetMealPlan();
+    resetShoppingList();
+  };
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -62,6 +70,7 @@ const Index = () => {
           onEditMeal={handleEditMeal} 
           onRateMeal={handleRateMeal}
           onAddMealToDay={handleAddMealToDay}
+          onResetMealPlan={handleResetAll}
         />
         
         <ShoppingListSection 

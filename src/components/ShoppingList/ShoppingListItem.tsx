@@ -47,7 +47,7 @@ export const ShoppingListItem = ({
     setNameValue(item.name);
   }, [item.quantity, item.name]);
 
-  // Handle quantity change
+  // Handle quantity change with immediate update
   const handleQuantityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
     setQuantityValue(newValue);
