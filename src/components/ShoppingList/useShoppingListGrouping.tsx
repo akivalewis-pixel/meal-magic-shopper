@@ -27,7 +27,7 @@ export function useShoppingListGrouping(
         item.name.toLowerCase().includes(searchTerm.toLowerCase());
       const shouldShow = showChecked || !item.checked;
       const matchesStore = selectedStore === "all" || 
-        item.store === selectedStore || !item.store;
+        item.store === selectedStore || (!item.store && selectedStore === "Unassigned");
         
       return matchesSearch && shouldShow && matchesStore;
     });

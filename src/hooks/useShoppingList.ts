@@ -61,8 +61,31 @@ export function useShoppingList(meals: Meal[], pantryItems: string[] = []) {
       )
     );
     
-    setGroceryItems(filteredShoppingList);
+    setGroceryItems(sortGroceryItems(filteredShoppingList));
   }, [meals, pantryItems, archivedItems, manualItems]);
+
+  // Sort grocery items by store and category
+  const sortGroceryItems = (items: GroceryItem[]): GroceryItem[] => {
+    return [...items].sort((a, b) => {
+      // First sort by store (with "Unassigned" at the end)
+      const storeA = a.store || "Unassigned";
+      const storeB = b.store || "Unassigned";
+      
+      if (storeA !== storeB) {
+        if (storeA === "Unassigned") return 1;
+        if (storeB === "Unassigned") return -1;
+        return storeA.localeCompare(storeB);
+      }
+      
+      // Then by department if available
+      if (a.department && b.department && a.department !== b.department) {
+        return a.department.localeCompare(b.department);
+      }
+      
+      // Finally by category
+      return a.category.localeCompare(b.category);
+    });
+  };
 
   // Save to localStorage when state changes
   useEffect(() => {
@@ -80,11 +103,13 @@ export function useShoppingList(meals: Meal[], pantryItems: string[] = []) {
 
   const handleUpdateGroceryItem = (updatedItem: GroceryItem) => {
     // Important: preserve all properties, especially store information
-    setGroceryItems(prevItems =>
-      prevItems.map(item =>
+    setGroceryItems(prevItems => {
+      const newItems = prevItems.map(item =>
         item.id === updatedItem.id ? updatedItem : item
-      )
-    );
+      );
+      // Re-sort after update to ensure stores are properly grouped
+      return sortGroceryItems(newItems);
+    });
     
     // Update in manualItems if it exists there
     setManualItems(prevItems => {
@@ -127,7 +152,7 @@ export function useShoppingList(meals: Meal[], pantryItems: string[] = []) {
     setManualItems(prev => [...prev, newItem]);
     
     // Add to grocery items directly to ensure immediate visibility
-    setGroceryItems(prevItems => [...prevItems, newItem]);
+    setGroceryItems(prevItems => sortGroceryItems([...prevItems, newItem]));
     
     toast({
       title: "Item Added",

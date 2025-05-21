@@ -132,7 +132,10 @@ export const ShoppingListItem = ({
         
         <Select 
           value={item.store || ""}
-          onValueChange={(value) => onStoreChange(item, value)}
+          onValueChange={(value) => {
+            // Ensure the store change is applied immediately 
+            onStoreChange(item, value);
+          }}
           disabled={isArchiveView}
         >
           <SelectTrigger className="w-[120px] h-8 text-xs">

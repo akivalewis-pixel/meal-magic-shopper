@@ -52,6 +52,7 @@ export const ShoppingListSection = ({
   };
 
   const handleStoreChange = (item: GroceryItem, store: string) => {
+    console.log("Store changed for", item.name, "to", store);
     onUpdateItem({ ...item, store });
   };
   
