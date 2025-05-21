@@ -1,12 +1,10 @@
 
-import React, { useState, useEffect } from "react";
-import { GroceryItem, GroceryCategory } from "@/types";
-import { groceryCategories } from "@/utils/constants";
-import { ShoppingListHeader } from "./ShoppingListHeader";
-import { ShoppingListFilters } from "./ShoppingListFilters";
-import { ShoppingListGroup } from "./ShoppingListGroup";
-import { StoreManagementDialog } from "./StoreManagementDialog";
-import { AddItemForm } from "./AddItemForm";
+import React, { useState } from "react";
+import { GroceryItem } from "@/types";
+import { ShoppingListActions } from "./ShoppingListActions";
+import { ShoppingListContent } from "./ShoppingListContent";
+import { useShoppingListGrouping } from "./useShoppingListGrouping";
+import { useCategoryNames } from "./useCategoryNames";
 
 interface ShoppingListSectionProps {
   groceryItems: GroceryItem[];
@@ -18,11 +16,6 @@ interface ShoppingListSectionProps {
   onUpdateStores?: (stores: string[]) => void;
   archivedItems?: GroceryItem[];
 }
-
-// Helper functions
-const getCategoryLabel = (category: GroceryCategory): string => {
-  return groceryCategories.find(c => c.value === category)?.label || "Other";
-};
 
 export const ShoppingListSection = ({
   groceryItems,
@@ -42,20 +35,8 @@ export const ShoppingListSection = ({
   const [sortBy, setSortBy] = useState<"store" | "department" | "category">("store");
   const [isAddingItem, setIsAddingItem] = useState(false);
   const [searchArchivedItems, setSearchArchivedItems] = useState(false);
-  const [customCategoryNames, setCustomCategoryNames] = useState<Record<string, string>>({});
-
-  useEffect(() => {
-    // Load custom category names from localStorage
-    const savedCategoryNames = localStorage.getItem('mealPlannerCustomCategoryNames');
-    if (savedCategoryNames) {
-      setCustomCategoryNames(JSON.parse(savedCategoryNames));
-    }
-  }, []);
-
-  // Save custom category names when they change
-  useEffect(() => {
-    localStorage.setItem('mealPlannerCustomCategoryNames', JSON.stringify(customCategoryNames));
-  }, [customCategoryNames]);
+  
+  const { customCategoryNames, handleCategoryNameChange } = useCategoryNames();
 
   // Handle the toggle to immediately archive checked items
   const handleToggle = (id: string) => {
@@ -65,84 +46,6 @@ export const ShoppingListSection = ({
       onToggleItem(id);
     }
   };
-
-  // Function to get the display category name (custom or default)
-  const getDisplayCategoryName = (categoryName: string): string => {
-    return customCategoryNames[categoryName] || categoryName;
-  };
-
-  // Function to handle category name changes
-  const handleCategoryNameChange = (oldName: string, newName: string) => {
-    setCustomCategoryNames(prev => ({
-      ...prev,
-      [oldName]: newName
-    }));
-  };
-
-  // Group items by store if groupByStore is true, otherwise by category
-  const groupedItems = React.useMemo(() => {
-    // Select which items array to use based on search mode
-    const itemsToProcess = searchArchivedItems ? archivedItems : groceryItems;
-    
-    let filteredItems = itemsToProcess.filter(item => {
-      const matchesSearch = searchTerm === "" || 
-        item.name.toLowerCase().includes(searchTerm.toLowerCase());
-      const shouldShow = showChecked || !item.checked;
-      const matchesStore = selectedStore === "all" || 
-        item.store === selectedStore || !item.store;
-        
-      return matchesSearch && shouldShow && matchesStore;
-    });
-
-    if (groupByStore) {
-      // Group by store, then by department/category
-      const byStore: Record<string, Record<string, GroceryItem[]>> = {};
-      
-      filteredItems.forEach(item => {
-        const store = item.store || "Unassigned";
-        let secondaryKey;
-        
-        if (sortBy === "department") {
-          secondaryKey = item.department || "Unassigned";
-        } else {
-          secondaryKey = getCategoryLabel(item.category);
-        }
-        
-        if (!byStore[store]) {
-          byStore[store] = {};
-        }
-        
-        if (!byStore[store][secondaryKey]) {
-          byStore[store][secondaryKey] = [];
-        }
-        
-        byStore[store][secondaryKey].push(item);
-      });
-      
-      return byStore;
-    } else {
-      // Group by category or department
-      const byPrimary: Record<string, GroceryItem[]> = {};
-      
-      filteredItems.forEach(item => {
-        let primaryKey;
-        
-        if (sortBy === "department") {
-          primaryKey = item.department || "Unassigned";
-        } else {
-          primaryKey = getCategoryLabel(item.category);
-        }
-        
-        if (!byPrimary[primaryKey]) {
-          byPrimary[primaryKey] = [];
-        }
-        
-        byPrimary[primaryKey].push(item);
-      });
-      
-      return { "All Stores": byPrimary };
-    }
-  }, [groceryItems, searchTerm, showChecked, selectedStore, groupByStore, sortBy, archivedItems, searchArchivedItems]);
 
   const handleQuantityChange = (item: GroceryItem, newQuantity: string) => {
     onUpdateItem({ ...item, quantity: newQuantity });
@@ -166,96 +69,61 @@ export const ShoppingListSection = ({
     onUpdateItem({ ...item, name });
   };
 
-  const handleAddNewItem = (item: GroceryItem) => {
-    if (onAddItem) {
-      onAddItem(item);
-      // Close the add item dialog after adding
-      setIsAddingItem(false);
-      // Ensure we're not in archive view mode
-      setSearchArchivedItems(false);
-      // Reset search term to make sure the new item is visible
-      setSearchTerm("");
-    }
-  };
+  // Use our custom hook to get the grouped items
+  const groupedItems = useShoppingListGrouping(
+    groceryItems,
+    archivedItems,
+    searchArchivedItems,
+    searchTerm,
+    showChecked,
+    selectedStore,
+    groupByStore,
+    sortBy
+  );
 
   return (
     <section id="shopping-list" className="py-8 bg-gray-50">
       <div className="container mx-auto">
-        <ShoppingListHeader 
-          onEditStores={() => setIsEditingStores(true)} 
-          onSortChange={setSortBy}
+        <ShoppingListActions
+          searchTerm={searchTerm}
+          setSearchTerm={setSearchTerm}
+          showChecked={showChecked}
+          setShowChecked={setShowChecked}
+          selectedStore={selectedStore}
+          setSelectedStore={setSelectedStore}
+          groupByStore={groupByStore}
+          setGroupByStore={setGroupByStore}
           sortBy={sortBy}
-          onAddItem={() => {
-            setSearchArchivedItems(false);
-            setIsAddingItem(true);
-          }}
+          setSortBy={setSortBy}
+          setIsEditingStores={setIsEditingStores}
+          availableStores={availableStores}
+          setIsAddingItem={setIsAddingItem}
           canAddItem={!!onAddItem}
         />
-        
-        <ShoppingListFilters 
-          searchTerm={searchTerm}
-          onSearchChange={setSearchTerm}
-          selectedStore={selectedStore}
-          onStoreFilterChange={setSelectedStore}
-          showChecked={showChecked}
-          onToggleShowChecked={() => setShowChecked(!showChecked)}
+
+        <ShoppingListContent
+          groupedItems={groupedItems}
+          onToggle={handleToggle}
+          onQuantityChange={handleQuantityChange}
+          onStoreChange={handleStoreChange}
+          onToggleRecurring={handleToggleRecurring}
+          onNameChange={handleNameChange}
+          onCategoryNameChange={handleCategoryNameChange}
+          availableStores={availableStores}
           groupByStore={groupByStore}
-          onToggleGroupByStore={() => setGroupByStore(!groupByStore)}
-          availableStores={availableStores}
-        />
-
-        <div className="bg-white rounded-lg shadow p-4">
-          {Object.keys(groupedItems).length === 0 ? (
-            <div className="text-center py-10 text-gray-500">
-              <p>No items in your {searchArchivedItems ? "archive" : "shopping list"}</p>
-              {searchTerm && <p className="text-sm mt-2">Try a different search term</p>}
-            </div>
-          ) : (
-            Object.entries(groupedItems).map(([storeName, categories]) => (
-              <div key={storeName} className="mb-8 last:mb-0">
-                {groupByStore && (
-                  <h3 className="text-lg font-semibold mb-4 pb-1 border-b">{storeName}</h3>
-                )}
-                
-                {Object.entries(categories).map(([categoryName, items]) => (
-                  <ShoppingListGroup 
-                    key={`${storeName}-${categoryName}`}
-                    categoryName={getDisplayCategoryName(categoryName)}
-                    items={items}
-                    onToggle={handleToggle}
-                    onQuantityChange={handleQuantityChange}
-                    onStoreChange={handleStoreChange}
-                    onToggleRecurring={handleToggleRecurring}
-                    onNameChange={handleNameChange}
-                    onCategoryNameChange={handleCategoryNameChange}
-                    availableStores={availableStores}
-                    isArchiveView={searchArchivedItems}
-                  />
-                ))}
-              </div>
-            ))
-          )}
-        </div>
-      </div>
-
-      <StoreManagementDialog 
-        open={isEditingStores} 
-        onOpenChange={setIsEditingStores}
-        stores={availableStores}
-        onSaveStores={handleSaveStores}
-      />
-      
-      {onAddItem && (
-        <AddItemForm
-          open={isAddingItem}
-          onOpenChange={setIsAddingItem}
-          availableStores={availableStores}
-          onAddItem={handleAddNewItem}
+          searchArchivedItems={searchArchivedItems}
+          customCategoryNames={customCategoryNames}
+          isEditingStores={isEditingStores}
+          setIsEditingStores={setIsEditingStores}
+          onSaveStores={handleSaveStores}
+          isAddingItem={isAddingItem}
+          setIsAddingItem={setIsAddingItem}
+          onAddItem={onAddItem}
           archivedItems={archivedItems}
-          onSearchArchivedItems={setSearchArchivedItems}
-          isSearchingArchived={searchArchivedItems}
+          setSearchArchivedItems={setSearchArchivedItems}
+          searchTerm={searchTerm}
         />
-      )}
+      </div>
     </section>
   );
 };
