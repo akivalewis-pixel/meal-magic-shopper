@@ -76,11 +76,13 @@ export const MealPlanSection = ({
   };
 
   const handleMoveMeal = (meal: Meal, fromDay: string, toDay: string) => {
-    // Create a copy of the meal with the new day
-    const updatedMeal = { ...meal, day: toDay };
+    // First remove from original day by setting day to ""
+    const updatedMeal = { ...meal, day: "" };
+    onAddMealToDay(updatedMeal, "");
     
-    // Add to the new day
-    onAddMealToDay(updatedMeal, toDay);
+    // Then add to the new day
+    const newDayMeal = { ...meal, day: toDay };
+    onAddMealToDay(newDayMeal, toDay);
   };
 
   const handleRemoveMeal = (meal: Meal) => {

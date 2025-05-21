@@ -35,7 +35,10 @@ export const DroppableDay = ({
   const [{ isOver }, drop] = useDrop(() => ({
     accept: ItemTypes.MEAL,
     drop: (item: { id: string, day: string, meal: Meal }) => {
-      onDrop(item.meal, item.day, day);
+      if (item.day !== day) {
+        // Only move if the day changed
+        onDrop(item.meal, item.day, day);
+      }
       return { name: day };
     },
     collect: (monitor) => ({
