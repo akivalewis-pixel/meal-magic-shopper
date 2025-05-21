@@ -12,6 +12,7 @@ export function useShoppingList(meals: Meal[], pantryItems: string[] = []) {
   const [groceryItems, setGroceryItems] = useState<GroceryItem[]>([]);
   const [recurringItems, setRecurringItems] = useState<GroceryItem[]>([]);
   const [archivedItems, setArchivedItems] = useState<GroceryItem[]>([]);
+  const [manualItems, setManualItems] = useState<GroceryItem[]>([]);
   const [availableStores, setAvailableStores] = useState<string[]>([
     "Any Store", "Supermarket", "Farmers Market", "Specialty Store"
   ]);
@@ -21,49 +22,62 @@ export function useShoppingList(meals: Meal[], pantryItems: string[] = []) {
     const savedRecurringItems = localStorage.getItem('mealPlannerRecurringItems');
     const savedStores = localStorage.getItem('mealPlannerStores');
     const savedArchivedItems = localStorage.getItem('mealPlannerArchivedItems');
+    const savedManualItems = localStorage.getItem('mealPlannerManualItems');
     
     const initialRecurringItems = savedRecurringItems ? JSON.parse(savedRecurringItems) : [];
     const initialStores = savedStores ? JSON.parse(savedStores) : ["Any Store", "Supermarket", "Farmers Market", "Specialty Store"];
     const initialArchivedItems = savedArchivedItems ? JSON.parse(savedArchivedItems) : [];
+    const initialManualItems = savedManualItems ? JSON.parse(savedManualItems) : [];
     
     setRecurringItems(initialRecurringItems);
     setAvailableStores(initialStores);
     setArchivedItems(initialArchivedItems);
+    setManualItems(initialManualItems);
   }, []);
 
-  // Update shopping list when meals or pantry changes
+  // Update shopping list when meals, pantry, or manual items change
   useEffect(() => {
+    let shoppingList: GroceryItem[] = [];
+    
     if (meals.length > 0) {
       // Only include meals that have a day assigned
       const activeMeals = meals.filter(meal => meal.day && meal.day !== "");
-      const shoppingList = generateShoppingList(activeMeals, pantryItems, recurringItems);
-      
-      // Filter out any items that are in the archived list
-      const filteredShoppingList = shoppingList.filter(item => 
-        !archivedItems.some(archivedItem => 
-          archivedItem.name.toLowerCase() === item.name.toLowerCase() && 
-          (!item.meal || archivedItem.meal === item.meal)
-        )
-      );
-      
-      setGroceryItems(filteredShoppingList);
+      shoppingList = generateShoppingList(activeMeals, pantryItems, recurringItems);
     } else {
-      // If no meals, only show recurring items that aren't archived
-      const recurringOnlyList = recurringItems.filter(item => 
-        !archivedItems.some(archivedItem => 
-          archivedItem.name.toLowerCase() === item.name.toLowerCase()
-        )
-      );
-      setGroceryItems(recurringOnlyList);
+      // If no meals, only show recurring items
+      shoppingList = [...recurringItems];
     }
-  }, [meals, pantryItems, recurringItems, archivedItems]);
+    
+    // Add manually added items that aren't in the list already
+    manualItems.forEach(manualItem => {
+      const existingItem = shoppingList.find(item => 
+        item.name.toLowerCase() === manualItem.name.toLowerCase() && 
+        (!item.meal || item.meal === manualItem.meal)
+      );
+      
+      if (!existingItem) {
+        shoppingList.push(manualItem);
+      }
+    });
+    
+    // Filter out any items that are in the archived list
+    const filteredShoppingList = shoppingList.filter(item => 
+      !archivedItems.some(archivedItem => 
+        archivedItem.name.toLowerCase() === item.name.toLowerCase() && 
+        (!item.meal || archivedItem.meal === item.meal)
+      )
+    );
+    
+    setGroceryItems(filteredShoppingList);
+  }, [meals, pantryItems, recurringItems, archivedItems, manualItems]);
 
   // Save to localStorage when state changes
   useEffect(() => {
     localStorage.setItem('mealPlannerRecurringItems', JSON.stringify(recurringItems));
     localStorage.setItem('mealPlannerStores', JSON.stringify(availableStores));
     localStorage.setItem('mealPlannerArchivedItems', JSON.stringify(archivedItems));
-  }, [recurringItems, availableStores, archivedItems]);
+    localStorage.setItem('mealPlannerManualItems', JSON.stringify(manualItems));
+  }, [recurringItems, availableStores, archivedItems, manualItems]);
 
   const handleToggleGroceryItem = (id: string) => {
     const updatedItems = groceryItems.map((item) =>
@@ -79,6 +93,17 @@ export function useShoppingList(meals: Meal[], pantryItems: string[] = []) {
         item.id === updatedItem.id ? updatedItem : item
       )
     );
+    
+    // Update in manualItems if it exists there
+    setManualItems(prevItems => {
+      const existingIndex = prevItems.findIndex(item => item.id === updatedItem.id);
+      if (existingIndex >= 0) {
+        const newItems = [...prevItems];
+        newItems[existingIndex] = updatedItem;
+        return newItems;
+      }
+      return prevItems;
+    });
     
     // If the item is marked as recurring, add/update it in the recurring items list
     if (updatedItem.recurring) {
@@ -125,7 +150,12 @@ export function useShoppingList(meals: Meal[], pantryItems: string[] = []) {
       if (matchingArchivedItem.store) newItem.store = matchingArchivedItem.store;
     }
     
+    // Add to manual items
+    setManualItems(prev => [...prev, newItem]);
+    
+    // Add to grocery items directly to ensure immediate visibility
     setGroceryItems(prevItems => [...prevItems, newItem]);
+    
     toast({
       title: "Item Added",
       description: `${newItem.name} has been added to your shopping list`,
@@ -142,6 +172,9 @@ export function useShoppingList(meals: Meal[], pantryItems: string[] = []) {
     // Remove the item from the current list
     setGroceryItems(prev => prev.filter(item => item.id !== id));
     
+    // Remove from manual items if it exists there
+    setManualItems(prev => prev.filter(item => item.id !== id));
+    
     toast({
       title: "Item Archived",
       description: `${itemToArchive.name} has been moved to archive`,
@@ -152,6 +185,7 @@ export function useShoppingList(meals: Meal[], pantryItems: string[] = []) {
   const resetShoppingList = () => {
     // Keep recurring items but remove non-recurring items
     setGroceryItems(groceryItems.filter(item => item.recurring));
+    setManualItems([]);
     
     toast({
       title: "Shopping List Reset",

@@ -42,6 +42,20 @@ export const ShoppingListSection = ({
   const [sortBy, setSortBy] = useState<"store" | "department" | "category">("store");
   const [isAddingItem, setIsAddingItem] = useState(false);
   const [searchArchivedItems, setSearchArchivedItems] = useState(false);
+  const [customCategoryNames, setCustomCategoryNames] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    // Load custom category names from localStorage
+    const savedCategoryNames = localStorage.getItem('mealPlannerCustomCategoryNames');
+    if (savedCategoryNames) {
+      setCustomCategoryNames(JSON.parse(savedCategoryNames));
+    }
+  }, []);
+
+  // Save custom category names when they change
+  useEffect(() => {
+    localStorage.setItem('mealPlannerCustomCategoryNames', JSON.stringify(customCategoryNames));
+  }, [customCategoryNames]);
 
   // Handle the toggle to immediately archive checked items
   const handleToggle = (id: string) => {
@@ -50,6 +64,19 @@ export const ShoppingListSection = ({
     } else {
       onToggleItem(id);
     }
+  };
+
+  // Function to get the display category name (custom or default)
+  const getDisplayCategoryName = (categoryName: string): string => {
+    return customCategoryNames[categoryName] || categoryName;
+  };
+
+  // Function to handle category name changes
+  const handleCategoryNameChange = (oldName: string, newName: string) => {
+    setCustomCategoryNames(prev => ({
+      ...prev,
+      [oldName]: newName
+    }));
   };
 
   // Group items by store if groupByStore is true, otherwise by category
@@ -139,6 +166,18 @@ export const ShoppingListSection = ({
     onUpdateItem({ ...item, name });
   };
 
+  const handleAddNewItem = (item: GroceryItem) => {
+    if (onAddItem) {
+      onAddItem(item);
+      // Close the add item dialog after adding
+      setIsAddingItem(false);
+      // Ensure we're not in archive view mode
+      setSearchArchivedItems(false);
+      // Reset search term to make sure the new item is visible
+      setSearchTerm("");
+    }
+  };
+
   return (
     <section id="shopping-list" className="py-8 bg-gray-50">
       <div className="container mx-auto">
@@ -181,13 +220,14 @@ export const ShoppingListSection = ({
                 {Object.entries(categories).map(([categoryName, items]) => (
                   <ShoppingListGroup 
                     key={`${storeName}-${categoryName}`}
-                    categoryName={categoryName}
+                    categoryName={getDisplayCategoryName(categoryName)}
                     items={items}
                     onToggle={handleToggle}
                     onQuantityChange={handleQuantityChange}
                     onStoreChange={handleStoreChange}
                     onToggleRecurring={handleToggleRecurring}
                     onNameChange={handleNameChange}
+                    onCategoryNameChange={handleCategoryNameChange}
                     availableStores={availableStores}
                     isArchiveView={searchArchivedItems}
                   />
@@ -210,7 +250,7 @@ export const ShoppingListSection = ({
           open={isAddingItem}
           onOpenChange={setIsAddingItem}
           availableStores={availableStores}
-          onAddItem={onAddItem}
+          onAddItem={handleAddNewItem}
           archivedItems={archivedItems}
           onSearchArchivedItems={setSearchArchivedItems}
           isSearchingArchived={searchArchivedItems}

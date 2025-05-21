@@ -119,10 +119,16 @@ export const PrintButton = ({ meals, groceryItems }: PrintButtonProps) => {
             margin-top: 8px;
             margin-bottom: 3px;
           }
+          .category-title {
+            font-weight: bold;
+            margin-top: 8px;
+            margin-bottom: 3px;
+            font-style: italic;
+          }
         </style>
       </head>
       <body>
-        <h1>NomNom Navigator: Weekly Meal Plan</h1>
+        <h1>Pantry Pilot: Weekly Meal Plan</h1>
     `);
 
     // Add meal plan content
@@ -173,11 +179,10 @@ export const PrintButton = ({ meals, groceryItems }: PrintButtonProps) => {
     // Add page break and shopping list
     printWindow.document.write(`
       <div class="page-break"></div>
-      <h1>NomNom Navigator: Shopping List</h1>
+      <h1>Pantry Pilot: Shopping List</h1>
     `);
 
-    // Sort by store first, then by department
-    // Create a sorted copy of grocery items that's sorted by store and department
+    // Create a sorted copy of grocery items that's sorted by store and department/category
     const sortedItems = [...groceryItems].sort((a, b) => {
       // First sort by store
       const storeA = a.store || "Unassigned";
@@ -188,50 +193,58 @@ export const PrintButton = ({ meals, groceryItems }: PrintButtonProps) => {
       }
       
       // If same store, sort by department
-      const deptA = a.department || "Unassigned";
-      const deptB = b.department || "Unassigned";
+      if (a.department && b.department) {
+        return a.department.localeCompare(b.department);
+      }
       
-      return deptA.localeCompare(deptB);
+      // If no department, sort by category
+      return a.category.localeCompare(b.category);
     });
 
-    // Group items by store and department
+    // Group items by store and then by department/category
     const groupedByStore: Record<string, Record<string, GroceryItem[]>> = {};
     
     sortedItems.forEach(item => {
       const store = item.store || "Unassigned";
-      const department = item.department || "Unassigned";
+      
+      // Use department if available, otherwise use category
+      const groupKey = item.department || item.category;
       
       if (!groupedByStore[store]) {
         groupedByStore[store] = {};
       }
       
-      if (!groupedByStore[store][department]) {
-        groupedByStore[store][department] = [];
+      if (!groupedByStore[store][groupKey]) {
+        groupedByStore[store][groupKey] = [];
       }
       
-      groupedByStore[store][department].push(item);
+      groupedByStore[store][groupKey].push(item);
     });
 
     // Create two columns for shopping list
     printWindow.document.write('<div class="grocery-columns">');
 
-    // Print each store and its departments
-    Object.entries(groupedByStore).forEach(([store, departments]) => {
+    // Print each store and its departments/categories
+    Object.entries(groupedByStore).forEach(([store, groups]) => {
       printWindow.document.write(`
         <div class="store-section">
           <div class="store-title">${store}</div>
       `);
       
-      Object.entries(departments).forEach(([department, items]) => {
+      Object.entries(groups).forEach(([groupName, items]) => {
+        // Determine if this is a department or category
+        const isCategory = /^(produce|dairy|meat|grains|frozen|pantry|spices|other)$/i.test(groupName);
+        const titleClass = isCategory ? "category-title" : "department";
+        
         printWindow.document.write(`
-          <div class="department">${department}</div>
+          <div class="${titleClass}">${groupName}</div>
         `);
         
         items.forEach(item => {
           printWindow.document.write(`
             <div class="item">
               <span>${item.name}</span>
-              <span> - ${item.quantity}</span>
+              <span> - ${item.quantity || "1"}</span>
               ${item.meal ? `<span> (${item.meal})</span>` : ''}
             </div>
           `);
