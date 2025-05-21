@@ -10,7 +10,6 @@ interface ShoppingListContentProps {
   onToggle: (id: string) => void;
   onQuantityChange: (item: GroceryItem, quantity: string) => void;
   onStoreChange: (item: GroceryItem, store: string) => void;
-  onToggleRecurring: (item: GroceryItem) => void;
   onNameChange: (item: GroceryItem, name: string) => void;
   onCategoryNameChange: (oldName: string, newName: string) => void;
   availableStores: string[];
@@ -33,7 +32,6 @@ export const ShoppingListContent = ({
   onToggle,
   onQuantityChange,
   onStoreChange,
-  onToggleRecurring,
   onNameChange,
   onCategoryNameChange,
   availableStores,
@@ -74,7 +72,6 @@ export const ShoppingListContent = ({
           onToggle={onToggle}
           onQuantityChange={onQuantityChange}
           onStoreChange={onStoreChange}
-          onToggleRecurring={onToggleRecurring}
           onNameChange={onNameChange}
           onCategoryNameChange={onCategoryNameChange}
           availableStores={availableStores}

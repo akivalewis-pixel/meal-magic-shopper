@@ -54,10 +54,6 @@ export const ShoppingListSection = ({
   const handleStoreChange = (item: GroceryItem, store: string) => {
     onUpdateItem({ ...item, store });
   };
-
-  const handleToggleRecurring = (item: GroceryItem) => {
-    onUpdateItem({ ...item, recurring: !item.recurring });
-  };
   
   const handleSaveStores = (updatedStores: string[]) => {
     if (onUpdateStores) {
@@ -106,7 +102,6 @@ export const ShoppingListSection = ({
           onToggle={handleToggle}
           onQuantityChange={handleQuantityChange}
           onStoreChange={handleStoreChange}
-          onToggleRecurring={handleToggleRecurring}
           onNameChange={handleNameChange}
           onCategoryNameChange={handleCategoryNameChange}
           availableStores={availableStores}

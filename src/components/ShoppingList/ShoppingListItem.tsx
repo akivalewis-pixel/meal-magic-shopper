@@ -4,8 +4,6 @@ import { GroceryItem } from "@/types";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Repeat } from "lucide-react";
 import { 
   Select, 
   SelectContent, 
@@ -19,7 +17,6 @@ interface ShoppingListItemProps {
   onToggle: (id: string) => void;
   onQuantityChange: (item: GroceryItem, quantity: string) => void;
   onStoreChange: (item: GroceryItem, store: string) => void;
-  onToggleRecurring: (item: GroceryItem) => void;
   onNameChange?: (item: GroceryItem, name: string) => void;
   availableStores: string[];
   isArchiveView?: boolean;
@@ -30,7 +27,6 @@ export const ShoppingListItem = ({
   onToggle,
   onQuantityChange,
   onStoreChange,
-  onToggleRecurring,
   onNameChange,
   availableStores,
   isArchiveView = false
@@ -118,9 +114,6 @@ export const ShoppingListItem = ({
         ) : (
           <div className="flex items-center gap-2 cursor-pointer">
             <span>{item.name}</span>
-            {item.recurring && (
-              <Repeat className="h-4 w-4 text-blue-500" />
-            )}
             {item.meal && (
               <span className="text-xs text-gray-500">({item.meal})</span>
             )}
@@ -151,21 +144,6 @@ export const ShoppingListItem = ({
             ))}
           </SelectContent>
         </Select>
-
-        {!isArchiveView && (
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-8 px-2"
-            onClick={(e) => {
-              e.stopPropagation();
-              onToggleRecurring(item);
-            }}
-            title={item.recurring ? "Remove from recurring items" : "Add to recurring items"}
-          >
-            <Repeat className={`h-4 w-4 ${item.recurring ? 'text-blue-500' : 'text-gray-400'}`} />
-          </Button>
-        )}
       </div>
     </li>
   );

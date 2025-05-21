@@ -18,7 +18,6 @@ export interface GroceryItem {
   quantity: string;
   checked: boolean;
   meal?: string;
-  recurring?: boolean;
   store?: string;
   department?: string;
 }

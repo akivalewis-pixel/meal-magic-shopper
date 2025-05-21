@@ -6,7 +6,7 @@ import { groceryCategories } from "./constants";
 /**
  * Generate a shopping list based on meals and pantry items
  */
-export const generateShoppingList = (meals: Meal[], pantryItems: string[], recurringItems: GroceryItem[] = []): GroceryItem[] => {
+export const generateShoppingList = (meals: Meal[], pantryItems: string[], previousItems: GroceryItem[] = []): GroceryItem[] => {
   console.log("Generating shopping list with", meals.length, "meals");
   console.log("Pantry items:", pantryItems);
   
@@ -30,7 +30,6 @@ export const generateShoppingList = (meals: Meal[], pantryItems: string[], recur
         quantity: quantity,
         checked: false,
         meal: meal.title,
-        recurring: false,
         store: "", // Default store
         department: ""
       };
@@ -49,11 +48,11 @@ export const generateShoppingList = (meals: Meal[], pantryItems: string[], recur
   
   console.log("Filtered ingredients after pantry check:", filteredIngredients);
   
-  // Find existing grocery items (including recurring) by name for preserving data
+  // Find existing grocery items by name for preserving data
   const existingItemsByName: Record<string, GroceryItem> = {};
   
-  // Add recurring items to the lookup
-  recurringItems.forEach(item => {
+  // Add previous items to the lookup
+  previousItems.forEach(item => {
     existingItemsByName[item.name.toLowerCase()] = item;
   });
   
@@ -89,28 +88,17 @@ export const generateShoppingList = (meals: Meal[], pantryItems: string[], recur
         existingItem.meal = existingItem.meal ? `${existingItem.meal}, ${item.meal}` : item.meal;
       }
     } else {
-      // Check if we have an existing item with the same name from recurring items
-      const existingRecurringItem = existingItemsByName[item.name.toLowerCase()];
-      if (existingRecurringItem) {
+      // Check if we have an existing item with the same name from previous items
+      const existingPreviousItem = existingItemsByName[item.name.toLowerCase()];
+      if (existingPreviousItem) {
         // Preserve store and department information
-        item.store = existingRecurringItem.store || item.store;
-        item.department = existingRecurringItem.department || item.department;
-        item.recurring = existingRecurringItem.recurring || item.recurring;
+        item.store = existingPreviousItem.store || item.store;
+        item.department = existingPreviousItem.department || item.department;
       }
       acc.push(item);
     }
     return acc;
   }, [] as GroceryItem[]);
-  
-  // Add recurring items that are not already in the list
-  recurringItems.forEach(recurringItem => {
-    if (!uniqueIngredients.some(item => item.name.toLowerCase() === recurringItem.name.toLowerCase())) {
-      uniqueIngredients.push({
-        ...recurringItem,
-        checked: false
-      });
-    }
-  });
   
   // Sort by store and category
   return uniqueIngredients.sort((a, b) => {
