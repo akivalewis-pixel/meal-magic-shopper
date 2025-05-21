@@ -52,8 +52,7 @@ export const AddItemForm = ({
       quantity: quantity || "1",
       category: category as any,
       checked: false,
-      store: store || undefined,
-      recurring: false
+      store: store || undefined
     };
 
     onAddItem(newItem);

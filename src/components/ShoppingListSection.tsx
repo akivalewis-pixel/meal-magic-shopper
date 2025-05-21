@@ -19,7 +19,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Repeat, Plus, X, Edit, List, Store } from "lucide-react";
+import { Plus, X, Edit, List, Store } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 
 interface ShoppingListSectionProps {
@@ -128,10 +128,6 @@ export const ShoppingListSection = ({
 
   const handleDepartmentChange = (item: GroceryItem, department: string) => {
     onUpdateItem({ ...item, department });
-  };
-
-  const toggleRecurring = (item: GroceryItem) => {
-    onUpdateItem({ ...item, recurring: !item.recurring });
   };
   
   const handleAddStore = () => {
@@ -277,9 +273,6 @@ export const ShoppingListSection = ({
                           >
                             <div className="flex items-center gap-2">
                               <span>{item.name}</span>
-                              {item.recurring && (
-                                <Repeat className="h-4 w-4 text-blue-500" />
-                              )}
                               {item.meal && (
                                 <span className="text-xs text-gray-500">({item.meal})</span>
                               )}
@@ -307,15 +300,6 @@ export const ShoppingListSection = ({
                                 ))}
                               </SelectContent>
                             </Select>
-
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="h-8 px-2"
-                              onClick={() => toggleRecurring(item)}
-                            >
-                              <Repeat className={`h-4 w-4 ${item.recurring ? 'text-blue-500' : 'text-gray-400'}`} />
-                            </Button>
                           </div>
                         </li>
                       ))}
