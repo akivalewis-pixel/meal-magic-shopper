@@ -163,13 +163,16 @@ export const PrintButton = ({ meals, groceryItems }: PrintButtonProps) => {
       <h1>Pantry Pilot: Shopping List</h1>
     `);
 
-    // Create a sorted copy of grocery items that's sorted by store and category
+    // Create a fresh sorted copy of grocery items that's sorted by store and category
+    // for the print version, ensuring we have the latest store assignments
     const sortedItems = [...groceryItems].sort((a, b) => {
       // First sort by store
       const storeA = a.store || "Unassigned";
       const storeB = b.store || "Unassigned";
       
       if (storeA !== storeB) {
+        if (storeA === "Unassigned") return 1;
+        if (storeB === "Unassigned") return -1;
         return storeA.localeCompare(storeB);
       }
       

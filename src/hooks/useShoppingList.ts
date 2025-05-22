@@ -104,7 +104,7 @@ export function useShoppingList(meals: Meal[], pantryItems: string[] = []) {
   const handleUpdateGroceryItem = (updatedItem: GroceryItem) => {
     console.log("Updating grocery item:", updatedItem);
     
-    // Important: preserve all properties, especially store information
+    // Update in groceryItems - this triggers resorting
     setGroceryItems(prevItems => {
       const newItems = prevItems.map(item =>
         item.id === updatedItem.id ? updatedItem : item

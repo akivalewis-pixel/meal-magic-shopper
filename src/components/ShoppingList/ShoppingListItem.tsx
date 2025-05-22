@@ -87,11 +87,13 @@ export const ShoppingListItem = ({
     }
   };
 
-  // Handle store change directly
+  // Handle store change directly with immediate update
   const handleStoreChange = (value: string) => {
     console.log("Store change in ShoppingListItem:", item.name, "to", value);
-    // Ensure the store change is applied immediately with the updated store value
-    onStoreChange(item, value);
+    // Create a new item with updated store value to ensure the state is updated properly
+    const updatedItem = { ...item, store: value };
+    // Pass the updated item to the parent component
+    onStoreChange(updatedItem, value);
   };
 
   return (
