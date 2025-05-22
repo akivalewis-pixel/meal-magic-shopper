@@ -19,8 +19,25 @@ export function useShoppingListGrouping(
   sortBy: "store" | "department" | "category"
 ) {
   return useMemo(() => {
+    console.log("useShoppingListGrouping called with", {
+      itemsCount: groceryItems.length,
+      searchTerm,
+      showChecked,
+      selectedStore,
+      groupByStore,
+      sortBy
+    });
+    
     // Select which items array to use based on search mode
     const itemsToProcess = searchArchivedItems ? archivedItems : groceryItems;
+    
+    // Debug log to see what items we're processing
+    console.log("Processing items:", itemsToProcess.map(item => ({
+      name: item.name,
+      store: item.store || "Unassigned",
+      category: item.category,
+      department: item.department
+    })));
     
     // Filter items based on search, checked status, and store
     let filteredItems = itemsToProcess.filter(item => {

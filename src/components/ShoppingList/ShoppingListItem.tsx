@@ -87,6 +87,12 @@ export const ShoppingListItem = ({
     }
   };
 
+  // Handle store change directly
+  const handleStoreChange = (value: string) => {
+    console.log("Store change in ShoppingListItem:", item.name, "to", value);
+    onStoreChange(item, value);
+  };
+
   return (
     <li className="flex items-center gap-3 flex-wrap">
       <Checkbox
@@ -132,11 +138,7 @@ export const ShoppingListItem = ({
         
         <Select 
           value={item.store || ""}
-          onValueChange={(value) => {
-            // Ensure the store change is applied immediately 
-            // This will call the parent's onStoreChange which updates the item
-            onStoreChange(item, value);
-          }}
+          onValueChange={handleStoreChange}
           disabled={isArchiveView}
         >
           <SelectTrigger className="w-[120px] h-8 text-xs">

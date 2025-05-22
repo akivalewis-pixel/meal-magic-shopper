@@ -123,6 +123,14 @@ export function useShoppingList(meals: Meal[], pantryItems: string[] = []) {
       }
       return prevItems;
     });
+
+    // If this is a store update, display a toast
+    if (updatedItem.store) {
+      toast({
+        title: "Store Updated",
+        description: `${updatedItem.name} assigned to ${updatedItem.store}`,
+      });
+    }
   };
 
   const handleUpdateStores = (stores: string[]) => {
