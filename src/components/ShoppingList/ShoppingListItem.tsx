@@ -134,6 +134,7 @@ export const ShoppingListItem = ({
           value={item.store || ""}
           onValueChange={(value) => {
             // Ensure the store change is applied immediately 
+            // This will call the parent's onStoreChange which updates the item
             onStoreChange(item, value);
           }}
           disabled={isArchiveView}

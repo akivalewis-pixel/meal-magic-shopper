@@ -102,6 +102,8 @@ export function useShoppingList(meals: Meal[], pantryItems: string[] = []) {
   };
 
   const handleUpdateGroceryItem = (updatedItem: GroceryItem) => {
+    console.log("Updating grocery item:", updatedItem);
+    
     // Important: preserve all properties, especially store information
     setGroceryItems(prevItems => {
       const newItems = prevItems.map(item =>

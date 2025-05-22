@@ -1,5 +1,5 @@
 
-import React, { useMemo } from "react";
+import { useMemo } from "react";
 import { GroceryItem, GroceryCategory } from "@/types";
 import { groceryCategories } from "@/utils/constants";
 
@@ -22,30 +22,36 @@ export function useShoppingListGrouping(
     // Select which items array to use based on search mode
     const itemsToProcess = searchArchivedItems ? archivedItems : groceryItems;
     
+    // Filter items based on search, checked status, and store
     let filteredItems = itemsToProcess.filter(item => {
       const matchesSearch = searchTerm === "" || 
         item.name.toLowerCase().includes(searchTerm.toLowerCase());
       const shouldShow = showChecked || !item.checked;
+      
+      // Handle store filtering, with special case for "Unassigned" items
       const matchesStore = selectedStore === "all" || 
-        item.store === selectedStore || (!item.store && selectedStore === "Unassigned");
+        (selectedStore === "Unassigned" ? !item.store : item.store === selectedStore);
         
       return matchesSearch && shouldShow && matchesStore;
     });
 
+    // Group items by store and then by department/category
     if (groupByStore) {
-      // Group by store, then by department/category
       const byStore: Record<string, Record<string, GroceryItem[]>> = {};
       
       filteredItems.forEach(item => {
+        // Use "Unassigned" if no store is selected
         const store = item.store || "Unassigned";
         let secondaryKey;
         
+        // Choose grouping method based on sortBy
         if (sortBy === "department") {
           secondaryKey = item.department || "Unassigned";
         } else {
           secondaryKey = getCategoryLabel(item.category);
         }
         
+        // Initialize store and category objects if they don't exist
         if (!byStore[store]) {
           byStore[store] = {};
         }
@@ -59,7 +65,7 @@ export function useShoppingListGrouping(
       
       return byStore;
     } else {
-      // Group by category or department
+      // Group by category or department only
       const byPrimary: Record<string, GroceryItem[]> = {};
       
       filteredItems.forEach(item => {
