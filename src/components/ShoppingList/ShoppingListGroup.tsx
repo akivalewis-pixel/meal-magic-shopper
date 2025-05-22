@@ -49,6 +49,7 @@ export const ShoppingListGroup = ({
 
   const handleNameSubmit = () => {
     if (onCategoryNameChange && editedName !== categoryName && editedName.trim()) {
+      console.log("Category name change:", categoryName, "to", editedName.trim());
       onCategoryNameChange(categoryName, editedName.trim());
     }
     setIsEditing(false);

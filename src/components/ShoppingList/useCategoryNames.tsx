@@ -1,7 +1,9 @@
 
 import { useState, useEffect } from "react";
+import { useToast } from "@/hooks/use-toast";
 
 export function useCategoryNames() {
+  const { toast } = useToast();
   const [customCategoryNames, setCustomCategoryNames] = useState<Record<string, string>>({});
 
   useEffect(() => {
@@ -19,10 +21,17 @@ export function useCategoryNames() {
 
   // Function to handle category name changes
   const handleCategoryNameChange = (oldName: string, newName: string) => {
+    console.log("Updating category name from", oldName, "to", newName);
+    
     setCustomCategoryNames(prev => ({
       ...prev,
       [oldName]: newName
     }));
+    
+    toast({
+      title: "Category Updated",
+      description: `Category renamed to "${newName}"`,
+    });
   };
 
   return {

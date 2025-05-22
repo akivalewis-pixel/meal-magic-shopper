@@ -36,7 +36,7 @@ export function useShoppingListGrouping(
       name: item.name,
       store: item.store || "Unassigned",
       category: item.category,
-      department: item.department
+      department: item.department || "Unassigned"
     })));
     
     // Filter items based on search, checked status, and store
@@ -80,6 +80,7 @@ export function useShoppingListGrouping(
         byStore[store][secondaryKey].push(item);
       });
       
+      console.log("Grouped items by store:", Object.keys(byStore));
       return byStore;
     } else {
       // Group by category or department only
@@ -101,6 +102,7 @@ export function useShoppingListGrouping(
         byPrimary[primaryKey].push(item);
       });
       
+      console.log("Grouped items by category/department:", Object.keys(byPrimary));
       return { "All Stores": byPrimary };
     }
   }, [groceryItems, archivedItems, searchArchivedItems, searchTerm, showChecked, selectedStore, groupByStore, sortBy]);

@@ -90,6 +90,7 @@ export const ShoppingListItem = ({
   // Handle store change directly
   const handleStoreChange = (value: string) => {
     console.log("Store change in ShoppingListItem:", item.name, "to", value);
+    // Ensure the store change is applied immediately with the updated store value
     onStoreChange(item, value);
   };
 
