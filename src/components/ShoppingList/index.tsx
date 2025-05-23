@@ -5,6 +5,8 @@ import { ShoppingListActions } from "./ShoppingListActions";
 import { ShoppingListContent } from "./ShoppingListContent";
 import { useShoppingListGrouping } from "./useShoppingListGrouping";
 import { useCategoryNames } from "./useCategoryNames";
+import { Button } from "@/components/ui/button";
+import { LayoutGrid, List } from "lucide-react";
 
 interface ShoppingListSectionProps {
   groceryItems: GroceryItem[];
@@ -35,10 +37,10 @@ export const ShoppingListSection = ({
   const [sortBy, setSortBy] = useState<"store" | "department" | "category">("store");
   const [isAddingItem, setIsAddingItem] = useState(false);
   const [searchArchivedItems, setSearchArchivedItems] = useState(false);
+  const [viewMode, setViewMode] = useState<"list" | "board">("list");
   
   const { customCategoryNames, handleCategoryNameChange } = useCategoryNames();
 
-  // Handle the toggle to immediately archive checked items
   const handleToggle = (id: string) => {
     if (onArchiveItem) {
       onArchiveItem(id);
@@ -66,7 +68,12 @@ export const ShoppingListSection = ({
     onUpdateItem({ ...item, name });
   };
 
-  // Use our custom hook to get the grouped items
+  const handleUpdateMultiple = (items: GroceryItem[], updates: Partial<GroceryItem>) => {
+    items.forEach(item => {
+      onUpdateItem({ ...item, ...updates });
+    });
+  };
+
   const groupedItems = useShoppingListGrouping(
     groceryItems,
     archivedItems,
@@ -81,22 +88,41 @@ export const ShoppingListSection = ({
   return (
     <section id="shopping-list" className="py-8 bg-gray-50">
       <div className="container mx-auto">
-        <ShoppingListActions
-          searchTerm={searchTerm}
-          setSearchTerm={setSearchTerm}
-          showChecked={showChecked}
-          setShowChecked={setShowChecked}
-          selectedStore={selectedStore}
-          setSelectedStore={setSelectedStore}
-          groupByStore={groupByStore}
-          setGroupByStore={setGroupByStore}
-          sortBy={sortBy}
-          setSortBy={setSortBy}
-          setIsEditingStores={setIsEditingStores}
-          availableStores={availableStores}
-          setIsAddingItem={setIsAddingItem}
-          canAddItem={!!onAddItem}
-        />
+        <div className="flex items-center justify-between mb-4">
+          <ShoppingListActions
+            searchTerm={searchTerm}
+            setSearchTerm={setSearchTerm}
+            showChecked={showChecked}
+            setShowChecked={setShowChecked}
+            selectedStore={selectedStore}
+            setSelectedStore={setSelectedStore}
+            groupByStore={groupByStore}
+            setGroupByStore={setGroupByStore}
+            sortBy={sortBy}
+            setSortBy={setSortBy}
+            setIsEditingStores={setIsEditingStores}
+            availableStores={availableStores}
+            setIsAddingItem={setIsAddingItem}
+            canAddItem={!!onAddItem}
+          />
+          
+          <div className="flex items-center gap-2">
+            <Button
+              variant={viewMode === "list" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setViewMode("list")}
+            >
+              <List className="h-4 w-4" />
+            </Button>
+            <Button
+              variant={viewMode === "board" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setViewMode("board")}
+            >
+              <LayoutGrid className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
 
         <ShoppingListContent
           groupedItems={groupedItems}
@@ -105,6 +131,8 @@ export const ShoppingListSection = ({
           onStoreChange={handleStoreChange}
           onNameChange={handleNameChange}
           onCategoryNameChange={handleCategoryNameChange}
+          onUpdateItem={onUpdateItem}
+          onUpdateMultiple={handleUpdateMultiple}
           availableStores={availableStores}
           groupByStore={groupByStore}
           searchArchivedItems={searchArchivedItems}
@@ -118,6 +146,7 @@ export const ShoppingListSection = ({
           archivedItems={archivedItems}
           setSearchArchivedItems={setSearchArchivedItems}
           searchTerm={searchTerm}
+          viewMode={viewMode}
         />
       </div>
     </section>

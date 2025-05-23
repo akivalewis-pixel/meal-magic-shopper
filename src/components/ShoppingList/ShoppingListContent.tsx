@@ -2,6 +2,7 @@
 import React from "react";
 import { GroceryItem } from "@/types";
 import { GroupedShoppingList } from "./GroupedShoppingList";
+import { ShoppingListBoard } from "./ShoppingListBoard";
 import { StoreManagementDialog } from "./StoreManagementDialog";
 import { AddItemForm } from "./AddItemForm";
 
@@ -12,6 +13,8 @@ interface ShoppingListContentProps {
   onStoreChange: (item: GroceryItem, store: string) => void;
   onNameChange: (item: GroceryItem, name: string) => void;
   onCategoryNameChange: (oldName: string, newName: string) => void;
+  onUpdateItem: (updatedItem: GroceryItem) => void;
+  onUpdateMultiple: (items: GroceryItem[], updates: Partial<GroceryItem>) => void;
   availableStores: string[];
   groupByStore: boolean;
   searchArchivedItems: boolean;
@@ -25,6 +28,7 @@ interface ShoppingListContentProps {
   archivedItems: GroceryItem[];
   setSearchArchivedItems: (value: boolean) => void;
   searchTerm: string;
+  viewMode: "list" | "board";
 }
 
 export const ShoppingListContent = ({
@@ -34,6 +38,8 @@ export const ShoppingListContent = ({
   onStoreChange,
   onNameChange,
   onCategoryNameChange,
+  onUpdateItem,
+  onUpdateMultiple,
   availableStores,
   groupByStore,
   searchArchivedItems,
@@ -46,14 +52,13 @@ export const ShoppingListContent = ({
   onAddItem,
   archivedItems,
   setSearchArchivedItems,
-  searchTerm
+  searchTerm,
+  viewMode
 }: ShoppingListContentProps) => {
   const handleAddNewItem = (item: GroceryItem) => {
     if (onAddItem) {
       onAddItem(item);
-      // Close the add item dialog after adding
       setIsAddingItem(false);
-      // Ensure we're not in archive view mode
       setSearchArchivedItems(false);
     }
   };
@@ -67,18 +72,28 @@ export const ShoppingListContent = ({
           </div>
         )}
         
-        <GroupedShoppingList
-          groupedItems={groupedItems}
-          onToggle={onToggle}
-          onQuantityChange={onQuantityChange}
-          onStoreChange={onStoreChange}
-          onNameChange={onNameChange}
-          onCategoryNameChange={onCategoryNameChange}
-          availableStores={availableStores}
-          groupByStore={groupByStore}
-          searchArchivedItems={searchArchivedItems}
-          customCategoryNames={customCategoryNames}
-        />
+        {viewMode === "board" ? (
+          <ShoppingListBoard
+            groupedItems={groupedItems}
+            onUpdateItem={onUpdateItem}
+            onUpdateMultiple={onUpdateMultiple}
+            availableStores={availableStores}
+            customCategoryNames={customCategoryNames}
+          />
+        ) : (
+          <GroupedShoppingList
+            groupedItems={groupedItems}
+            onToggle={onToggle}
+            onQuantityChange={onQuantityChange}
+            onStoreChange={onStoreChange}
+            onNameChange={onNameChange}
+            onCategoryNameChange={onCategoryNameChange}
+            availableStores={availableStores}
+            groupByStore={groupByStore}
+            searchArchivedItems={searchArchivedItems}
+            customCategoryNames={customCategoryNames}
+          />
+        )}
       </div>
 
       <StoreManagementDialog 
