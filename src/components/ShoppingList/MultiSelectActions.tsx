@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { GroceryItem, GroceryCategory } from "@/types";
 import { Button } from "@/components/ui/button";
@@ -51,8 +52,11 @@ export const MultiSelectActions = ({
     setSelectedCategory(value as GroceryCategory | "");
   };
 
+  // Generate a unique key for this component based on the selected items
+  const selectedItemsKey = selectedItems.map(item => item.id).join('-');
+
   return (
-    <div className="bg-primary/10 p-4 rounded-lg mb-4">
+    <div className="bg-primary/10 p-4 rounded-lg mb-4" key={`multi-select-${selectedItemsKey}`}>
       <div className="flex items-center justify-between mb-3">
         <span className="font-medium">
           {selectedItems.length} item{selectedItems.length > 1 ? 's' : ''} selected

@@ -37,8 +37,15 @@ export const StoreColumn = ({
       items.map(item => item.name));
   });
 
+  // Generate a unique key for this render based on the items
+  const columnItemsKey = Object.entries(categories)
+    .flatMap(([category, items]) => 
+      items.map(item => `${item.id}-${item.store || 'Unassigned'}`)
+    )
+    .join('|');
+
   return (
-    <div className="flex-1 min-w-[280px]">
+    <div className="flex-1 min-w-[280px]" key={`column-${storeName}-${columnItemsKey}`}>
       <div 
         className="bg-white rounded-lg shadow-sm border p-4 h-full"
         onDragOver={onDragOver}
@@ -51,9 +58,10 @@ export const StoreColumn = ({
         <div className="space-y-4">
           {Object.entries(categories).map(([categoryName, items]) => {
             console.log(`Rendering category: ${categoryName} with ${items.length} items`);
+            const categoryKey = `${categoryName}-${items.map(item => item.id).join('-')}`;
             
             return (
-              <div key={categoryName} className="mb-4">
+              <div key={categoryKey} className="mb-4">
                 <h4 className="text-sm font-medium text-muted-foreground mb-2">
                   {getDisplayCategoryName(categoryName)}
                 </h4>
@@ -69,7 +77,7 @@ export const StoreColumn = ({
                     <div className="space-y-2">
                       {items.map(item => (
                         <IngredientButton
-                          key={item.id}
+                          key={`${item.id}-${item.store || 'Unassigned'}`}
                           item={item}
                           isSelected={selectedItems.includes(item.id)}
                           onSelect={onSelectItem}

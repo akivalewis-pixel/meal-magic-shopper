@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { GroceryItem, GroceryCategory } from "@/types";
 import { StoreColumn } from "./StoreColumn";
 import { IngredientEditDialog } from "./IngredientEditDialog";
@@ -23,12 +23,20 @@ export const ShoppingListBoard = ({
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [editingItem, setEditingItem] = useState<GroceryItem | null>(null);
   const [draggedItem, setDraggedItem] = useState<GroceryItem | null>(null);
+  const [boardVersion, setBoardVersion] = useState(Date.now());
 
   // Get all items for selection handling
   const allItems = Object.values(groupedItems).flatMap(categories =>
     Object.values(categories).flat()
   );
 
+  // Force re-render when grouped items changes
+  useEffect(() => {
+    console.log("Board - Data changed, forcing re-render");
+    setBoardVersion(Date.now());
+  }, [groupedItems]);
+
+  console.log("ShoppingListBoard - Rendering with version:", boardVersion);
   console.log("ShoppingListBoard - Grouped items structure:", groupedItems);
   console.log("ShoppingListBoard - All items count:", allItems.length);
   console.log("ShoppingListBoard - All items with stores:", allItems.map(item => ({ name: item.name, store: item.store || 'Unassigned' })));
@@ -109,12 +117,18 @@ export const ShoppingListBoard = ({
     onUpdateItem(updatedItem);
     
     setDraggedItem(null);
+    
+    // Force re-render of the board
+    setBoardVersion(Date.now());
   };
 
   const handleUpdateMultiple = (items: GroceryItem[], updates: Partial<GroceryItem>) => {
     console.log("Board - Updating multiple items:", items.length, "updates:", updates);
     onUpdateMultiple(items, updates);
     setSelectedItems([]);
+    
+    // Force re-render of the board
+    setBoardVersion(Date.now());
   };
 
   if (Object.keys(groupedItems).length === 0) {
@@ -125,11 +139,8 @@ export const ShoppingListBoard = ({
     );
   }
 
-  // Generate a unique key based on all item stores to force re-render when stores change
-  const boardKey = allItems.map(item => `${item.id}-${item.store || 'Unassigned'}`).join('|');
-
   return (
-    <div className="space-y-4" key={boardKey}>
+    <div className="space-y-4" key={`board-${boardVersion}`}>
       <MultiSelectActions
         selectedItems={selectedItemObjects}
         onUpdateMultiple={handleUpdateMultiple}
@@ -140,11 +151,9 @@ export const ShoppingListBoard = ({
       <div className="flex gap-4 overflow-x-auto pb-4">
         {Object.entries(groupedItems).map(([storeName, categories]) => {
           console.log("Board - Rendering store column:", storeName, "with categories:", Object.keys(categories));
-          // Generate unique key for each store column based on its items
-          const storeKey = `${storeName}-${Object.values(categories).flat().map(item => `${item.id}-${item.store}`).join('|')}`;
           return (
             <StoreColumn
-              key={storeKey}
+              key={`${storeName}-${boardVersion}`}
               storeName={storeName}
               categories={categories}
               selectedItems={selectedItems}
