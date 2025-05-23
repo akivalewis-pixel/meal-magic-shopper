@@ -1,6 +1,6 @@
 
 import React, { useState } from "react";
-import { GroceryItem } from "@/types";
+import { GroceryItem, GroceryCategory } from "@/types";
 import { Input } from "@/components/ui/input";
 
 interface CategoryEditInputProps {
