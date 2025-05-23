@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+
+import { useState, useEffect, useRef } from "react";
 import { GroceryItem, Meal } from "@/types";
 import { generateShoppingList } from "@/utils/groceryUtils";
 import { useToast } from "@/hooks/use-toast";
@@ -10,6 +11,9 @@ export function useSimpleShoppingList(meals: Meal[], pantryItems: string[] = [])
     "Unassigned", "Supermarket", "Farmers Market", "Specialty Store"
   ]);
   
+  // Use a ref to persistently track store assignments across renders
+  const storeAssignments = useRef<Map<string, string>>(new Map());
+  
   const { toast } = useToast();
 
   // Load from localStorage on mount
@@ -17,6 +21,7 @@ export function useSimpleShoppingList(meals: Meal[], pantryItems: string[] = [])
     const savedStores = localStorage.getItem('shoppingList_stores');
     const savedArchived = localStorage.getItem('shoppingList_archived');
     const savedItems = localStorage.getItem('shoppingList_allItems');
+    const savedAssignments = localStorage.getItem('shoppingList_storeAssignments');
     
     if (savedStores) {
       setAvailableStores(JSON.parse(savedStores));
@@ -25,7 +30,17 @@ export function useSimpleShoppingList(meals: Meal[], pantryItems: string[] = [])
       setArchivedItems(JSON.parse(savedArchived));
     }
     if (savedItems) {
-      setAllItems(JSON.parse(savedItems));
+      const items = JSON.parse(savedItems);
+      setAllItems(items);
+      // Initialize store assignments from loaded items
+      items.forEach((item: GroceryItem) => {
+        if (item.store && item.store !== "Unassigned") {
+          storeAssignments.current.set(item.name.toLowerCase(), item.store);
+        }
+      });
+    }
+    if (savedAssignments) {
+      storeAssignments.current = new Map(JSON.parse(savedAssignments));
     }
   }, []);
 
@@ -34,6 +49,7 @@ export function useSimpleShoppingList(meals: Meal[], pantryItems: string[] = [])
     localStorage.setItem('shoppingList_stores', JSON.stringify(availableStores));
     localStorage.setItem('shoppingList_archived', JSON.stringify(archivedItems));
     localStorage.setItem('shoppingList_allItems', JSON.stringify(allItems));
+    localStorage.setItem('shoppingList_storeAssignments', JSON.stringify(Array.from(storeAssignments.current.entries())));
   }, [availableStores, archivedItems, allItems]);
 
   // Generate shopping list from meals and merge with existing items
@@ -47,21 +63,17 @@ export function useSimpleShoppingList(meals: Meal[], pantryItems: string[] = [])
       mealItems = generateShoppingList(activeMeals, pantryItems, []);
     }
     
-    // Create a map of existing items by name to preserve store assignments
-    const existingItemsByName = new Map<string, GroceryItem>();
-    allItems.forEach(item => {
-      existingItemsByName.set(item.name.toLowerCase(), item);
-    });
-    
-    // Normalize meal items and preserve store assignments
+    // Normalize meal items and apply stored assignments
     const normalizedMealItems = mealItems.map(item => {
-      const existingItem = existingItemsByName.get(item.name.toLowerCase());
+      const storedStore = storeAssignments.current.get(item.name.toLowerCase());
+      const assignedStore = storedStore || "Unassigned";
+      
       return {
         ...item,
-        store: existingItem?.store || "Unassigned", // Preserve existing store assignment
+        store: assignedStore,
         id: `meal-${item.name}-${item.meal || 'default'}-${Date.now()}-${Math.random()}`,
         source: 'meal' as const,
-        __updateTimestamp: existingItem?.__updateTimestamp || Date.now()
+        __updateTimestamp: Date.now()
       };
     });
 
@@ -88,6 +100,13 @@ export function useSimpleShoppingList(meals: Meal[], pantryItems: string[] = [])
 
   const updateItem = (updatedItem: GroceryItem) => {
     console.log("useSimpleShoppingList updateItem called:", updatedItem.name, "new store:", updatedItem.store);
+    
+    // Update store assignment in persistent storage
+    if (updatedItem.store && updatedItem.store !== "Unassigned") {
+      storeAssignments.current.set(updatedItem.name.toLowerCase(), updatedItem.store);
+    } else {
+      storeAssignments.current.delete(updatedItem.name.toLowerCase());
+    }
     
     setAllItems(prevItems => {
       const updatedItems = prevItems.map(item => {
