@@ -13,7 +13,7 @@ export const CategoryEditInput = ({
   onCategoryChange
 }: CategoryEditInputProps) => {
   const [isEditing, setIsEditing] = useState(false);
-  const [editValue, setEditValue] = useState(item.category);
+  const [editValue, setEditValue] = useState<string>(item.category);
 
   const handleClick = () => {
     setIsEditing(true);
