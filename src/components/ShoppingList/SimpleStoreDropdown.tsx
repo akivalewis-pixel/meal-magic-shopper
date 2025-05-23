@@ -29,20 +29,32 @@ export const SimpleStoreDropdown = ({
   console.log("SimpleStoreDropdown: Rendering dropdown for:", item.name, "current store:", currentStore);
 
   return (
-    <Select value={currentStore} onValueChange={handleChange}>
+    <Select 
+      key={`${item.id}-${currentStore}`} 
+      value={currentStore} 
+      onValueChange={handleChange}
+    >
       <SelectTrigger className="w-32 h-8 text-xs bg-white border border-gray-300">
-        <SelectValue />
+        <SelectValue placeholder="Select store" />
       </SelectTrigger>
       <SelectContent className="bg-white border shadow-lg z-[100]">
-        {availableStores.map(store => (
-          <SelectItem 
-            key={store} 
-            value={store} 
-            className="bg-white hover:bg-gray-100 cursor-pointer"
-          >
-            {store}
-          </SelectItem>
-        ))}
+        <SelectItem 
+          value="Unassigned" 
+          className="bg-white hover:bg-gray-100 cursor-pointer"
+        >
+          Unassigned
+        </SelectItem>
+        {availableStores
+          .filter(store => store !== "Unassigned")
+          .map(store => (
+            <SelectItem 
+              key={store} 
+              value={store} 
+              className="bg-white hover:bg-gray-100 cursor-pointer"
+            >
+              {store}
+            </SelectItem>
+          ))}
       </SelectContent>
     </Select>
   );

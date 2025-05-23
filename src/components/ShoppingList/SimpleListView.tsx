@@ -43,32 +43,36 @@ export const SimpleListView = ({
     onUpdateItem(itemWithNewStore);
   };
 
-  // Force re-computation when items change by including timestamp in dependency
+  // Create a more robust grouping that properly handles store changes
   const groupedItems = React.useMemo(() => {
-    const itemsWithTimestamp = items.map(item => ({ 
-      ...item, 
-      _computeKey: `${item.id}-${item.store}-${item.__updateTimestamp || 0}` 
-    }));
+    console.log("SimpleListView: Re-computing grouped items with", items.length, "items");
+    
+    // Create a fresh grouping based on current items state
+    const currentGrouping: Record<string, GroceryItem[]> = {};
     
     if (groupByStore) {
-      return itemsWithTimestamp.reduce((acc, item) => {
+      items.forEach(item => {
         const store = item.store || "Unassigned";
-        if (!acc[store]) acc[store] = [];
-        acc[store].push(item);
-        return acc;
-      }, {} as Record<string, GroceryItem[]>);
+        if (!currentGrouping[store]) {
+          currentGrouping[store] = [];
+        }
+        currentGrouping[store].push(item);
+      });
+    } else {
+      currentGrouping["All Items"] = [...items];
     }
-    return { "All Items": itemsWithTimestamp };
-  }, [items, groupByStore, items.map(i => i.__updateTimestamp).join(',')]);
-
-  console.log("SimpleListView: Grouped items:", Object.entries(groupedItems).map(([store, storeItems]) => ({
-    store,
-    count: storeItems.length,
-    items: storeItems.map(i => ({ name: i.name, store: i.store }))
-  })));
+    
+    console.log("SimpleListView: Grouped items result:", Object.entries(currentGrouping).map(([store, storeItems]) => ({
+      store,
+      count: storeItems.length,
+      items: storeItems.map(i => ({ name: i.name, store: i.store }))
+    })));
+    
+    return currentGrouping;
+  }, [items, groupByStore]);
 
   const renderItem = (item: GroceryItem) => (
-    <li key={`${item.id}-${item.store}-${item.__updateTimestamp || 0}`} className="flex items-center gap-3 py-2 border-b border-gray-100">
+    <li key={item.id} className="flex items-center gap-3 py-2 border-b border-gray-100">
       <Checkbox
         checked={item.checked}
         onCheckedChange={() => onToggleItem(item.id)}
@@ -110,7 +114,7 @@ export const SimpleListView = ({
   return (
     <div className="space-y-6">
       {Object.entries(groupedItems).map(([storeName, storeItems]) => (
-        <div key={`${storeName}-${storeItems.length}-${storeItems.map(i => i.__updateTimestamp).join(',')}`}>
+        <div key={storeName}>
           {groupByStore && (
             <h3 className="text-lg font-semibold mb-4 pb-2 border-b">
               {storeName} ({storeItems.length} items)
