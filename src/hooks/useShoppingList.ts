@@ -133,6 +133,43 @@ export function useShoppingList(meals: Meal[], pantryItems: string[] = []) {
     }
   };
 
+  const handleUpdateMultipleGroceryItems = (items: GroceryItem[], updates: Partial<GroceryItem>) => {
+    console.log("Updating multiple grocery items:", items.length, "with updates:", updates);
+    
+    // Create a map of item IDs to updates for efficient lookup
+    const itemIdsToUpdate = new Set(items.map(item => item.id));
+    
+    // Update groceryItems
+    setGroceryItems(prevItems => {
+      const newItems = prevItems.map(item => {
+        if (itemIdsToUpdate.has(item.id)) {
+          return { ...item, ...updates };
+        }
+        return item;
+      });
+      // Re-sort after bulk update
+      return sortGroceryItems(newItems);
+    });
+    
+    // Update manualItems if any of the updated items exist there
+    setManualItems(prevItems => {
+      const newItems = prevItems.map(item => {
+        if (itemIdsToUpdate.has(item.id)) {
+          return { ...item, ...updates };
+        }
+        return item;
+      });
+      return newItems;
+    });
+
+    // Show success toast
+    const updateType = updates.store ? 'store' : updates.category ? 'category' : 'items';
+    toast({
+      title: "Items Updated",
+      description: `${items.length} item${items.length > 1 ? 's' : ''} ${updateType} updated successfully`,
+    });
+  };
+
   const handleUpdateStores = (stores: string[]) => {
     setAvailableStores(stores);
     toast({
@@ -204,6 +241,7 @@ export function useShoppingList(meals: Meal[], pantryItems: string[] = []) {
     availableStores,
     handleToggleGroceryItem,
     handleUpdateGroceryItem,
+    handleUpdateMultipleGroceryItems,
     handleUpdateStores,
     handleAddGroceryItem,
     handleArchiveItem,

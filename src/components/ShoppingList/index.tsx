@@ -12,6 +12,7 @@ interface ShoppingListSectionProps {
   groceryItems: GroceryItem[];
   onToggleItem: (id: string) => void;
   onUpdateItem: (updatedItem: GroceryItem) => void;
+  onUpdateMultipleItems?: (items: GroceryItem[], updates: Partial<GroceryItem>) => void;
   onAddItem?: (item: GroceryItem) => void;
   onArchiveItem?: (id: string) => void;
   availableStores: string[];
@@ -23,6 +24,7 @@ export const ShoppingListSection = ({
   groceryItems,
   onToggleItem,
   onUpdateItem,
+  onUpdateMultipleItems,
   onAddItem,
   onArchiveItem,
   availableStores = ["Any Store", "Supermarket", "Farmers Market", "Specialty Store"],
@@ -69,9 +71,14 @@ export const ShoppingListSection = ({
   };
 
   const handleUpdateMultiple = (items: GroceryItem[], updates: Partial<GroceryItem>) => {
-    items.forEach(item => {
-      onUpdateItem({ ...item, ...updates });
-    });
+    if (onUpdateMultipleItems) {
+      onUpdateMultipleItems(items, updates);
+    } else {
+      // Fallback to individual updates if bulk update not available
+      items.forEach(item => {
+        onUpdateItem({ ...item, ...updates });
+      });
+    }
   };
 
   const groupedItems = useShoppingListGrouping(

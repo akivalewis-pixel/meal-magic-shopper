@@ -27,6 +27,7 @@ const Index = () => {
     availableStores,
     handleToggleGroceryItem,
     handleUpdateGroceryItem,
+    handleUpdateMultipleGroceryItems,
     handleUpdateStores,
     handleAddGroceryItem,
     handleArchiveItem,
@@ -60,6 +61,7 @@ const Index = () => {
           groceryItems={groceryItems} 
           onToggleItem={handleToggleGroceryItem}
           onUpdateItem={handleUpdateGroceryItem}
+          onUpdateMultipleItems={handleUpdateMultipleGroceryItems}
           availableStores={availableStores}
           onUpdateStores={handleUpdateStores}
           onAddItem={handleAddGroceryItem}

@@ -90,6 +90,7 @@ export const ShoppingListBoard = ({
   };
 
   const handleUpdateMultiple = (items: GroceryItem[], updates: Partial<GroceryItem>) => {
+    console.log("Updating multiple items:", items.length, "updates:", updates);
     onUpdateMultiple(items, updates);
     setSelectedItems([]);
   };
