@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { GroceryItem, GroceryCategory } from "@/types";
 import { Button } from "@/components/ui/button";
@@ -32,8 +31,9 @@ export const MultiSelectActions = ({
   const handleMoveToStore = () => {
     if (selectedStore) {
       console.log("MultiSelect - Moving items to store:", selectedStore);
-      const storeValue = selectedStore === "unassigned" ? "" : selectedStore;
-      console.log("MultiSelect - Normalized store value:", storeValue);
+      // Keep store value as-is, don't convert to empty string
+      const storeValue = selectedStore === "unassigned" ? "Unassigned" : selectedStore;
+      console.log("MultiSelect - Using store value:", storeValue);
       onUpdateMultiple(selectedItems, { store: storeValue });
       setSelectedStore("");
     }

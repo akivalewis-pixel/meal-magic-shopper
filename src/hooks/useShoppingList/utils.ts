@@ -2,11 +2,19 @@
 import { GroceryItem } from "@/types";
 import { groceryCategories } from "@/utils/constants";
 
+export const normalizeStoreValue = (store: string | undefined): string => {
+  // Convert empty strings and undefined to "Unassigned"
+  if (!store || store.trim() === "") {
+    return "Unassigned";
+  }
+  return store;
+};
+
 export const sortGroceryItems = (items: GroceryItem[]): GroceryItem[] => {
   return [...items].sort((a, b) => {
     // Normalize store values for consistent sorting
-    const storeA = a.store || "Unassigned";
-    const storeB = b.store || "Unassigned";
+    const storeA = normalizeStoreValue(a.store);
+    const storeB = normalizeStoreValue(b.store);
     
     if (storeA !== storeB) {
       if (storeA === "Unassigned") return 1;

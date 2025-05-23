@@ -79,7 +79,7 @@ export const ShoppingListBoard = ({
     console.log("Dropping item:", draggedItem.name, "to store:", targetStore, "category:", targetCategory);
 
     const updates: Partial<GroceryItem> = {
-      store: targetStore === "Unassigned" ? "" : targetStore
+      store: targetStore
     };
 
     if (targetCategory) {
@@ -93,10 +93,6 @@ export const ShoppingListBoard = ({
 
   const handleUpdateMultiple = (items: GroceryItem[], updates: Partial<GroceryItem>) => {
     console.log("Board - Updating multiple items:", items.length, "updates:", updates);
-    // Normalize store value for consistency
-    if (updates.store !== undefined) {
-      updates.store = updates.store === "Unassigned" ? "" : updates.store;
-    }
     onUpdateMultiple(items, updates);
     setSelectedItems([]);
   };
