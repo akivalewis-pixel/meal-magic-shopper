@@ -32,7 +32,7 @@ export const AddItemForm = ({
   const [name, setName] = useState("");
   const [quantity, setQuantity] = useState("1");
   const [category, setCategory] = useState("other");
-  const [store, setStore] = useState("");
+  const [store, setStore] = useState("Unassigned"); // Default to "Unassigned"
   const [searchTerm, setSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState<"add" | "search">("add");
   
@@ -52,9 +52,10 @@ export const AddItemForm = ({
       quantity: quantity || "1",
       category: category as any,
       checked: false,
-      store: store || undefined
+      store: store // Use the selected store value directly
     };
 
+    console.log("AddItemForm: Creating new item:", newItem);
     onAddItem(newItem);
     onOpenChange(false);
     resetForm();
@@ -64,7 +65,7 @@ export const AddItemForm = ({
     setName("");
     setQuantity("1");
     setCategory("other");
-    setStore("");
+    setStore("Unassigned"); // Reset to "Unassigned"
     setSearchTerm("");
     setActiveTab("add");
   };
@@ -143,11 +144,14 @@ export const AddItemForm = ({
                     <SelectValue placeholder="Select store" />
                   </SelectTrigger>
                   <SelectContent>
-                    {availableStores.map((storeName) => (
-                      <SelectItem key={storeName} value={storeName}>
-                        {storeName}
-                      </SelectItem>
-                    ))}
+                    <SelectItem value="Unassigned">Unassigned</SelectItem>
+                    {availableStores
+                      .filter(storeName => storeName !== "Unassigned")
+                      .map((storeName) => (
+                        <SelectItem key={storeName} value={storeName}>
+                          {storeName}
+                        </SelectItem>
+                      ))}
                   </SelectContent>
                 </Select>
               </div>

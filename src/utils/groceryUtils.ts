@@ -1,3 +1,4 @@
+
 // Grocery and shopping list related utility functions
 import { GroceryItem, Meal, GroceryCategory } from "@/types";
 import { cleanIngredientName } from "./recipeUtils";
@@ -30,7 +31,7 @@ export const generateShoppingList = (meals: Meal[], pantryItems: string[], previ
         quantity: quantity,
         checked: false,
         meal: meal.title,
-        store: "", // Default store
+        store: "Unassigned", // Always start with "Unassigned" instead of empty string
         department: ""
       };
     })
@@ -91,8 +92,8 @@ export const generateShoppingList = (meals: Meal[], pantryItems: string[], previ
       // Check if we have an existing item with the same name from previous items
       const existingPreviousItem = existingItemsByName[item.name.toLowerCase()];
       if (existingPreviousItem) {
-        // Preserve store and department information
-        item.store = existingPreviousItem.store || item.store;
+        // Preserve store and department information, but ensure store is never empty
+        item.store = existingPreviousItem.store || "Unassigned";
         item.department = existingPreviousItem.department || item.department;
       }
       acc.push(item);
