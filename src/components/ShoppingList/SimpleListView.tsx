@@ -35,22 +35,16 @@ export const SimpleListView = ({
 
   const handleStoreChange = (updatedItem: GroceryItem, newStore: string) => {
     console.log("SimpleListView: Store change for", updatedItem.name, "to", newStore);
+    console.log("SimpleListView: Updated item received:", updatedItem);
     
-    // Create a new item object with the updated store
-    const itemWithNewStore = { 
-      ...updatedItem, 
-      store: newStore, // Keep the store value as-is
-      __updateTimestamp: Date.now()
-    };
-    
-    console.log("SimpleListView: Calling onUpdateItem with:", itemWithNewStore);
-    onUpdateItem(itemWithNewStore);
+    // Pass the already updated item directly to onUpdateItem
+    onUpdateItem(updatedItem);
   };
 
   // Create a more robust grouping that properly handles store changes
   const groupedItems = React.useMemo(() => {
     console.log("SimpleListView: Re-computing grouped items with", items.length, "items");
-    console.log("SimpleListView: Items with stores:", items.map(i => ({ name: i.name, store: i.store })));
+    console.log("SimpleListView: Items with stores:", items.map(i => ({ name: i.name, store: i.store, timestamp: i.__updateTimestamp })));
     
     // Create a fresh grouping based on current items state
     const currentGrouping: Record<string, GroceryItem[]> = {};

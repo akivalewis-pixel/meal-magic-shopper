@@ -22,7 +22,16 @@ export const SimpleStoreDropdown = ({
 }: SimpleStoreDropdownProps) => {
   const handleChange = (newStore: string) => {
     console.log("SimpleStoreDropdown: Store dropdown change:", item.name, "from:", item.store, "to:", newStore);
-    onStoreChange(item, newStore);
+    
+    // Create updated item with new store
+    const updatedItem = { 
+      ...item, 
+      store: newStore,
+      __updateTimestamp: Date.now()
+    };
+    
+    console.log("SimpleStoreDropdown: Calling onStoreChange with updated item:", updatedItem);
+    onStoreChange(updatedItem, newStore);
   };
 
   const currentStore = item.store || "Unassigned";

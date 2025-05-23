@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { GroceryItem, Meal } from "@/types";
 import { generateShoppingList } from "@/utils/groceryUtils";
@@ -67,19 +66,20 @@ export function useSimpleShoppingList(meals: Meal[], pantryItems: string[] = [])
   const updateItem = (updatedItem: GroceryItem) => {
     console.log("useSimpleShoppingList updateItem called:", updatedItem.name, "new store:", updatedItem.store);
     
+    // Create a completely new item object to force React re-render
+    const finalUpdatedItem = {
+      ...updatedItem,
+      store: updatedItem.store || "Unassigned",
+      __updateTimestamp: Date.now()
+    };
+    
+    console.log("useSimpleShoppingList: Final updated item:", finalUpdatedItem);
+    
     setGroceryItems(prevItems => {
       const newItems = prevItems.map(item => {
-        if (item.id === updatedItem.id) {
-          console.log("useSimpleShoppingList: Found matching item, updating:", item.name, "from store:", item.store, "to store:", updatedItem.store);
-          
-          const finalStore = updatedItem.store === "Unassigned" ? "Unassigned" : updatedItem.store;
-          
-          return { 
-            ...item,
-            ...updatedItem,
-            store: finalStore,
-            __updateTimestamp: Date.now()
-          };
+        if (item.id === finalUpdatedItem.id) {
+          console.log("useSimpleShoppingList: Found matching item, updating:", item.name, "from store:", item.store, "to store:", finalUpdatedItem.store);
+          return finalUpdatedItem;
         }
         return item;
       });
@@ -89,19 +89,17 @@ export function useSimpleShoppingList(meals: Meal[], pantryItems: string[] = [])
     });
 
     // Also update manual items if this is a manual item
-    if (updatedItem.id.startsWith('manual-')) {
+    if (finalUpdatedItem.id.startsWith('manual-')) {
       setManualItems(prevManual => 
         prevManual.map(item => 
-          item.id === updatedItem.id 
-            ? { ...updatedItem, store: updatedItem.store || "Unassigned" }
-            : item
+          item.id === finalUpdatedItem.id ? finalUpdatedItem : item
         )
       );
     }
 
     toast({
       title: "Item Updated", 
-      description: `${updatedItem.name} ${updatedItem.store !== "Unassigned" ? `moved to ${updatedItem.store}` : 'updated'}`,
+      description: `${finalUpdatedItem.name} ${finalUpdatedItem.store !== "Unassigned" ? `moved to ${finalUpdatedItem.store}` : 'updated'}`,
     });
   };
 
