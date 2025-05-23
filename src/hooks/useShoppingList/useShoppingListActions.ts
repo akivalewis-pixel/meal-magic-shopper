@@ -1,98 +1,31 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { 
-  GroceryItem,
-  Meal
-} from "@/types";
-import { generateShoppingList } from "@/utils/groceryUtils";
+import { GroceryItem } from "@/types";
+import { sortGroceryItems, findMatchingArchivedItem } from "./utils";
 
-export function useShoppingList(meals: Meal[], pantryItems: string[] = []) {
+interface UseShoppingListActionsProps {
+  groceryItems: GroceryItem[];
+  setGroceryItems: (items: GroceryItem[] | ((prev: GroceryItem[]) => GroceryItem[])) => void;
+  archivedItems: GroceryItem[];
+  setArchivedItems: (items: GroceryItem[] | ((prev: GroceryItem[]) => GroceryItem[])) => void;
+  manualItems: GroceryItem[];
+  setManualItems: (items: GroceryItem[] | ((prev: GroceryItem[]) => GroceryItem[])) => void;
+  availableStores: string[];
+  setAvailableStores: (stores: string[]) => void;
+}
+
+export const useShoppingListActions = ({
+  groceryItems,
+  setGroceryItems,
+  archivedItems,
+  setArchivedItems,
+  manualItems,
+  setManualItems,
+  availableStores,
+  setAvailableStores
+}: UseShoppingListActionsProps) => {
   const { toast } = useToast();
-  const [groceryItems, setGroceryItems] = useState<GroceryItem[]>([]);
-  const [archivedItems, setArchivedItems] = useState<GroceryItem[]>([]);
-  const [manualItems, setManualItems] = useState<GroceryItem[]>([]);
-  const [availableStores, setAvailableStores] = useState<string[]>([
-    "Any Store", "Supermarket", "Farmers Market", "Specialty Store"
-  ]);
-
-  // Initialize with saved data
-  useEffect(() => {
-    const savedStores = localStorage.getItem('mealPlannerStores');
-    const savedArchivedItems = localStorage.getItem('mealPlannerArchivedItems');
-    const savedManualItems = localStorage.getItem('mealPlannerManualItems');
-    
-    const initialStores = savedStores ? JSON.parse(savedStores) : ["Any Store", "Supermarket", "Farmers Market", "Specialty Store"];
-    const initialArchivedItems = savedArchivedItems ? JSON.parse(savedArchivedItems) : [];
-    const initialManualItems = savedManualItems ? JSON.parse(savedManualItems) : [];
-    
-    setAvailableStores(initialStores);
-    setArchivedItems(initialArchivedItems);
-    setManualItems(initialManualItems);
-  }, []);
-
-  // Update shopping list when meals, pantry, or manual items change
-  useEffect(() => {
-    let shoppingList: GroceryItem[] = [];
-    
-    if (meals.length > 0) {
-      // Only include meals that have a day assigned
-      const activeMeals = meals.filter(meal => meal.day && meal.day !== "");
-      shoppingList = generateShoppingList(activeMeals, pantryItems, []);
-    }
-    
-    // Add manually added items that aren't in the list already
-    manualItems.forEach(manualItem => {
-      const existingItem = shoppingList.find(item => 
-        item.name.toLowerCase() === manualItem.name.toLowerCase() && 
-        (!item.meal || item.meal === manualItem.meal)
-      );
-      
-      if (!existingItem) {
-        shoppingList.push(manualItem);
-      }
-    });
-    
-    // Filter out any items that are in the archived list
-    const filteredShoppingList = shoppingList.filter(item => 
-      !archivedItems.some(archivedItem => 
-        archivedItem.name.toLowerCase() === item.name.toLowerCase() && 
-        (!item.meal || archivedItem.meal === item.meal)
-      )
-    );
-    
-    setGroceryItems(sortGroceryItems(filteredShoppingList));
-  }, [meals, pantryItems, archivedItems, manualItems]);
-
-  // Sort grocery items by store and category
-  const sortGroceryItems = (items: GroceryItem[]): GroceryItem[] => {
-    return [...items].sort((a, b) => {
-      // First sort by store (with "Unassigned" at the end)
-      const storeA = a.store || "Unassigned";
-      const storeB = b.store || "Unassigned";
-      
-      if (storeA !== storeB) {
-        if (storeA === "Unassigned") return 1;
-        if (storeB === "Unassigned") return -1;
-        return storeA.localeCompare(storeB);
-      }
-      
-      // Then by department if available
-      if (a.department && b.department && a.department !== b.department) {
-        return a.department.localeCompare(b.department);
-      }
-      
-      // Finally by category
-      return a.category.localeCompare(b.category);
-    });
-  };
-
-  // Save to localStorage when state changes
-  useEffect(() => {
-    localStorage.setItem('mealPlannerStores', JSON.stringify(availableStores));
-    localStorage.setItem('mealPlannerArchivedItems', JSON.stringify(archivedItems));
-    localStorage.setItem('mealPlannerManualItems', JSON.stringify(manualItems));
-  }, [availableStores, archivedItems, manualItems]);
 
   const handleToggleGroceryItem = (id: string) => {
     const updatedItems = groceryItems.map((item) =>
@@ -180,9 +113,7 @@ export function useShoppingList(meals: Meal[], pantryItems: string[] = []) {
   
   const handleAddGroceryItem = (newItem: GroceryItem) => {
     // Check if this item was previously archived
-    const matchingArchivedItem = archivedItems.find(item => 
-      item.name.toLowerCase() === newItem.name.toLowerCase()
-    );
+    const matchingArchivedItem = findMatchingArchivedItem(newItem, archivedItems);
 
     if (matchingArchivedItem) {
       // Remove from archived items
@@ -226,7 +157,6 @@ export function useShoppingList(meals: Meal[], pantryItems: string[] = []) {
     });
   };
 
-  // Function to reset the shopping list
   const resetShoppingList = () => {
     setManualItems([]);
     
@@ -237,15 +167,12 @@ export function useShoppingList(meals: Meal[], pantryItems: string[] = []) {
   };
 
   return {
-    groceryItems,
-    availableStores,
     handleToggleGroceryItem,
     handleUpdateGroceryItem,
     handleUpdateMultipleGroceryItems,
     handleUpdateStores,
     handleAddGroceryItem,
     handleArchiveItem,
-    archivedItems,
     resetShoppingList
   };
-}
+};
