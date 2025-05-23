@@ -21,12 +21,14 @@ export const SimpleStoreSelector = ({
   onStoreChange
 }: SimpleStoreSelectorProps) => {
   const handleStoreChange = (value: string) => {
-    console.log(`SimpleStoreSelector: Changing ${item.name} from ${item.store} to ${value}`);
-    const normalizedStore = value === "unassigned" ? "Unassigned" : value;
-    onStoreChange(item, normalizedStore);
+    console.log(`SimpleStoreSelector: Changing ${item.name} to store: ${value}`);
+    onStoreChange(item, value);
   };
 
-  const currentValue = !item.store || item.store === "Unassigned" ? "unassigned" : item.store;
+  // Determine current value - treat empty/undefined as "Unassigned"
+  const currentValue = item.store && item.store !== "Unassigned" ? item.store : "Unassigned";
+  
+  console.log(`SimpleStoreSelector: Rendering ${item.name} with current store: '${item.store}' -> display value: '${currentValue}'`);
 
   return (
     <Select value={currentValue} onValueChange={handleStoreChange}>
@@ -34,7 +36,7 @@ export const SimpleStoreSelector = ({
         <SelectValue />
       </SelectTrigger>
       <SelectContent>
-        <SelectItem value="unassigned">Unassigned</SelectItem>
+        <SelectItem value="Unassigned">Unassigned</SelectItem>
         {availableStores
           .filter(store => store !== "Any Store" && store !== "Unassigned")
           .map(store => (
