@@ -4,6 +4,7 @@ import { GroceryItem } from "@/types";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { SimpleStoreDropdown } from "./SimpleStoreDropdown";
+import { CategoryEditInput } from "./CategoryEditInput";
 
 interface SimpleListViewProps {
   items: GroceryItem[];
@@ -28,9 +29,12 @@ export const SimpleListView = ({
     onUpdateItem({ ...item, name });
   };
 
+  const handleCategoryChange = (item: GroceryItem, category: string) => {
+    onUpdateItem({ ...item, category: category as any });
+  };
+
   const handleStoreChange = (updatedItem: GroceryItem, newStore: string) => {
     console.log("SimpleListView: Store change for", updatedItem.name, "to", newStore);
-    // Ensure the store is properly set and force a re-render
     const itemWithNewStore = { 
       ...updatedItem, 
       store: newStore,
@@ -39,23 +43,28 @@ export const SimpleListView = ({
     onUpdateItem(itemWithNewStore);
   };
 
-  // Group items by store if needed - ensure this is reactive to store changes
+  // Force re-computation when items change by including timestamp in dependency
   const groupedItems = React.useMemo(() => {
+    const itemsWithTimestamp = items.map(item => ({ 
+      ...item, 
+      _computeKey: `${item.id}-${item.store}-${item.__updateTimestamp || 0}` 
+    }));
+    
     if (groupByStore) {
-      return items.reduce((acc, item) => {
+      return itemsWithTimestamp.reduce((acc, item) => {
         const store = item.store || "Unassigned";
         if (!acc[store]) acc[store] = [];
         acc[store].push(item);
         return acc;
       }, {} as Record<string, GroceryItem[]>);
     }
-    return { "All Items": items };
-  }, [items, groupByStore]);
+    return { "All Items": itemsWithTimestamp };
+  }, [items, groupByStore, items.map(i => i.__updateTimestamp).join(',')]);
 
   console.log("SimpleListView: Grouped items:", Object.entries(groupedItems).map(([store, storeItems]) => ({
     store,
     count: storeItems.length,
-    items: storeItems.map(i => i.name)
+    items: storeItems.map(i => ({ name: i.name, store: i.store }))
   })));
 
   const renderItem = (item: GroceryItem) => (
@@ -91,16 +100,17 @@ export const SimpleListView = ({
         onStoreChange={handleStoreChange}
       />
       
-      <span className="text-xs text-gray-500 w-16 text-center capitalize">
-        {item.category}
-      </span>
+      <CategoryEditInput
+        item={item}
+        onCategoryChange={handleCategoryChange}
+      />
     </li>
   );
 
   return (
     <div className="space-y-6">
       {Object.entries(groupedItems).map(([storeName, storeItems]) => (
-        <div key={`${storeName}-${storeItems.length}`}>
+        <div key={`${storeName}-${storeItems.length}-${storeItems.map(i => i.__updateTimestamp).join(',')}`}>
           {groupByStore && (
             <h3 className="text-lg font-semibold mb-4 pb-2 border-b">
               {storeName} ({storeItems.length} items)

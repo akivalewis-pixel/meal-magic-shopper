@@ -46,7 +46,7 @@ export function useSimpleShoppingList(meals: Meal[], pantryItems: string[] = [])
     const normalizedItems = newItems.map(item => ({
       ...item,
       store: item.store || "Unassigned",
-      id: `${item.name}-${item.meal || 'default'}-${Date.now()}`
+      id: `${item.name}-${item.meal || 'default'}-${Date.now()}-${Math.random()}`
     }));
 
     setGroceryItems(normalizedItems);
@@ -62,6 +62,7 @@ export function useSimpleShoppingList(meals: Meal[], pantryItems: string[] = [])
         if (item.id === updatedItem.id) {
           console.log("useSimpleShoppingList: Found matching item, updating:", item.name, "from store:", item.store, "to store:", updatedItem.store);
           return { 
+            ...item,
             ...updatedItem,
             __updateTimestamp: Date.now()
           };
