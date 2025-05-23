@@ -8,21 +8,27 @@ interface UseUpdateActionsProps {
   setGroceryItems: (items: GroceryItem[] | ((prev: GroceryItem[]) => GroceryItem[])) => void;
   manualItems: GroceryItem[];
   setManualItems: (items: GroceryItem[] | ((prev: GroceryItem[]) => GroceryItem[])) => void;
+  validateStore: (store: string) => string;
 }
 
 export const useUpdateActions = ({
   groceryItems,
   setGroceryItems,
   manualItems,
-  setManualItems
+  setManualItems,
+  validateStore
 }: UseUpdateActionsProps) => {
   const { toast } = useToast();
 
   const handleUpdateGroceryItem = (updatedItem: GroceryItem) => {
     console.log("useUpdateActions - Updating single item:", updatedItem.name, "to store:", updatedItem.store);
     
+    // Validate store value
+    const validatedStore = validateStore(updatedItem.store || "");
+    const itemWithValidStore = { ...updatedItem, store: validatedStore };
+    
     // Normalize the entire item to ensure consistency
-    const normalizedItem = normalizeGroceryItem(updatedItem);
+    const normalizedItem = normalizeGroceryItem(itemWithValidStore);
     
     console.log("useUpdateActions - Normalized item store:", normalizedItem.store);
     
@@ -59,13 +65,13 @@ export const useUpdateActions = ({
     // Show toast for store updates
     if (normalizedItem.store && normalizedItem.store !== "Unassigned") {
       toast({
-        title: "Store Updated",
+        title: "Item Updated",
         description: `${normalizedItem.name} assigned to ${normalizedItem.store}`,
       });
     } else {
       toast({
-        title: "Store Updated", 
-        description: `${normalizedItem.name} moved to Unassigned`,
+        title: "Item Updated", 
+        description: `${normalizedItem.name} updated`,
       });
     }
   };
@@ -76,7 +82,8 @@ export const useUpdateActions = ({
     // Normalize updates
     const normalizedUpdates = { ...updates };
     if (normalizedUpdates.store !== undefined) {
-      normalizedUpdates.store = normalizeStoreValue(normalizedUpdates.store);
+      const validatedStore = validateStore(normalizedUpdates.store);
+      normalizedUpdates.store = validatedStore;
       console.log("useUpdateActions - Normalized bulk store value:", normalizedUpdates.store);
     }
     
@@ -117,7 +124,7 @@ export const useUpdateActions = ({
     const updateValue = normalizedUpdates.store || normalizedUpdates.category || 'updated';
     toast({
       title: "Items Updated",
-      description: `${items.length} item${items.length > 1 ? 's' : ''} moved to ${updateValue}`,
+      description: `${items.length} item${items.length > 1 ? 's' : ''} ${updateType === 'store' ? 'moved to' : 'updated with'} ${updateValue}`,
     });
   };
 

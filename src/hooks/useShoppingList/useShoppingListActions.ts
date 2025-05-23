@@ -16,6 +16,13 @@ interface UseShoppingListActionsProps {
 }
 
 export const useShoppingListActions = (props: UseShoppingListActionsProps) => {
+  // Initialize store actions first so we can use its methods in other actions
+  const storeActions = useStoreActions({
+    setAvailableStores: props.setAvailableStores,
+    groceryItems: props.groceryItems,
+    setGroceryItems: props.setGroceryItems
+  });
+
   const itemActions = useItemActions({
     groceryItems: props.groceryItems,
     setGroceryItems: props.setGroceryItems,
@@ -29,11 +36,8 @@ export const useShoppingListActions = (props: UseShoppingListActionsProps) => {
     groceryItems: props.groceryItems,
     setGroceryItems: props.setGroceryItems,
     manualItems: props.manualItems,
-    setManualItems: props.setManualItems
-  });
-
-  const storeActions = useStoreActions({
-    setAvailableStores: props.setAvailableStores
+    setManualItems: props.setManualItems,
+    validateStore: storeActions.validateStore
   });
 
   return {
