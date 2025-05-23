@@ -21,20 +21,26 @@ export const SimpleStoreDropdown = ({
   onStoreChange
 }: SimpleStoreDropdownProps) => {
   const handleChange = (newStore: string) => {
-    console.log("Store dropdown change:", item.name, "->", newStore);
-    onStoreChange({ ...item, store: newStore }, newStore);
+    console.log("Store dropdown change:", item.name, "from:", item.store, "to:", newStore);
+    const updatedItem = { 
+      ...item, 
+      store: newStore,
+      __updateTimestamp: Date.now() // Force re-render
+    };
+    onStoreChange(updatedItem, newStore);
   };
 
   const currentStore = item.store || "Unassigned";
+  console.log("Rendering dropdown for:", item.name, "current store:", currentStore);
 
   return (
     <Select value={currentStore} onValueChange={handleChange}>
-      <SelectTrigger className="w-32 h-8 text-xs">
+      <SelectTrigger className="w-32 h-8 text-xs bg-white">
         <SelectValue />
       </SelectTrigger>
-      <SelectContent>
+      <SelectContent className="bg-white border shadow-lg z-50">
         {availableStores.map(store => (
-          <SelectItem key={store} value={store}>
+          <SelectItem key={store} value={store} className="bg-white hover:bg-gray-100">
             {store}
           </SelectItem>
         ))}

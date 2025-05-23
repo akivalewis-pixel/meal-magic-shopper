@@ -28,6 +28,11 @@ export const SimpleListView = ({
     onUpdateItem({ ...item, name });
   };
 
+  const handleStoreChange = (updatedItem: GroceryItem) => {
+    console.log("SimpleListView: Store change for", updatedItem.name, "to", updatedItem.store);
+    onUpdateItem(updatedItem);
+  };
+
   // Group items by store if needed
   const groupedItems = groupByStore ? 
     items.reduce((acc, item) => {
@@ -39,7 +44,7 @@ export const SimpleListView = ({
     { "All Items": items };
 
   const renderItem = (item: GroceryItem) => (
-    <li key={item.id} className="flex items-center gap-3 py-2 border-b border-gray-100">
+    <li key={`${item.id}-${item.__updateTimestamp || 0}`} className="flex items-center gap-3 py-2 border-b border-gray-100">
       <Checkbox
         checked={item.checked}
         onCheckedChange={() => onToggleItem(item.id)}
@@ -68,7 +73,7 @@ export const SimpleListView = ({
       <SimpleStoreDropdown
         item={item}
         availableStores={availableStores}
-        onStoreChange={onUpdateItem}
+        onStoreChange={handleStoreChange}
       />
       
       <span className="text-xs text-gray-500 w-16 text-center capitalize">

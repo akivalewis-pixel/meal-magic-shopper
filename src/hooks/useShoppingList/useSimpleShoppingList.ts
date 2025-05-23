@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { GroceryItem, Meal } from "@/types";
 import { generateShoppingList } from "@/utils/groceryUtils";
@@ -53,19 +52,24 @@ export function useSimpleShoppingList(meals: Meal[], pantryItems: string[] = [])
   }, [meals, pantryItems]);
 
   const updateItem = (updatedItem: GroceryItem) => {
-    console.log("Updating item:", updatedItem.name, "store:", updatedItem.store);
+    console.log("updateItem called:", updatedItem.name, "new store:", updatedItem.store);
     
     setGroceryItems(prev => {
-      const newItems = prev.map(item => 
-        item.id === updatedItem.id ? { ...updatedItem } : item
-      );
-      console.log("Updated items:", newItems.map(i => ({ name: i.name, store: i.store })));
+      const newItems = prev.map(item => {
+        if (item.id === updatedItem.id) {
+          console.log("Updating item:", item.name, "from store:", item.store, "to store:", updatedItem.store);
+          return { ...updatedItem };
+        }
+        return item;
+      });
+      
+      console.log("Updated grocery items:", newItems.map(i => ({ name: i.name, store: i.store })));
       return newItems;
     });
 
     toast({
-      title: "Item Updated",
-      description: `${updatedItem.name} updated successfully`,
+      title: "Item Updated", 
+      description: `${updatedItem.name} ${updatedItem.store !== "Unassigned" ? `moved to ${updatedItem.store}` : 'updated'}`,
     });
   };
 
