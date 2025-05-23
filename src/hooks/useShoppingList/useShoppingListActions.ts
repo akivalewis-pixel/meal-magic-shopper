@@ -41,13 +41,21 @@ export const useShoppingListActions = ({
     
     console.log("useShoppingListActions - Normalized item store:", normalizedItem.store);
     
-    // Force a complete state update to ensure re-render
+    // Create completely new array and new objects to ensure React detects changes
     setGroceryItems(prevItems => {
-      const newItems = prevItems.map(item =>
-        item.id === normalizedItem.id ? { ...normalizedItem } : item
-      );
+      const newItems = prevItems.map(item => {
+        if (item.id === normalizedItem.id) {
+          // Create a completely new object with a new timestamp to force re-render
+          return { 
+            ...normalizedItem,
+            __updateTimestamp: Date.now() // Force object reference change
+          };
+        }
+        return { ...item }; // Create new objects for all items
+      });
+      
       const sortedItems = sortGroceryItems(newItems);
-      console.log("useShoppingListActions - After single update, updated item in list:", 
+      console.log("useShoppingListActions - After single update, item in list:", 
         sortedItems.find(item => item.id === normalizedItem.id));
       return sortedItems;
     });
@@ -88,16 +96,18 @@ export const useShoppingListActions = ({
     }
     
     const itemIdsToUpdate = new Set(items.map(item => item.id));
+    const updateTimestamp = Date.now();
     
-    // Force a complete state update to ensure re-render
+    // Create completely new array and new objects to ensure React detects changes
     setGroceryItems(prevItems => {
       const newItems = prevItems.map(item => {
         if (itemIdsToUpdate.has(item.id)) {
           const updatedItem = normalizeGroceryItem({ ...item, ...normalizedUpdates });
           console.log("useShoppingListActions - Bulk updating:", item.name, "from:", item.store, "to:", updatedItem.store);
-          return { ...updatedItem };
+          // Add timestamp to force re-render
+          return { ...updatedItem, __updateTimestamp: updateTimestamp };
         }
-        return item;
+        return { ...item }; // Create new objects for all items
       });
       
       const sortedItems = sortGroceryItems(newItems);

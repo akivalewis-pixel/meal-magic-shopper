@@ -125,8 +125,11 @@ export const ShoppingListBoard = ({
     );
   }
 
+  // Generate a unique key based on all item stores to force re-render when stores change
+  const boardKey = allItems.map(item => `${item.id}-${item.store || 'Unassigned'}`).join('|');
+
   return (
-    <div className="space-y-4">
+    <div className="space-y-4" key={boardKey}>
       <MultiSelectActions
         selectedItems={selectedItemObjects}
         onUpdateMultiple={handleUpdateMultiple}
@@ -137,9 +140,11 @@ export const ShoppingListBoard = ({
       <div className="flex gap-4 overflow-x-auto pb-4">
         {Object.entries(groupedItems).map(([storeName, categories]) => {
           console.log("Board - Rendering store column:", storeName, "with categories:", Object.keys(categories));
+          // Generate unique key for each store column based on its items
+          const storeKey = `${storeName}-${Object.values(categories).flat().map(item => `${item.id}-${item.store}`).join('|')}`;
           return (
             <StoreColumn
-              key={storeName}
+              key={storeKey}
               storeName={storeName}
               categories={categories}
               selectedItems={selectedItems}
