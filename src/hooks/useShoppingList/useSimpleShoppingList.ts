@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { GroceryItem, Meal } from "@/types";
 import { generateShoppingList } from "@/utils/groceryUtils";
@@ -48,27 +47,43 @@ export function useSimpleShoppingList(meals: Meal[], pantryItems: string[] = [])
       mealItems = generateShoppingList(activeMeals, pantryItems, []);
     }
     
-    // Normalize all meal items
-    const normalizedMealItems = mealItems.map(item => ({
-      ...item,
-      store: item.store || "Unassigned",
-      id: `meal-${item.name}-${item.meal || 'default'}-${Date.now()}-${Math.random()}`,
-      source: 'meal' as const
-    }));
+    // Create a map of existing items by name to preserve store assignments
+    const existingItemsByName = new Map<string, GroceryItem>();
+    allItems.forEach(item => {
+      existingItemsByName.set(item.name.toLowerCase(), item);
+    });
+    
+    // Normalize meal items and preserve store assignments
+    const normalizedMealItems = mealItems.map(item => {
+      const existingItem = existingItemsByName.get(item.name.toLowerCase());
+      return {
+        ...item,
+        store: existingItem?.store || "Unassigned", // Preserve existing store assignment
+        id: `meal-${item.name}-${item.meal || 'default'}-${Date.now()}-${Math.random()}`,
+        source: 'meal' as const,
+        __updateTimestamp: existingItem?.__updateTimestamp || Date.now()
+      };
+    });
 
-    // Merge with existing manual items (preserve store assignments)
-    setAllItems(prevItems => {
-      const manualItems = prevItems.filter(item => item.id.startsWith('manual-'));
-      const combinedItems = [...normalizedMealItems, ...manualItems];
-      
-      console.log("useSimpleShoppingList: Combined items:", combinedItems.map(i => ({ 
+    // Keep manual items that don't conflict with meal items
+    const manualItems = allItems.filter(item => 
+      item.id.startsWith('manual-') && 
+      !normalizedMealItems.some(mealItem => 
+        mealItem.name.toLowerCase() === item.name.toLowerCase()
+      )
+    );
+    
+    const combinedItems = [...normalizedMealItems, ...manualItems];
+    
+    console.log("useSimpleShoppingList: Combined items with preserved stores:", 
+      combinedItems.map(i => ({ 
         name: i.name, 
         store: i.store, 
         source: i.id.startsWith('manual-') ? 'manual' : 'meal' 
-      })));
-      
-      return combinedItems;
-    });
+      }))
+    );
+    
+    setAllItems(combinedItems);
   }, [meals, pantryItems]);
 
   const updateItem = (updatedItem: GroceryItem) => {
