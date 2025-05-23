@@ -41,14 +41,14 @@ export const useShoppingListActions = ({
     
     console.log("useShoppingListActions - Normalized item store:", normalizedItem.store);
     
-    // Update in groceryItems with proper state management
+    // Force a complete state update to ensure re-render
     setGroceryItems(prevItems => {
       const newItems = prevItems.map(item =>
-        item.id === normalizedItem.id ? normalizedItem : item
+        item.id === normalizedItem.id ? { ...normalizedItem } : item
       );
       const sortedItems = sortGroceryItems(newItems);
-      console.log("useShoppingListActions - After single update, all items:", 
-        sortedItems.map(item => ({ name: item.name, store: item.store })));
+      console.log("useShoppingListActions - After single update, updated item in list:", 
+        sortedItems.find(item => item.id === normalizedItem.id));
       return sortedItems;
     });
     
@@ -57,7 +57,7 @@ export const useShoppingListActions = ({
       const existingIndex = prevItems.findIndex(item => item.id === normalizedItem.id);
       if (existingIndex >= 0) {
         const newItems = [...prevItems];
-        newItems[existingIndex] = normalizedItem;
+        newItems[existingIndex] = { ...normalizedItem };
         return newItems;
       }
       return prevItems;
@@ -68,6 +68,11 @@ export const useShoppingListActions = ({
       toast({
         title: "Store Updated",
         description: `${normalizedItem.name} assigned to ${normalizedItem.store}`,
+      });
+    } else {
+      toast({
+        title: "Store Updated", 
+        description: `${normalizedItem.name} moved to Unassigned`,
       });
     }
   };
@@ -84,20 +89,20 @@ export const useShoppingListActions = ({
     
     const itemIdsToUpdate = new Set(items.map(item => item.id));
     
-    // Update groceryItems with proper state management
+    // Force a complete state update to ensure re-render
     setGroceryItems(prevItems => {
       const newItems = prevItems.map(item => {
         if (itemIdsToUpdate.has(item.id)) {
           const updatedItem = normalizeGroceryItem({ ...item, ...normalizedUpdates });
           console.log("useShoppingListActions - Bulk updating:", item.name, "from:", item.store, "to:", updatedItem.store);
-          return updatedItem;
+          return { ...updatedItem };
         }
         return item;
       });
       
       const sortedItems = sortGroceryItems(newItems);
-      console.log("useShoppingListActions - After bulk update, all items:", 
-        sortedItems.map(item => ({ name: item.name, store: item.store })));
+      console.log("useShoppingListActions - After bulk update, sample updated items:", 
+        sortedItems.filter(item => itemIdsToUpdate.has(item.id)).slice(0, 3).map(item => ({ name: item.name, store: item.store })));
       return sortedItems;
     });
     

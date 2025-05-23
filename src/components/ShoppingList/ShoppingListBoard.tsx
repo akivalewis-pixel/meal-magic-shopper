@@ -31,7 +31,7 @@ export const ShoppingListBoard = ({
 
   console.log("ShoppingListBoard - Grouped items structure:", groupedItems);
   console.log("ShoppingListBoard - All items count:", allItems.length);
-  console.log("ShoppingListBoard - All items:", allItems.map(item => ({ name: item.name, store: item.store || 'Unassigned' })));
+  console.log("ShoppingListBoard - All items with stores:", allItems.map(item => ({ name: item.name, store: item.store || 'Unassigned' })));
 
   const selectedItemObjects = allItems.filter(item => selectedItems.includes(item.id));
 
@@ -54,16 +54,21 @@ export const ShoppingListBoard = ({
   };
 
   const handleSaveItem = (updatedItem: GroceryItem) => {
-    console.log("Saving item:", updatedItem);
+    console.log("Saving item from dialog:", updatedItem.name, "with store:", updatedItem.store);
     onUpdateItem(updatedItem);
     setEditingItem(null);
   };
 
   const handleDragStart = (e: React.DragEvent, item: GroceryItem) => {
-    console.log("Dragging item:", item.name, "from store:", item.store || "Unassigned");
+    console.log("Board - Drag start:", item.name, "from store:", item.store || "Unassigned");
     setDraggedItem(item);
     e.dataTransfer.effectAllowed = "move";
-    e.dataTransfer.setData("text/plain", JSON.stringify(item));
+    // Store the complete item data for drop handling
+    e.dataTransfer.setData("text/plain", JSON.stringify({
+      id: item.id,
+      name: item.name,
+      currentStore: item.store || "Unassigned"
+    }));
   };
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -74,20 +79,35 @@ export const ShoppingListBoard = ({
   const handleDrop = (e: React.DragEvent, targetStore: string, targetCategory?: GroceryCategory) => {
     e.preventDefault();
     
-    if (!draggedItem) return;
+    if (!draggedItem) {
+      console.log("Board - No dragged item found");
+      return;
+    }
 
-    console.log("Dropping item:", draggedItem.name, "to store:", targetStore, "category:", targetCategory);
+    console.log("Board - Drop event:", {
+      itemName: draggedItem.name,
+      fromStore: draggedItem.store || "Unassigned", 
+      toStore: targetStore,
+      targetCategory
+    });
 
+    // Normalize the target store value
+    const normalizedTargetStore = targetStore === "Unassigned" ? "Unassigned" : targetStore;
+    
     const updates: Partial<GroceryItem> = {
-      store: targetStore
+      store: normalizedTargetStore
     };
 
     if (targetCategory) {
       updates.category = targetCategory;
     }
 
-    console.log("Applying updates:", updates, "to item:", draggedItem.name);
-    onUpdateItem({ ...draggedItem, ...updates });
+    console.log("Board - Applying updates to dragged item:", updates);
+    
+    // Create updated item and call update
+    const updatedItem = { ...draggedItem, ...updates };
+    onUpdateItem(updatedItem);
+    
     setDraggedItem(null);
   };
 
@@ -116,7 +136,7 @@ export const ShoppingListBoard = ({
       
       <div className="flex gap-4 overflow-x-auto pb-4">
         {Object.entries(groupedItems).map(([storeName, categories]) => {
-          console.log("Rendering store column:", storeName, "with categories:", Object.keys(categories));
+          console.log("Board - Rendering store column:", storeName, "with categories:", Object.keys(categories));
           return (
             <StoreColumn
               key={storeName}
