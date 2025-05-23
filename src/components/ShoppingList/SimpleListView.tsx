@@ -35,17 +35,22 @@ export const SimpleListView = ({
 
   const handleStoreChange = (updatedItem: GroceryItem, newStore: string) => {
     console.log("SimpleListView: Store change for", updatedItem.name, "to", newStore);
+    
+    // Create a new item object with the updated store
     const itemWithNewStore = { 
       ...updatedItem, 
-      store: newStore,
+      store: newStore === "Unassigned" ? undefined : newStore,
       __updateTimestamp: Date.now()
     };
+    
+    console.log("SimpleListView: Calling onUpdateItem with:", itemWithNewStore);
     onUpdateItem(itemWithNewStore);
   };
 
   // Create a more robust grouping that properly handles store changes
   const groupedItems = React.useMemo(() => {
     console.log("SimpleListView: Re-computing grouped items with", items.length, "items");
+    console.log("SimpleListView: Items with stores:", items.map(i => ({ name: i.name, store: i.store })));
     
     // Create a fresh grouping based on current items state
     const currentGrouping: Record<string, GroceryItem[]> = {};
@@ -72,7 +77,7 @@ export const SimpleListView = ({
   }, [items, groupByStore]);
 
   const renderItem = (item: GroceryItem) => (
-    <li key={item.id} className="flex items-center gap-3 py-2 border-b border-gray-100">
+    <li key={`${item.id}-${item.__updateTimestamp || 0}`} className="flex items-center gap-3 py-2 border-b border-gray-100">
       <Checkbox
         checked={item.checked}
         onCheckedChange={() => onToggleItem(item.id)}
@@ -114,7 +119,7 @@ export const SimpleListView = ({
   return (
     <div className="space-y-6">
       {Object.entries(groupedItems).map(([storeName, storeItems]) => (
-        <div key={storeName}>
+        <div key={`${storeName}-${storeItems.length}`}>
           {groupByStore && (
             <h3 className="text-lg font-semibold mb-4 pb-2 border-b">
               {storeName} ({storeItems.length} items)

@@ -30,7 +30,6 @@ export const SimpleStoreDropdown = ({
 
   return (
     <Select 
-      key={`${item.id}-${currentStore}`} 
       value={currentStore} 
       onValueChange={handleChange}
     >
