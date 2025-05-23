@@ -30,19 +30,42 @@ export const IngredientButton = ({
     onDoubleClick(item);
   };
 
+  const handleDragStart = (e: React.DragEvent) => {
+    console.log("Drag starting for item:", item.name);
+    e.stopPropagation();
+    onDragStart(e, item);
+    
+    // Set a delay to make drag visually better
+    setTimeout(() => {
+      const draggedElement = e.currentTarget as HTMLElement;
+      if (draggedElement) {
+        draggedElement.classList.add("opacity-50");
+      }
+    }, 0);
+  };
+
+  const handleDragEnd = (e: React.DragEvent) => {
+    const draggedElement = e.currentTarget as HTMLElement;
+    if (draggedElement) {
+      draggedElement.classList.remove("opacity-50");
+    }
+  };
+
   return (
     <Button
       variant={isSelected ? "default" : "outline"}
       size="sm"
       className={cn(
-        "w-full justify-start text-left h-auto p-3 mb-2 cursor-pointer transition-all",
+        "w-full justify-start text-left h-auto p-3 mb-2 cursor-move transition-all",
         isSelected && "ring-2 ring-primary",
         item.checked && "opacity-50 line-through"
       )}
       onClick={handleClick}
       onDoubleClick={handleDoubleClick}
-      draggable
-      onDragStart={(e) => onDragStart(e, item)}
+      draggable={true}
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
+      data-item-id={item.id}
     >
       <div className="flex flex-col items-start w-full">
         <div className="font-medium text-sm">{item.name}</div>

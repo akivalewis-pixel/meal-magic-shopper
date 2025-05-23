@@ -25,6 +25,8 @@ export const useUpdateActions = ({
     
     // Validate store value and create a new object to ensure reference change
     const validatedStore = validateStore(updatedItem.store || "");
+    console.log("Store after validation:", validatedStore);
+    
     const normalizedItem = { 
       ...updatedItem, 
       store: validatedStore,
@@ -37,13 +39,16 @@ export const useUpdateActions = ({
     setGroceryItems(prevItems => {
       const newItems = prevItems.map(item => {
         if (item.id === normalizedItem.id) {
+          console.log(`Updating item ${item.id} - old store: ${item.store}, new store: ${normalizedItem.store}`);
           return normalizedItem;
         }
         return { ...item }; // Create new references for all items
       });
       
       // Sort the items after updating
-      return sortGroceryItems(newItems);
+      const sortedItems = sortGroceryItems(newItems);
+      console.log("Items after sorting:", sortedItems.map(i => ({ id: i.id, name: i.name, store: i.store })));
+      return sortedItems;
     });
     
     // Update in manualItems if it exists there
@@ -78,6 +83,7 @@ export const useUpdateActions = ({
     const normalizedUpdates = { ...updates };
     if (normalizedUpdates.store !== undefined) {
       normalizedUpdates.store = validateStore(normalizedUpdates.store);
+      console.log("Bulk update - normalized store value:", normalizedUpdates.store);
     }
     
     const itemIdsToUpdate = new Set(items.map(item => item.id));
@@ -87,11 +93,13 @@ export const useUpdateActions = ({
     setGroceryItems(prevItems => {
       const newItems = prevItems.map(item => {
         if (itemIdsToUpdate.has(item.id)) {
-          return { 
+          const updatedItem = { 
             ...item, 
             ...normalizedUpdates, 
             __updateTimestamp: updateTimestamp 
           };
+          console.log(`Bulk updating item ${item.name} - old store: ${item.store}, new store: ${updatedItem.store}`);
+          return updatedItem;
         }
         return { ...item };
       });

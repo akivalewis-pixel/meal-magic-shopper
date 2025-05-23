@@ -5,24 +5,32 @@ import { groceryCategories } from "@/utils/constants";
 export const normalizeStoreValue = (store: string | undefined): string => {
   // Convert empty strings, undefined, and null values to "Unassigned"
   if (!store || store.trim() === "" || store === "undefined" || store === "null") {
+    console.log("Normalizing empty store to Unassigned");
     return "Unassigned";
   }
+  console.log(`Normalized store: '${store}' -> '${store}'`);
   return store;
 };
 
 export const normalizeGroceryItem = (item: GroceryItem): GroceryItem => {
-  return {
+  const normalizedItem = {
     ...item,
     store: normalizeStoreValue(item.store)
   };
+  console.log(`Normalized item ${item.name} store: '${item.store}' -> '${normalizedItem.store}'`);
+  return normalizedItem;
 };
 
 export const sortGroceryItems = (items: GroceryItem[]): GroceryItem[] => {
+  console.log("Sorting grocery items...");
+  
   // Create a completely new array to avoid mutation issues
   return [...items].sort((a, b) => {
     // Always normalize store values for consistent comparison
     const storeA = normalizeStoreValue(a.store);
     const storeB = normalizeStoreValue(b.store);
+    
+    console.log(`Comparing ${a.name}(${storeA}) with ${b.name}(${storeB})`);
     
     if (storeA !== storeB) {
       // Unassigned always comes last

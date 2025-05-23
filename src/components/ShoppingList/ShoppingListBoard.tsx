@@ -24,34 +24,6 @@ export const ShoppingListBoard = ({
   const [editingItem, setEditingItem] = useState<GroceryItem | null>(null);
   const [draggedItem, setDraggedItem] = useState<GroceryItem | null>(null);
   
-  // Calculate a hash of the groupedItems to detect changes
-  const itemsHash = useCallback(() => {
-    return Object.entries(groupedItems)
-      .map(([store, categories]) => {
-        const categoryHashes = Object.entries(categories)
-          .map(([category, items]) => {
-            return `${category}:${items.map(i => `${i.id}-${i.store || 'Unassigned'}`).join('|')}`;
-          })
-          .join('||');
-        return `${store}-${categoryHashes}`;
-      })
-      .join('###');
-  }, [groupedItems]);
-  
-  // Update this hash whenever the groupedItems change
-  const [currentItemsHash, setCurrentItemsHash] = useState(itemsHash());
-  const [boardKey, setBoardKey] = useState(Date.now());
-  
-  // Force re-render when grouped items structure changes
-  useEffect(() => {
-    const newHash = itemsHash();
-    if (newHash !== currentItemsHash) {
-      console.log("Board - Data structure changed, forcing re-render");
-      setCurrentItemsHash(newHash);
-      setBoardKey(Date.now());
-    }
-  }, [groupedItems, itemsHash, currentItemsHash]);
-
   // Get all items for selection handling
   const allItems = Object.values(groupedItems).flatMap(categories =>
     Object.values(categories).flat()
@@ -81,17 +53,13 @@ export const ShoppingListBoard = ({
     console.log("Saving item from dialog:", updatedItem.name, "with store:", updatedItem.store);
     onUpdateItem(updatedItem);
     setEditingItem(null);
-    
-    // Force UI refresh
-    setBoardKey(Date.now());
   };
 
   const handleDragStart = (e: React.DragEvent, item: GroceryItem) => {
     console.log("Board - Drag start:", item.name, "from store:", item.store || "Unassigned");
     setDraggedItem(item);
     e.dataTransfer.effectAllowed = "move";
-    // Store the complete item data for drop handling
-    e.dataTransfer.setData("text/plain", JSON.stringify({
+    e.dataTransfer.setData("application/json", JSON.stringify({
       id: item.id,
       name: item.name,
       currentStore: item.store || "Unassigned"
@@ -108,6 +76,35 @@ export const ShoppingListBoard = ({
     
     if (!draggedItem) {
       console.log("Board - No dragged item found");
+      try {
+        // Try to get the item data from the dataTransfer
+        const data = e.dataTransfer.getData("application/json");
+        if (data) {
+          const parsedData = JSON.parse(data);
+          console.log("Found data in transfer:", parsedData);
+          
+          // Find the actual item
+          const item = allItems.find(i => i.id === parsedData.id);
+          if (item) {
+            console.log("Found item in allItems:", item);
+            
+            // Apply updates directly
+            const updates: Partial<GroceryItem> = {
+              store: targetStore
+            };
+            
+            if (targetCategory) {
+              updates.category = targetCategory;
+            }
+            
+            console.log("Applying updates:", updates);
+            onUpdateItem({ ...item, ...updates });
+            return;
+          }
+        }
+      } catch (error) {
+        console.error("Error parsing drag data:", error);
+      }
       return;
     }
 
@@ -136,18 +133,12 @@ export const ShoppingListBoard = ({
     onUpdateItem(updatedItem);
     
     setDraggedItem(null);
-    
-    // Force re-render
-    setBoardKey(Date.now());
   };
 
   const handleUpdateMultiple = (items: GroceryItem[], updates: Partial<GroceryItem>) => {
     console.log("Board - Updating multiple items:", items.length, "updates:", updates);
     onUpdateMultiple(items, updates);
     setSelectedItems([]);
-    
-    // Force re-render
-    setBoardKey(Date.now());
   };
 
   if (Object.keys(groupedItems).length === 0) {
@@ -159,7 +150,7 @@ export const ShoppingListBoard = ({
   }
 
   return (
-    <div className="space-y-4" key={`board-${boardKey}`}>
+    <div className="space-y-4">
       <MultiSelectActions
         selectedItems={selectedItemObjects}
         onUpdateMultiple={handleUpdateMultiple}
@@ -172,7 +163,7 @@ export const ShoppingListBoard = ({
           console.log("Board - Rendering store column:", storeName, "with categories:", Object.keys(categories));
           return (
             <StoreColumn
-              key={`${storeName}-${boardKey}-${Object.keys(categories).length}`}
+              key={`${storeName}-${Date.now()}-${Object.keys(categories).length}`}
               storeName={storeName}
               categories={categories}
               selectedItems={selectedItems}

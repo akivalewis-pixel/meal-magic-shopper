@@ -59,7 +59,8 @@ export const useStoreActions = ({
 
   // Helper function to validate if a store exists before assigning
   const validateStore = (store: string): string => {
-    if (!store || store === "unassigned" || store === "Unassigned") {
+    console.log("Validating store:", store);
+    if (!store || store.trim() === "" || store === "unassigned" || store === "Unassigned") {
       return "Unassigned";
     }
     return store;

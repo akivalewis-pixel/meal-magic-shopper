@@ -25,11 +25,8 @@ export const ShoppingListActions = ({
   searchTerm,
   setSearchTerm,
   showChecked,
-  setShowChecked,
   selectedStore,
   setSelectedStore,
-  groupByStore,
-  setGroupByStore,
   sortBy,
   setSortBy,
   setIsEditingStores,
@@ -52,10 +49,6 @@ export const ShoppingListActions = ({
         onSearchChange={setSearchTerm}
         selectedStore={selectedStore}
         onStoreFilterChange={setSelectedStore}
-        showChecked={showChecked}
-        onToggleShowChecked={() => setShowChecked(!showChecked)}
-        groupByStore={groupByStore}
-        onToggleGroupByStore={() => setGroupByStore(!groupByStore)}
         availableStores={availableStores}
       />
     </>

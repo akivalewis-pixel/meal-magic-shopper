@@ -2,7 +2,6 @@
 import React from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
 import { 
   Select, 
   SelectContent, 
@@ -16,10 +15,6 @@ interface ShoppingListFiltersProps {
   onSearchChange: (value: string) => void;
   selectedStore: string;
   onStoreFilterChange: (value: string) => void;
-  showChecked: boolean;
-  onToggleShowChecked: () => void;
-  groupByStore: boolean;
-  onToggleGroupByStore: () => void;
   availableStores: string[];
 }
 
@@ -28,10 +23,6 @@ export const ShoppingListFilters = ({
   onSearchChange,
   selectedStore,
   onStoreFilterChange,
-  showChecked,
-  onToggleShowChecked,
-  groupByStore,
-  onToggleGroupByStore,
   availableStores
 }: ShoppingListFiltersProps) => {
   return (
@@ -64,24 +55,6 @@ export const ShoppingListFilters = ({
               ))}
             </SelectContent>
           </Select>
-        </div>
-        <div className="flex items-end">
-          <Button 
-            variant="outline" 
-            onClick={onToggleShowChecked}
-            className="whitespace-nowrap"
-          >
-            {showChecked ? "Hide Checked Items" : "Show Checked Items"}
-          </Button>
-        </div>
-        <div className="flex items-end">
-          <Button 
-            variant="outline" 
-            onClick={onToggleGroupByStore}
-            className="whitespace-nowrap"
-          >
-            {groupByStore ? "Group by Category" : "Group by Store"}
-          </Button>
         </div>
       </div>
     </div>

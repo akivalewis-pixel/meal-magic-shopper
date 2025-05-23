@@ -31,24 +31,19 @@ export const StoreColumn = ({
     return customCategoryNames[categoryName] || categoryName;
   };
 
-  // Generate unique keys for each render cycle based on the store name and all items
-  const columnKey = React.useMemo(() => {
-    const timestamp = Date.now();
-    const itemsSignature = Object.entries(categories)
-      .flatMap(([category, items]) => 
-        items.map(item => `${item.id}-${item.store || 'Unassigned'}-${JSON.stringify(item)}`)
-      )
-      .join('|');
-    
-    return `${storeName}-${timestamp}-${itemsSignature.length}`;
-  }, [storeName, categories]);
-
   return (
-    <div className="flex-1 min-w-[280px]" key={columnKey}>
+    <div className="flex-1 min-w-[280px]">
       <div 
         className="bg-white rounded-lg shadow-sm border p-4 h-full"
-        onDragOver={onDragOver}
-        onDrop={(e) => onDrop(e, storeName)}
+        onDragOver={(e) => {
+          e.preventDefault();
+          e.dataTransfer.dropEffect = "move";
+          console.log("Dragging over store:", storeName);
+        }}
+        onDrop={(e) => {
+          console.log("Dropping on store:", storeName);
+          onDrop(e, storeName);
+        }}
       >
         <h3 className="text-lg font-semibold mb-4 sticky top-0 bg-white pb-2 border-b">
           {storeName}
@@ -56,7 +51,6 @@ export const StoreColumn = ({
         
         <div className="space-y-4">
           {Object.entries(categories).map(([categoryName, items]) => {
-            // Generate unique key for each category section
             const categoryKey = `${storeName}-${categoryName}-${items.length}-${Date.now()}`;
             
             return (
@@ -69,14 +63,21 @@ export const StoreColumn = ({
                     "min-h-[60px] p-2 rounded border-2 border-dashed border-muted transition-colors",
                     "hover:border-primary/50"
                   )}
-                  onDragOver={onDragOver}
-                  onDrop={(e) => onDrop(e, storeName, categoryName as GroceryCategory)}
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    e.dataTransfer.dropEffect = "move";
+                    console.log("Dragging over category:", categoryName, "in store:", storeName);
+                  }}
+                  onDrop={(e) => {
+                    console.log("Dropping on category:", categoryName, "in store:", storeName);
+                    onDrop(e, storeName, categoryName as GroceryCategory);
+                  }}
                 >
                   {items.length > 0 ? (
                     <div className="space-y-2">
                       {items.map(item => (
                         <IngredientButton
-                          key={`${item.id}-${Date.now()}`}
+                          key={item.id}
                           item={item}
                           isSelected={selectedItems.includes(item.id)}
                           onSelect={onSelectItem}
