@@ -31,7 +31,8 @@ export const MultiSelectActions = ({
 
   const handleMoveToStore = () => {
     if (selectedStore) {
-      onUpdateMultiple(selectedItems, { store: selectedStore });
+      const storeValue = selectedStore === "unassigned" ? "" : selectedStore;
+      onUpdateMultiple(selectedItems, { store: storeValue });
       setSelectedStore("");
     }
   };
@@ -65,7 +66,7 @@ export const MultiSelectActions = ({
               <SelectValue placeholder="Move to store" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Unassigned</SelectItem>
+              <SelectItem value="unassigned">Unassigned</SelectItem>
               {availableStores.filter(s => s !== "Any Store").map(store => (
                 <SelectItem key={store} value={store}>
                   {store}

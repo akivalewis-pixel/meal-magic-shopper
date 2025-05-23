@@ -90,11 +90,15 @@ export const ShoppingListItem = ({
   // Handle store change directly with immediate update
   const handleStoreChange = (value: string) => {
     console.log("Store change in ShoppingListItem:", item.name, "to", value);
+    const storeValue = value === "unassigned" ? "" : value;
     // Create a new item with updated store value to ensure the state is updated properly
-    const updatedItem = { ...item, store: value };
+    const updatedItem = { ...item, store: storeValue };
     // Pass the updated item to the parent component
-    onStoreChange(updatedItem, value);
+    onStoreChange(updatedItem, storeValue);
   };
+
+  // Get the current store value for the select
+  const currentStoreValue = item.store || "unassigned";
 
   return (
     <li className="flex items-center gap-3 flex-wrap">
@@ -140,7 +144,7 @@ export const ShoppingListItem = ({
         />
         
         <Select 
-          value={item.store || ""}
+          value={currentStoreValue}
           onValueChange={handleStoreChange}
           disabled={isArchiveView}
         >
@@ -148,7 +152,8 @@ export const ShoppingListItem = ({
             <SelectValue placeholder="Select Store" />
           </SelectTrigger>
           <SelectContent>
-            {availableStores.map(store => (
+            <SelectItem value="unassigned">Unassigned</SelectItem>
+            {availableStores.filter(store => store !== "Any Store").map(store => (
               <SelectItem key={store} value={store}>{store}</SelectItem>
             ))}
           </SelectContent>

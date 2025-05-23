@@ -36,14 +36,14 @@ export const IngredientEditDialog = ({
 }: IngredientEditDialogProps) => {
   const [name, setName] = useState(item?.name || "");
   const [quantity, setQuantity] = useState(item?.quantity || "");
-  const [store, setStore] = useState(item?.store || "");
+  const [store, setStore] = useState(item?.store || "unassigned");
   const [category, setCategory] = useState<GroceryCategory>(item?.category || "other");
 
   React.useEffect(() => {
     if (item) {
       setName(item.name);
       setQuantity(item.quantity);
-      setStore(item.store || "");
+      setStore(item.store || "unassigned");
       setCategory(item.category);
     }
   }, [item]);
@@ -55,7 +55,7 @@ export const IngredientEditDialog = ({
       ...item,
       name,
       quantity,
-      store,
+      store: store === "unassigned" ? "" : store,
       category
     };
     
@@ -98,7 +98,7 @@ export const IngredientEditDialog = ({
                 <SelectValue placeholder="Select store" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Unassigned</SelectItem>
+                <SelectItem value="unassigned">Unassigned</SelectItem>
                 {availableStores.filter(s => s !== "Any Store").map(storeName => (
                   <SelectItem key={storeName} value={storeName}>
                     {storeName}
