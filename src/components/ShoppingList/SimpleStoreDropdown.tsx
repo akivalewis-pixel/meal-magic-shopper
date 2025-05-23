@@ -21,22 +21,26 @@ export const SimpleStoreDropdown = ({
   onStoreChange
 }: SimpleStoreDropdownProps) => {
   const handleChange = (newStore: string) => {
-    console.log("SimpleStoreDropdown: Store change for:", item.name, "to:", newStore);
+    console.log("SimpleStoreDropdown: Store change for:", item.name, "from:", item.store, "to:", newStore);
     
     const updatedItem = { 
       ...item, 
-      store: newStore
+      store: newStore,
+      __updateTimestamp: Date.now() // Force re-render
     };
     
     onStoreChange(updatedItem, newStore);
   };
 
   const currentStore = item.store || "Unassigned";
+  
+  console.log("SimpleStoreDropdown: Rendering", item.name, "with store:", currentStore, "timestamp:", item.__updateTimestamp);
 
   return (
     <Select 
       value={currentStore} 
       onValueChange={handleChange}
+      key={`${item.id}-${item.__updateTimestamp || 0}`} // Force re-render on updates
     >
       <SelectTrigger className="w-32 h-8 text-xs bg-white border border-gray-300">
         <SelectValue placeholder="Select store" />

@@ -75,20 +75,27 @@ export function useSimpleShoppingList(meals: Meal[], pantryItems: string[] = [])
     console.log("useSimpleShoppingList updateItem called:", updatedItem.name, "new store:", updatedItem.store);
     
     setAllItems(prevItems => {
-      const newItems = prevItems.map(item => {
+      const updatedItems = prevItems.map(item => {
         if (item.id === updatedItem.id) {
-          console.log("useSimpleShoppingList: Updating item:", item.name, "to store:", updatedItem.store);
-          return {
+          console.log("useSimpleShoppingList: Updating item:", item.name, "from store:", item.store, "to store:", updatedItem.store);
+          const updated = {
             ...updatedItem,
             store: updatedItem.store || "Unassigned",
             __updateTimestamp: Date.now()
           };
+          console.log("useSimpleShoppingList: Updated item result:", updated);
+          return updated;
         }
         return item;
       });
       
-      console.log("useSimpleShoppingList: Updated items:", newItems.map(i => ({ name: i.name, store: i.store })));
-      return newItems;
+      console.log("useSimpleShoppingList: All items after update:", updatedItems.map(i => ({ 
+        id: i.id,
+        name: i.name, 
+        store: i.store,
+        timestamp: i.__updateTimestamp 
+      })));
+      return updatedItems;
     });
 
     toast({
