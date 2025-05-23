@@ -5,10 +5,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Plus, Settings, RefreshCw, LayoutGrid, List } from "lucide-react";
+import { Plus, Settings, RefreshCw, LayoutGrid, List, Store, Edit } from "lucide-react";
 import { SimpleListView } from "./SimpleListView";
 import { SimpleBoardView } from "./SimpleBoardView";
 import { useSimpleShoppingList } from "@/hooks/useShoppingList/useSimpleShoppingList";
+import { StoreManagementDialog } from "./StoreManagementDialog";
+import { AddItemForm } from "./AddItemForm";
 
 interface NewShoppingListProps {
   meals: any[];
@@ -19,7 +21,8 @@ export const NewShoppingList = ({ meals, pantryItems = [] }: NewShoppingListProp
   const [viewMode, setViewMode] = useState<"list" | "board">("list");
   const [groupByStore, setGroupByStore] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [showChecked, setShowChecked] = useState(true);
+  const [isEditingStores, setIsEditingStores] = useState(false);
+  const [isAddingItem, setIsAddingItem] = useState(false);
   
   const {
     groceryItems,
@@ -33,13 +36,22 @@ export const NewShoppingList = ({ meals, pantryItems = [] }: NewShoppingListProp
     resetList
   } = useSimpleShoppingList(meals, pantryItems);
 
-  // Filter items based on search and checked status
+  // Filter items based on search only (no longer filtering by checked status)
   const filteredItems = groceryItems.filter(item => {
     const matchesSearch = searchTerm === "" || 
       item.name.toLowerCase().includes(searchTerm.toLowerCase());
-    const shouldShow = showChecked || !item.checked;
-    return matchesSearch && shouldShow;
+    return matchesSearch;
   });
+
+  const handleAddNewItem = (newItem: GroceryItem) => {
+    addItem(newItem);
+    setIsAddingItem(false);
+  };
+
+  const handleSaveStores = (stores: string[]) => {
+    updateStores(stores);
+    setIsEditingStores(false);
+  };
 
   console.log("Filtered items:", filteredItems.map(i => ({ name: i.name, store: i.store })));
 
@@ -67,6 +79,24 @@ export const NewShoppingList = ({ meals, pantryItems = [] }: NewShoppingListProp
             <Button
               variant="outline"
               size="sm"
+              onClick={() => setIsEditingStores(true)}
+              className="flex items-center gap-2"
+            >
+              <Store className="h-4 w-4" />
+              Manage Stores
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsAddingItem(true)}
+              className="flex items-center gap-2"
+            >
+              <Plus className="h-4 w-4" />
+              Add Item
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
               onClick={resetList}
               className="text-red-600"
             >
@@ -83,15 +113,6 @@ export const NewShoppingList = ({ meals, pantryItems = [] }: NewShoppingListProp
             onChange={(e) => setSearchTerm(e.target.value)}
             className="max-w-xs"
           />
-          
-          <div className="flex items-center space-x-2">
-            <Switch
-              id="show-checked"
-              checked={showChecked}
-              onCheckedChange={setShowChecked}
-            />
-            <Label htmlFor="show-checked">Show completed</Label>
-          </div>
           
           {viewMode === "list" && (
             <div className="flex items-center space-x-2">
@@ -126,6 +147,23 @@ export const NewShoppingList = ({ meals, pantryItems = [] }: NewShoppingListProp
             />
           )}
         </div>
+
+        <StoreManagementDialog 
+          open={isEditingStores} 
+          onOpenChange={setIsEditingStores}
+          stores={availableStores}
+          onSaveStores={handleSaveStores}
+        />
+        
+        <AddItemForm
+          open={isAddingItem}
+          onOpenChange={setIsAddingItem}
+          availableStores={availableStores}
+          onAddItem={handleAddNewItem}
+          archivedItems={archivedItems}
+          onSearchArchivedItems={() => {}}
+          isSearchingArchived={false}
+        />
       </div>
     </section>
   );
