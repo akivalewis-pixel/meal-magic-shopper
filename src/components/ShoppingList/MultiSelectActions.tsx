@@ -43,6 +43,10 @@ export const MultiSelectActions = ({
     }
   };
 
+  const handleCategoryChange = (value: string) => {
+    setSelectedCategory(value as GroceryCategory | "");
+  };
+
   return (
     <div className="bg-primary/10 p-4 rounded-lg mb-4">
       <div className="flex items-center justify-between mb-3">
@@ -75,7 +79,7 @@ export const MultiSelectActions = ({
         </div>
         
         <div className="flex items-center gap-2">
-          <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+          <Select value={selectedCategory} onValueChange={handleCategoryChange}>
             <SelectTrigger className="w-40">
               <SelectValue placeholder="Move to category" />
             </SelectTrigger>
