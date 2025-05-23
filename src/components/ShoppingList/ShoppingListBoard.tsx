@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { GroceryItem, GroceryCategory } from "@/types";
 import { StoreColumn } from "./StoreColumn";
 import { IngredientEditDialog } from "./IngredientEditDialog";
@@ -23,23 +23,39 @@ export const ShoppingListBoard = ({
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [editingItem, setEditingItem] = useState<GroceryItem | null>(null);
   const [draggedItem, setDraggedItem] = useState<GroceryItem | null>(null);
-  const [boardVersion, setBoardVersion] = useState(Date.now());
+  
+  // Calculate a hash of the groupedItems to detect changes
+  const itemsHash = useCallback(() => {
+    return Object.entries(groupedItems)
+      .map(([store, categories]) => {
+        const categoryHashes = Object.entries(categories)
+          .map(([category, items]) => {
+            return `${category}:${items.map(i => `${i.id}-${i.store || 'Unassigned'}`).join('|')}`;
+          })
+          .join('||');
+        return `${store}-${categoryHashes}`;
+      })
+      .join('###');
+  }, [groupedItems]);
+  
+  // Update this hash whenever the groupedItems change
+  const [currentItemsHash, setCurrentItemsHash] = useState(itemsHash());
+  const [boardKey, setBoardKey] = useState(Date.now());
+  
+  // Force re-render when grouped items structure changes
+  useEffect(() => {
+    const newHash = itemsHash();
+    if (newHash !== currentItemsHash) {
+      console.log("Board - Data structure changed, forcing re-render");
+      setCurrentItemsHash(newHash);
+      setBoardKey(Date.now());
+    }
+  }, [groupedItems, itemsHash, currentItemsHash]);
 
   // Get all items for selection handling
   const allItems = Object.values(groupedItems).flatMap(categories =>
     Object.values(categories).flat()
   );
-
-  // Force re-render when grouped items changes
-  useEffect(() => {
-    console.log("Board - Data changed, forcing re-render");
-    setBoardVersion(Date.now());
-  }, [groupedItems]);
-
-  console.log("ShoppingListBoard - Rendering with version:", boardVersion);
-  console.log("ShoppingListBoard - Grouped items structure:", groupedItems);
-  console.log("ShoppingListBoard - All items count:", allItems.length);
-  console.log("ShoppingListBoard - All items with stores:", allItems.map(item => ({ name: item.name, store: item.store || 'Unassigned' })));
 
   const selectedItemObjects = allItems.filter(item => selectedItems.includes(item.id));
 
@@ -65,6 +81,9 @@ export const ShoppingListBoard = ({
     console.log("Saving item from dialog:", updatedItem.name, "with store:", updatedItem.store);
     onUpdateItem(updatedItem);
     setEditingItem(null);
+    
+    // Force UI refresh
+    setBoardKey(Date.now());
   };
 
   const handleDragStart = (e: React.DragEvent, item: GroceryItem) => {
@@ -118,8 +137,8 @@ export const ShoppingListBoard = ({
     
     setDraggedItem(null);
     
-    // Force re-render of the board
-    setBoardVersion(Date.now());
+    // Force re-render
+    setBoardKey(Date.now());
   };
 
   const handleUpdateMultiple = (items: GroceryItem[], updates: Partial<GroceryItem>) => {
@@ -127,8 +146,8 @@ export const ShoppingListBoard = ({
     onUpdateMultiple(items, updates);
     setSelectedItems([]);
     
-    // Force re-render of the board
-    setBoardVersion(Date.now());
+    // Force re-render
+    setBoardKey(Date.now());
   };
 
   if (Object.keys(groupedItems).length === 0) {
@@ -140,7 +159,7 @@ export const ShoppingListBoard = ({
   }
 
   return (
-    <div className="space-y-4" key={`board-${boardVersion}`}>
+    <div className="space-y-4" key={`board-${boardKey}`}>
       <MultiSelectActions
         selectedItems={selectedItemObjects}
         onUpdateMultiple={handleUpdateMultiple}
@@ -153,7 +172,7 @@ export const ShoppingListBoard = ({
           console.log("Board - Rendering store column:", storeName, "with categories:", Object.keys(categories));
           return (
             <StoreColumn
-              key={`${storeName}-${boardVersion}`}
+              key={`${storeName}-${boardKey}-${Object.keys(categories).length}`}
               storeName={storeName}
               categories={categories}
               selectedItems={selectedItems}

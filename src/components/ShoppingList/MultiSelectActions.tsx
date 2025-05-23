@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { GroceryItem, GroceryCategory } from "@/types";
 import { Button } from "@/components/ui/button";
 import {
@@ -26,6 +26,12 @@ export const MultiSelectActions = ({
 }: MultiSelectActionsProps) => {
   const [selectedStore, setSelectedStore] = useState<string>("");
   const [selectedCategory, setSelectedCategory] = useState<GroceryCategory | "">("");
+  
+  // Reset selections when selected items change
+  useEffect(() => {
+    setSelectedStore("");
+    setSelectedCategory("");
+  }, [selectedItems.length]);
 
   if (selectedItems.length === 0) return null;
 
@@ -52,11 +58,11 @@ export const MultiSelectActions = ({
     setSelectedCategory(value as GroceryCategory | "");
   };
 
-  // Generate a unique key for this component based on the selected items
-  const selectedItemsKey = selectedItems.map(item => item.id).join('-');
+  // Generate a unique ID for this component instance
+  const componentId = `multi-select-${selectedItems.map(item => item.id).join('-')}-${Date.now()}`;
 
   return (
-    <div className="bg-primary/10 p-4 rounded-lg mb-4" key={`multi-select-${selectedItemsKey}`}>
+    <div className="bg-primary/10 p-4 rounded-lg mb-4" key={componentId}>
       <div className="flex items-center justify-between mb-3">
         <span className="font-medium">
           {selectedItems.length} item{selectedItems.length > 1 ? 's' : ''} selected

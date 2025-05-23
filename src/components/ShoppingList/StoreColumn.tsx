@@ -31,21 +31,20 @@ export const StoreColumn = ({
     return customCategoryNames[categoryName] || categoryName;
   };
 
-  console.log("StoreColumn - Rendering:", storeName, "Categories:", Object.keys(categories));
-  Object.entries(categories).forEach(([category, items]) => {
-    console.log(`StoreColumn - Category '${category}' contains ${items.length} items:`, 
-      items.map(item => item.name));
-  });
-
-  // Generate a unique key for this render based on the items
-  const columnItemsKey = Object.entries(categories)
-    .flatMap(([category, items]) => 
-      items.map(item => `${item.id}-${item.store || 'Unassigned'}`)
-    )
-    .join('|');
+  // Generate unique keys for each render cycle based on the store name and all items
+  const columnKey = React.useMemo(() => {
+    const timestamp = Date.now();
+    const itemsSignature = Object.entries(categories)
+      .flatMap(([category, items]) => 
+        items.map(item => `${item.id}-${item.store || 'Unassigned'}-${JSON.stringify(item)}`)
+      )
+      .join('|');
+    
+    return `${storeName}-${timestamp}-${itemsSignature.length}`;
+  }, [storeName, categories]);
 
   return (
-    <div className="flex-1 min-w-[280px]" key={`column-${storeName}-${columnItemsKey}`}>
+    <div className="flex-1 min-w-[280px]" key={columnKey}>
       <div 
         className="bg-white rounded-lg shadow-sm border p-4 h-full"
         onDragOver={onDragOver}
@@ -57,8 +56,8 @@ export const StoreColumn = ({
         
         <div className="space-y-4">
           {Object.entries(categories).map(([categoryName, items]) => {
-            console.log(`Rendering category: ${categoryName} with ${items.length} items`);
-            const categoryKey = `${categoryName}-${items.map(item => item.id).join('-')}`;
+            // Generate unique key for each category section
+            const categoryKey = `${storeName}-${categoryName}-${items.length}-${Date.now()}`;
             
             return (
               <div key={categoryKey} className="mb-4">
@@ -77,7 +76,7 @@ export const StoreColumn = ({
                     <div className="space-y-2">
                       {items.map(item => (
                         <IngredientButton
-                          key={`${item.id}-${item.store || 'Unassigned'}`}
+                          key={`${item.id}-${Date.now()}`}
                           item={item}
                           isSelected={selectedItems.includes(item.id)}
                           onSelect={onSelectItem}
