@@ -23,25 +23,29 @@ export const useUpdateActions = ({
   const handleUpdateGroceryItem = (updatedItem: GroceryItem) => {
     console.log("useUpdateActions - Updating item:", updatedItem.name, "to store:", updatedItem.store);
     
-    // Create a completely new item object with a unique timestamp
+    // Validate and normalize the store value
+    const normalizedStore = validateStore(updatedItem.store || "Unassigned");
+    
+    // Create completely new item object
     const newItem = { 
       ...updatedItem,
-      store: validateStore(updatedItem.store || "Unassigned"),
+      store: normalizedStore,
       __updateTimestamp: Date.now()
     };
     
-    console.log("useUpdateActions - Final item:", newItem);
+    console.log("useUpdateActions - Final normalized item:", newItem.name, "store:", newItem.store);
     
-    // Force complete re-render by creating new array
+    // Update grocery items with complete re-render trigger
     setGroceryItems(prevItems => {
-      const newItems = prevItems.map(item => 
+      const updatedItems = prevItems.map(item => 
         item.id === newItem.id ? newItem : item
       );
-      console.log("useUpdateActions - Updated items array");
-      return sortGroceryItems(newItems);
+      console.log("useUpdateActions - Updated items count:", updatedItems.length);
+      console.log("useUpdateActions - Item stores after update:", updatedItems.map(i => ({ name: i.name, store: i.store })));
+      return sortGroceryItems(updatedItems);
     });
     
-    // Update manual items if needed
+    // Update manual items if this item exists there
     setManualItems(prevItems => {
       const existingIndex = prevItems.findIndex(item => item.id === newItem.id);
       if (existingIndex >= 0) {
@@ -67,26 +71,31 @@ export const useUpdateActions = ({
     setGroceryItems(prevItems => {
       const newItems = prevItems.map(item => {
         if (itemIdsToUpdate.has(item.id)) {
+          const normalizedStore = validateStore(updates.store || item.store || "Unassigned");
           return { 
             ...item, 
             ...updates,
-            store: validateStore(updates.store || item.store || "Unassigned"),
+            store: normalizedStore,
             __updateTimestamp: updateTimestamp 
           };
         }
         return item;
       });
       
+      console.log("useUpdateActions - Bulk update complete, items:", newItems.length);
       return sortGroceryItems(newItems);
     });
     
+    // Update manual items
     setManualItems(prevItems => {
       const updatedManualItems = prevItems.map(item => {
         if (itemIdsToUpdate.has(item.id)) {
+          const normalizedStore = validateStore(updates.store || item.store || "Unassigned");
           return { 
             ...item, 
             ...updates,
-            store: validateStore(updates.store || item.store || "Unassigned")
+            store: normalizedStore,
+            __updateTimestamp: updateTimestamp
           };
         }
         return item;

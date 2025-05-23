@@ -12,8 +12,8 @@ export const normalizeGroceryItem = (item: GroceryItem): GroceryItem => {
   return {
     ...item,
     store: normalizeStoreValue(item.store),
-    // Add timestamp to force re-render when needed
-    __updateTimestamp: item.__updateTimestamp || Date.now()
+    // Force update timestamp to ensure re-render
+    __updateTimestamp: Date.now()
   };
 };
 

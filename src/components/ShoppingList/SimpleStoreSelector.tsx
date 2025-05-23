@@ -1,5 +1,5 @@
 
-import React, { useEffect } from "react";
+import React from "react";
 import { GroceryItem } from "@/types";
 import {
   Select,
@@ -21,29 +21,30 @@ export const SimpleStoreSelector = ({
   onStoreChange
 }: SimpleStoreSelectorProps) => {
   const handleStoreChange = (value: string) => {
-    console.log(`SimpleStoreSelector: Changing ${item.name} to store: ${value}`);
-    // Create a new item object to ensure rendering
+    console.log(`SimpleStoreSelector: Changing ${item.name} from store: '${item.store}' to store: '${value}'`);
+    
+    // Don't normalize here - pass the raw value and let the update handler deal with it
     const updatedItem = {
       ...item,
       store: value,
       __updateTimestamp: Date.now()
     };
+    
     onStoreChange(updatedItem, value);
   };
 
-  // Determine current value - treat empty/undefined as "Unassigned"
-  const currentValue = item.store && item.store !== "Unassigned" ? item.store : "Unassigned";
+  // Determine current value for display
+  const currentValue = item.store || "Unassigned";
   
-  console.log(`SimpleStoreSelector: Rendering ${item.name} with current store: '${item.store}' -> display value: '${currentValue}'`);
+  console.log(`SimpleStoreSelector: Rendering ${item.name} with store: '${item.store}' -> display value: '${currentValue}'`);
 
   return (
     <Select 
       value={currentValue} 
       onValueChange={handleStoreChange}
-      defaultValue="Unassigned"
     >
       <SelectTrigger className="w-32 h-8 text-xs">
-        <SelectValue />
+        <SelectValue placeholder="Select store" />
       </SelectTrigger>
       <SelectContent>
         <SelectItem value="Unassigned">Unassigned</SelectItem>

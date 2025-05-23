@@ -1,7 +1,6 @@
 
 import { useToast } from "@/hooks/use-toast";
 import { GroceryItem } from "@/types";
-import { normalizeStoreValue } from "./utils";
 
 interface UseStoreActionsProps {
   setAvailableStores: (stores: string[]) => void;
@@ -27,7 +26,7 @@ export const useStoreActions = ({
     const itemsToUpdate: GroceryItem[] = [];
     
     groceryItems.forEach(item => {
-      if (item.store && !availableStoreSet.has(item.store)) {
+      if (item.store && item.store !== "Unassigned" && !availableStoreSet.has(item.store)) {
         itemsToUpdate.push(item);
       }
     });
@@ -37,7 +36,7 @@ export const useStoreActions = ({
       const timestamp = Date.now();
       setGroceryItems(prevItems => 
         prevItems.map(item => {
-          if (item.store && !availableStoreSet.has(item.store)) {
+          if (item.store && item.store !== "Unassigned" && !availableStoreSet.has(item.store)) {
             return { 
               ...item, 
               store: "Unassigned", 
@@ -57,13 +56,13 @@ export const useStoreActions = ({
     });
   };
 
-  // Helper function to validate if a store exists before assigning
+  // Helper function to validate and normalize store values
   const validateStore = (store: string): string => {
     console.log("Validating store:", store);
-    if (!store || store.trim() === "" || store === "unassigned" || store === "Unassigned") {
+    if (!store || store.trim() === "" || store === "undefined" || store === "null") {
       return "Unassigned";
     }
-    return store;
+    return store.trim();
   };
 
   return {

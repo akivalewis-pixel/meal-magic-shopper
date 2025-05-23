@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from "react";
 import { GroceryItem, GroceryCategory } from "@/types";
 import { StoreColumn } from "./StoreColumn";
@@ -57,9 +56,13 @@ export const ShoppingListBoard = ({
 
   const handleDragStart = (e: React.DragEvent, item: GroceryItem) => {
     console.log("Board - Drag start:", item.name, "from store:", item.store || "Unassigned");
+    
+    // Store item data in multiple formats for compatibility
     e.dataTransfer.setData("text/plain", item.id);
     e.dataTransfer.setData("application/json", JSON.stringify(item));
     e.dataTransfer.effectAllowed = "move";
+    
+    // Keep reference in state
     setDraggedItem(item);
   };
 
@@ -70,18 +73,15 @@ export const ShoppingListBoard = ({
 
   const handleDrop = (e: React.DragEvent, targetStore: string, targetCategory?: GroceryCategory) => {
     e.preventDefault();
-    console.log("Drop event triggered", targetStore, targetCategory);
+    console.log("Board - Drop event triggered for store:", targetStore, "category:", targetCategory);
     
     try {
-      // Try to get the item from the state first
+      // Get the item from state or data transfer
       let itemToUpdate = draggedItem;
       
-      // If we don't have it in state, try to get it from data transfer
       if (!itemToUpdate) {
-        const jsonData = e.dataTransfer.getData("application/json");
         const itemId = e.dataTransfer.getData("text/plain");
-        
-        console.log("Drop data:", { jsonData, itemId });
+        const jsonData = e.dataTransfer.getData("application/json");
         
         if (jsonData) {
           try {
@@ -91,7 +91,6 @@ export const ShoppingListBoard = ({
           }
         }
         
-        // If we still don't have it, try to find it by ID
         if (!itemToUpdate && itemId) {
           itemToUpdate = allItems.find(item => item.id === itemId);
         }
@@ -102,18 +101,21 @@ export const ShoppingListBoard = ({
         return;
       }
       
-      console.log("Found item to update:", itemToUpdate.name);
+      console.log("Board - Found item to update:", itemToUpdate.name, "current store:", itemToUpdate.store);
       
       // Create updated item with new store/category
       const updatedItem = { 
         ...itemToUpdate,
-        store: targetStore !== "Unassigned" ? targetStore : "Unassigned",
+        store: targetStore,
         ...(targetCategory && { category: targetCategory }),
         __updateTimestamp: Date.now()
       };
       
-      console.log("Applying update:", updatedItem);
+      console.log("Board - Applying update to item:", updatedItem.name, "new store:", updatedItem.store);
+      
+      // Call the update handler
       onUpdateItem(updatedItem);
+      
     } catch (error) {
       console.error("Error in drop handler:", error);
     } finally {
@@ -149,7 +151,7 @@ export const ShoppingListBoard = ({
           console.log("Board - Rendering store column:", storeName, "with categories:", Object.keys(categories));
           return (
             <StoreColumn
-              key={`${storeName}-${Object.keys(categories).length}`}
+              key={`${storeName}-${Date.now()}`}
               storeName={storeName}
               categories={categories}
               selectedItems={selectedItems}
