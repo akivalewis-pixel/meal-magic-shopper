@@ -35,18 +35,13 @@ export const SimpleListView = ({
 
   const handleStoreChange = (updatedItem: GroceryItem, newStore: string) => {
     console.log("SimpleListView: Store change for", updatedItem.name, "to", newStore);
-    console.log("SimpleListView: Updated item received:", updatedItem);
-    
-    // Pass the already updated item directly to onUpdateItem
     onUpdateItem(updatedItem);
   };
 
-  // Create a more robust grouping that properly handles store changes
+  // Group items by store
   const groupedItems = React.useMemo(() => {
-    console.log("SimpleListView: Re-computing grouped items with", items.length, "items");
-    console.log("SimpleListView: Items with stores:", items.map(i => ({ name: i.name, store: i.store, timestamp: i.__updateTimestamp })));
+    console.log("SimpleListView: Grouping", items.length, "items");
     
-    // Create a fresh grouping based on current items state
     const currentGrouping: Record<string, GroceryItem[]> = {};
     
     if (groupByStore) {
@@ -61,17 +56,11 @@ export const SimpleListView = ({
       currentGrouping["All Items"] = [...items];
     }
     
-    console.log("SimpleListView: Grouped items result:", Object.entries(currentGrouping).map(([store, storeItems]) => ({
-      store,
-      count: storeItems.length,
-      items: storeItems.map(i => ({ name: i.name, store: i.store }))
-    })));
-    
     return currentGrouping;
   }, [items, groupByStore]);
 
   const renderItem = (item: GroceryItem) => (
-    <li key={`${item.id}-${item.__updateTimestamp || 0}`} className="flex items-center gap-3 py-2 border-b border-gray-100">
+    <li key={item.id} className="flex items-center gap-3 py-2 border-b border-gray-100">
       <Checkbox
         checked={item.checked}
         onCheckedChange={() => onToggleItem(item.id)}
@@ -113,7 +102,7 @@ export const SimpleListView = ({
   return (
     <div className="space-y-6">
       {Object.entries(groupedItems).map(([storeName, storeItems]) => (
-        <div key={`${storeName}-${storeItems.length}-${storeItems.map(i => i.__updateTimestamp).join('-')}`}>
+        <div key={storeName}>
           {groupByStore && (
             <h3 className="text-lg font-semibold mb-4 pb-2 border-b">
               {storeName} ({storeItems.length} items)

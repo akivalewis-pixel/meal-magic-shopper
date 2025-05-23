@@ -1,11 +1,11 @@
+
 import { useState, useEffect } from "react";
 import { GroceryItem, Meal } from "@/types";
 import { generateShoppingList } from "@/utils/groceryUtils";
 import { useToast } from "@/hooks/use-toast";
 
 export function useSimpleShoppingList(meals: Meal[], pantryItems: string[] = []) {
-  const [groceryItems, setGroceryItems] = useState<GroceryItem[]>([]);
-  const [manualItems, setManualItems] = useState<GroceryItem[]>([]);
+  const [allItems, setAllItems] = useState<GroceryItem[]>([]);
   const [archivedItems, setArchivedItems] = useState<GroceryItem[]>([]);
   const [availableStores, setAvailableStores] = useState<string[]>([
     "Unassigned", "Supermarket", "Farmers Market", "Specialty Store"
@@ -17,7 +17,7 @@ export function useSimpleShoppingList(meals: Meal[], pantryItems: string[] = [])
   useEffect(() => {
     const savedStores = localStorage.getItem('shoppingList_stores');
     const savedArchived = localStorage.getItem('shoppingList_archived');
-    const savedManual = localStorage.getItem('shoppingList_manual');
+    const savedItems = localStorage.getItem('shoppingList_allItems');
     
     if (savedStores) {
       setAvailableStores(JSON.parse(savedStores));
@@ -25,8 +25,8 @@ export function useSimpleShoppingList(meals: Meal[], pantryItems: string[] = [])
     if (savedArchived) {
       setArchivedItems(JSON.parse(savedArchived));
     }
-    if (savedManual) {
-      setManualItems(JSON.parse(savedManual));
+    if (savedItems) {
+      setAllItems(JSON.parse(savedItems));
     }
   }, []);
 
@@ -34,12 +34,12 @@ export function useSimpleShoppingList(meals: Meal[], pantryItems: string[] = [])
   useEffect(() => {
     localStorage.setItem('shoppingList_stores', JSON.stringify(availableStores));
     localStorage.setItem('shoppingList_archived', JSON.stringify(archivedItems));
-    localStorage.setItem('shoppingList_manual', JSON.stringify(manualItems));
-  }, [availableStores, archivedItems, manualItems]);
+    localStorage.setItem('shoppingList_allItems', JSON.stringify(allItems));
+  }, [availableStores, archivedItems, allItems]);
 
-  // Generate shopping list from meals and merge with manual items
+  // Generate shopping list from meals and merge with existing items
   useEffect(() => {
-    console.log("useSimpleShoppingList: Regenerating list with", meals.length, "meals and", manualItems.length, "manual items");
+    console.log("useSimpleShoppingList: Regenerating list with", meals.length, "meals");
     
     let mealItems: GroceryItem[] = [];
     
@@ -48,63 +48,57 @@ export function useSimpleShoppingList(meals: Meal[], pantryItems: string[] = [])
       mealItems = generateShoppingList(activeMeals, pantryItems, []);
     }
     
-    // Normalize all meal items to have proper store values
+    // Normalize all meal items
     const normalizedMealItems = mealItems.map(item => ({
       ...item,
       store: item.store || "Unassigned",
-      id: `meal-${item.name}-${item.meal || 'default'}-${Date.now()}-${Math.random()}`
+      id: `meal-${item.name}-${item.meal || 'default'}-${Date.now()}-${Math.random()}`,
+      source: 'meal' as const
     }));
 
-    // Combine meal items with manual items
-    const allItems = [...normalizedMealItems, ...manualItems];
-    
-    console.log("useSimpleShoppingList: Combined items:", allItems.map(i => ({ name: i.name, store: i.store, source: i.id.startsWith('manual-') ? 'manual' : 'meal' })));
-
-    setGroceryItems(allItems);
-  }, [meals, pantryItems, manualItems]);
+    // Merge with existing manual items (preserve store assignments)
+    setAllItems(prevItems => {
+      const manualItems = prevItems.filter(item => item.id.startsWith('manual-'));
+      const combinedItems = [...normalizedMealItems, ...manualItems];
+      
+      console.log("useSimpleShoppingList: Combined items:", combinedItems.map(i => ({ 
+        name: i.name, 
+        store: i.store, 
+        source: i.id.startsWith('manual-') ? 'manual' : 'meal' 
+      })));
+      
+      return combinedItems;
+    });
+  }, [meals, pantryItems]);
 
   const updateItem = (updatedItem: GroceryItem) => {
     console.log("useSimpleShoppingList updateItem called:", updatedItem.name, "new store:", updatedItem.store);
     
-    // Create a completely new item object to force React re-render
-    const finalUpdatedItem = {
-      ...updatedItem,
-      store: updatedItem.store || "Unassigned",
-      __updateTimestamp: Date.now()
-    };
-    
-    console.log("useSimpleShoppingList: Final updated item:", finalUpdatedItem);
-    
-    setGroceryItems(prevItems => {
+    setAllItems(prevItems => {
       const newItems = prevItems.map(item => {
-        if (item.id === finalUpdatedItem.id) {
-          console.log("useSimpleShoppingList: Found matching item, updating:", item.name, "from store:", item.store, "to store:", finalUpdatedItem.store);
-          return finalUpdatedItem;
+        if (item.id === updatedItem.id) {
+          console.log("useSimpleShoppingList: Updating item:", item.name, "to store:", updatedItem.store);
+          return {
+            ...updatedItem,
+            store: updatedItem.store || "Unassigned",
+            __updateTimestamp: Date.now()
+          };
         }
         return item;
       });
       
-      console.log("useSimpleShoppingList: New items after update:", newItems.map(i => ({ name: i.name, store: i.store })));
+      console.log("useSimpleShoppingList: Updated items:", newItems.map(i => ({ name: i.name, store: i.store })));
       return newItems;
     });
 
-    // Also update manual items if this is a manual item
-    if (finalUpdatedItem.id.startsWith('manual-')) {
-      setManualItems(prevManual => 
-        prevManual.map(item => 
-          item.id === finalUpdatedItem.id ? finalUpdatedItem : item
-        )
-      );
-    }
-
     toast({
       title: "Item Updated", 
-      description: `${finalUpdatedItem.name} ${finalUpdatedItem.store !== "Unassigned" ? `moved to ${finalUpdatedItem.store}` : 'updated'}`,
+      description: `${updatedItem.name} ${updatedItem.store !== "Unassigned" ? `moved to ${updatedItem.store}` : 'updated'}`,
     });
   };
 
   const toggleItem = (id: string) => {
-    setGroceryItems(prev => 
+    setAllItems(prev => 
       prev.map(item => 
         item.id === id ? { ...item, checked: !item.checked } : item
       )
@@ -112,16 +106,11 @@ export function useSimpleShoppingList(meals: Meal[], pantryItems: string[] = [])
   };
 
   const archiveItem = (id: string) => {
-    const item = groceryItems.find(i => i.id === id);
+    const item = allItems.find(i => i.id === id);
     if (!item) return;
 
     setArchivedItems(prev => [...prev, { ...item, checked: true }]);
-    setGroceryItems(prev => prev.filter(i => i.id !== id));
-    
-    // Remove from manual items if it's a manual item
-    if (item.id.startsWith('manual-')) {
-      setManualItems(prev => prev.filter(i => i.id !== id));
-    }
+    setAllItems(prev => prev.filter(i => i.id !== id));
     
     toast({
       title: "Item Archived",
@@ -133,12 +122,13 @@ export function useSimpleShoppingList(meals: Meal[], pantryItems: string[] = [])
     const itemWithId = {
       ...newItem,
       id: `manual-${Date.now()}-${Math.random()}`,
-      store: newItem.store || "Unassigned"
+      store: newItem.store || "Unassigned",
+      source: 'manual' as const
     };
     
     console.log("useSimpleShoppingList: Adding manual item:", itemWithId);
     
-    setManualItems(prev => [...prev, itemWithId]);
+    setAllItems(prev => [...prev, itemWithId]);
     
     toast({
       title: "Item Added",
@@ -150,16 +140,7 @@ export function useSimpleShoppingList(meals: Meal[], pantryItems: string[] = [])
     setAvailableStores(newStores);
     
     // Update items that have invalid stores
-    setGroceryItems(prev => 
-      prev.map(item => {
-        if (item.store && !newStores.includes(item.store)) {
-          return { ...item, store: "Unassigned" };
-        }
-        return item;
-      })
-    );
-    
-    setManualItems(prev => 
+    setAllItems(prev => 
       prev.map(item => {
         if (item.store && !newStores.includes(item.store)) {
           return { ...item, store: "Unassigned" };
@@ -175,15 +156,14 @@ export function useSimpleShoppingList(meals: Meal[], pantryItems: string[] = [])
   };
 
   const resetList = () => {
-    const itemsToArchive = groceryItems.map(item => ({
+    const itemsToArchive = allItems.map(item => ({
       ...item,
       checked: true,
       id: `archived-${Date.now()}-${item.id}`
     }));
     
     setArchivedItems(prev => [...prev, ...itemsToArchive]);
-    setGroceryItems([]);
-    setManualItems([]);
+    setAllItems([]);
     
     toast({
       title: "List Reset",
@@ -192,7 +172,7 @@ export function useSimpleShoppingList(meals: Meal[], pantryItems: string[] = [])
   };
 
   return {
-    groceryItems,
+    groceryItems: allItems,
     archivedItems,
     availableStores,
     updateItem,
