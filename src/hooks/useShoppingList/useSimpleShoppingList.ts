@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import { GroceryItem, Meal } from "@/types";
 import { generateShoppingList } from "@/utils/groceryUtils";
@@ -99,22 +98,34 @@ export function useSimpleShoppingList(meals: Meal[], pantryItems: string[] = [])
   }, [meals, pantryItems]);
 
   const updateItem = (updatedItem: GroceryItem) => {
-    console.log("useSimpleShoppingList updateItem called:", updatedItem.name, "new store:", updatedItem.store);
+    console.log("useSimpleShoppingList updateItem called:", updatedItem.name, "updates:", {
+      store: updatedItem.store,
+      quantity: updatedItem.quantity,
+      name: updatedItem.name
+    });
     
-    // Update store assignment in persistent storage
+    // Update store assignment in persistent storage if store changed
     if (updatedItem.store && updatedItem.store !== "Unassigned") {
       storeAssignments.current.set(updatedItem.name.toLowerCase(), updatedItem.store);
-    } else {
+    } else if (updatedItem.store === "Unassigned") {
       storeAssignments.current.delete(updatedItem.name.toLowerCase());
     }
     
     setAllItems(prevItems => {
       const updatedItems = prevItems.map(item => {
         if (item.id === updatedItem.id) {
-          console.log("useSimpleShoppingList: Updating item:", item.name, "from store:", item.store, "to store:", updatedItem.store);
+          console.log("useSimpleShoppingList: Updating item:", item.name, "with:", {
+            oldQuantity: item.quantity,
+            newQuantity: updatedItem.quantity,
+            oldName: item.name,
+            newName: updatedItem.name,
+            oldStore: item.store,
+            newStore: updatedItem.store
+          });
+          
           const updated = {
-            ...updatedItem,
-            store: updatedItem.store || "Unassigned",
+            ...item,
+            ...updatedItem, // Apply all updates from the updatedItem
             __updateTimestamp: Date.now()
           };
           console.log("useSimpleShoppingList: Updated item result:", updated);
@@ -126,15 +137,27 @@ export function useSimpleShoppingList(meals: Meal[], pantryItems: string[] = [])
       console.log("useSimpleShoppingList: All items after update:", updatedItems.map(i => ({ 
         id: i.id,
         name: i.name, 
+        quantity: i.quantity,
         store: i.store,
         timestamp: i.__updateTimestamp 
       })));
       return updatedItems;
     });
 
+    // Determine what was updated for the toast message
+    const changes = [];
+    if (updatedItem.store && updatedItem.store !== "Unassigned") {
+      changes.push(`moved to ${updatedItem.store}`);
+    }
+    if (updatedItem.quantity) {
+      changes.push(`quantity set to ${updatedItem.quantity}`);
+    }
+    
+    const description = changes.length > 0 ? changes.join(', ') : 'updated';
+
     toast({
       title: "Item Updated", 
-      description: `${updatedItem.name} ${updatedItem.store !== "Unassigned" ? `moved to ${updatedItem.store}` : 'updated'}`,
+      description: `${updatedItem.name} ${description}`,
     });
   };
 
