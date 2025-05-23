@@ -3,8 +3,8 @@ import { GroceryItem } from "@/types";
 import { groceryCategories } from "@/utils/constants";
 
 export const normalizeStoreValue = (store: string | undefined): string => {
-  // Convert empty strings and undefined to "Unassigned"
-  if (!store || store.trim() === "") {
+  // Convert empty strings, undefined, and null values to "Unassigned"
+  if (!store || store.trim() === "" || store === "undefined" || store === "null") {
     return "Unassigned";
   }
   return store;
@@ -18,12 +18,14 @@ export const normalizeGroceryItem = (item: GroceryItem): GroceryItem => {
 };
 
 export const sortGroceryItems = (items: GroceryItem[]): GroceryItem[] => {
+  // Create a completely new array to avoid mutation issues
   return [...items].sort((a, b) => {
-    // Normalize store values for consistent sorting
+    // Always normalize store values for consistent comparison
     const storeA = normalizeStoreValue(a.store);
     const storeB = normalizeStoreValue(b.store);
     
     if (storeA !== storeB) {
+      // Unassigned always comes last
       if (storeA === "Unassigned") return 1;
       if (storeB === "Unassigned") return -1;
       return storeA.localeCompare(storeB);

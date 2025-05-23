@@ -17,6 +17,8 @@ export const useStoreActions = ({
   const { toast } = useToast();
 
   const handleUpdateStores = (stores: string[]) => {
+    console.log("Updating stores:", stores);
+    
     // Update the available stores list
     setAvailableStores(stores);
     
@@ -32,10 +34,15 @@ export const useStoreActions = ({
     
     // If any items need to be updated, reassign them to "Unassigned"
     if (itemsToUpdate.length > 0) {
+      const timestamp = Date.now();
       setGroceryItems(prevItems => 
         prevItems.map(item => {
           if (item.store && !availableStoreSet.has(item.store)) {
-            return { ...item, store: "Unassigned", __updateTimestamp: Date.now() };
+            return { 
+              ...item, 
+              store: "Unassigned", 
+              __updateTimestamp: timestamp
+            };
           }
           return item;
         })

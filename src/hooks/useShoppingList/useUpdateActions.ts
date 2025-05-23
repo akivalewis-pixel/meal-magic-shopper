@@ -23,32 +23,27 @@ export const useUpdateActions = ({
   const handleUpdateGroceryItem = (updatedItem: GroceryItem) => {
     console.log("useUpdateActions - Updating single item:", updatedItem.name, "to store:", updatedItem.store);
     
-    // Validate store value
+    // Validate store value and create a new object to ensure reference change
     const validatedStore = validateStore(updatedItem.store || "");
-    const itemWithValidStore = { ...updatedItem, store: validatedStore };
+    const normalizedItem = { 
+      ...updatedItem, 
+      store: validatedStore,
+      __updateTimestamp: Date.now() // Add timestamp to force re-render
+    };
     
-    // Normalize the entire item to ensure consistency
-    const normalizedItem = normalizeGroceryItem(itemWithValidStore);
+    console.log("useUpdateActions - Item after normalization:", normalizedItem);
     
-    console.log("useUpdateActions - Normalized item store:", normalizedItem.store);
-    
-    // Create completely new array and new objects to ensure React detects changes
+    // Create completely new array to ensure React detects changes
     setGroceryItems(prevItems => {
       const newItems = prevItems.map(item => {
         if (item.id === normalizedItem.id) {
-          // Create a completely new object with a new timestamp to force re-render
-          return { 
-            ...normalizedItem,
-            __updateTimestamp: Date.now() // Force object reference change
-          };
+          return normalizedItem;
         }
-        return { ...item }; // Create new objects for all items
+        return { ...item }; // Create new references for all items
       });
       
-      const sortedItems = sortGroceryItems(newItems);
-      console.log("useUpdateActions - After single update, item in list:", 
-        sortedItems.find(item => item.id === normalizedItem.id));
-      return sortedItems;
+      // Sort the items after updating
+      return sortGroceryItems(newItems);
     });
     
     // Update in manualItems if it exists there
@@ -79,40 +74,36 @@ export const useUpdateActions = ({
   const handleUpdateMultipleGroceryItems = (items: GroceryItem[], updates: Partial<GroceryItem>) => {
     console.log("useUpdateActions - Bulk update:", items.length, "items with:", updates);
     
-    // Normalize updates
+    // Validate store value if included in updates
     const normalizedUpdates = { ...updates };
     if (normalizedUpdates.store !== undefined) {
-      const validatedStore = validateStore(normalizedUpdates.store);
-      normalizedUpdates.store = validatedStore;
-      console.log("useUpdateActions - Normalized bulk store value:", normalizedUpdates.store);
+      normalizedUpdates.store = validateStore(normalizedUpdates.store);
     }
     
     const itemIdsToUpdate = new Set(items.map(item => item.id));
     const updateTimestamp = Date.now();
     
-    // Create completely new array and new objects to ensure React detects changes
+    // Update groceryItems with new values
     setGroceryItems(prevItems => {
       const newItems = prevItems.map(item => {
         if (itemIdsToUpdate.has(item.id)) {
-          const updatedItem = normalizeGroceryItem({ ...item, ...normalizedUpdates });
-          console.log("useUpdateActions - Bulk updating:", item.name, "from:", item.store, "to:", updatedItem.store);
-          // Add timestamp to force re-render
-          return { ...updatedItem, __updateTimestamp: updateTimestamp };
+          return { 
+            ...item, 
+            ...normalizedUpdates, 
+            __updateTimestamp: updateTimestamp 
+          };
         }
-        return { ...item }; // Create new objects for all items
+        return { ...item };
       });
       
-      const sortedItems = sortGroceryItems(newItems);
-      console.log("useUpdateActions - After bulk update, sample updated items:", 
-        sortedItems.filter(item => itemIdsToUpdate.has(item.id)).slice(0, 3).map(item => ({ name: item.name, store: item.store })));
-      return sortedItems;
+      return sortGroceryItems(newItems);
     });
     
-    // Update manualItems if any of the updated items exist there
+    // Update manualItems if any exist
     setManualItems(prevItems => {
       const newItems = prevItems.map(item => {
         if (itemIdsToUpdate.has(item.id)) {
-          return normalizeGroceryItem({ ...item, ...normalizedUpdates });
+          return { ...item, ...normalizedUpdates };
         }
         return item;
       });

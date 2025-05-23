@@ -1,7 +1,7 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { Edit, List, Plus, Store } from "lucide-react";
+import { Edit, Plus, List } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -28,16 +28,28 @@ export const ShoppingListHeader = ({
     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4">
       <h2 className="text-2xl font-bold text-carrot-dark mb-4 sm:mb-0">Shopping List</h2>
       <div className="flex gap-2">
-        {canAddItem && onAddItem && (
-          <Button 
-            variant="outline" 
-            onClick={onAddItem}
-          >
-            <Plus className="mr-2 h-4 w-4" />
-            Add Item
-          </Button>
-        )}
+        {/* Combined Add dropdown menu */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline">
+              <Plus className="mr-2 h-4 w-4" />
+              Add
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            {canAddItem && onAddItem && (
+              <DropdownMenuItem onClick={onAddItem}>
+                Add Item
+              </DropdownMenuItem>
+            )}
+            <DropdownMenuItem onClick={onEditStores}>
+              <Edit className="mr-2 h-4 w-4" />
+              Manage Stores
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
         
+        {/* Sort dropdown menu */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline">
@@ -47,24 +59,16 @@ export const ShoppingListHeader = ({
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuItem onClick={() => onSortChange("store")}>
-              <Store className="mr-2 h-4 w-4" /> Store
+              Store
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => onSortChange("department")}>
-              <List className="mr-2 h-4 w-4" /> Department
+              Department
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => onSortChange("category")}>
-              <List className="mr-2 h-4 w-4" /> Category
+              Category
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
-        
-        <Button 
-          variant="outline" 
-          onClick={onEditStores}
-        >
-          <Edit className="mr-2 h-4 w-4" />
-          Customize Stores
-        </Button>
       </div>
     </div>
   );
