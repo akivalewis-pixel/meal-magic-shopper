@@ -1,7 +1,7 @@
 
 import { GroceryItem } from "@/types";
 import { useToast } from "@/hooks/use-toast";
-import { sortGroceryItems } from "./utils";
+import { sortGroceryItems, normalizeStoreValue } from "./utils";
 
 interface UseUpdateActionsProps {
   groceryItems: GroceryItem[];
@@ -23,29 +23,33 @@ export const useUpdateActions = ({
   const handleUpdateGroceryItem = (updatedItem: GroceryItem) => {
     console.log("useUpdateActions - Updating item:", updatedItem.name, "to store:", updatedItem.store);
     
-    // Validate and normalize the store value
-    const normalizedStore = validateStore(updatedItem.store || "Unassigned");
+    const normalizedStore = normalizeStoreValue(updatedItem.store);
+    console.log("useUpdateActions - Normalized store:", normalizedStore);
     
-    // Create completely new item object
     const newItem = { 
       ...updatedItem,
       store: normalizedStore,
       __updateTimestamp: Date.now()
     };
     
-    console.log("useUpdateActions - Final normalized item:", newItem.name, "store:", newItem.store);
+    console.log("useUpdateActions - Creating new item with store:", newItem.store);
     
-    // Update grocery items with complete re-render trigger
+    // Force a complete state update to ensure re-render
     setGroceryItems(prevItems => {
-      const updatedItems = prevItems.map(item => 
-        item.id === newItem.id ? newItem : item
-      );
-      console.log("useUpdateActions - Updated items count:", updatedItems.length);
-      console.log("useUpdateActions - Item stores after update:", updatedItems.map(i => ({ name: i.name, store: i.store })));
-      return sortGroceryItems(updatedItems);
+      const updatedItems = prevItems.map(item => {
+        if (item.id === newItem.id) {
+          console.log("useUpdateActions - Replacing item:", item.name, "old store:", item.store, "new store:", newItem.store);
+          return newItem;
+        }
+        return item;
+      });
+      
+      const sortedItems = sortGroceryItems(updatedItems);
+      console.log("useUpdateActions - Sorted items by store:", sortedItems.map(i => ({ name: i.name, store: i.store })));
+      return sortedItems;
     });
     
-    // Update manual items if this item exists there
+    // Update manual items as well
     setManualItems(prevItems => {
       const existingIndex = prevItems.findIndex(item => item.id === newItem.id);
       if (existingIndex >= 0) {
@@ -58,7 +62,7 @@ export const useUpdateActions = ({
 
     toast({
       title: "Item Updated",
-      description: `${newItem.name} ${newItem.store && newItem.store !== "Unassigned" ? `assigned to ${newItem.store}` : 'updated'}`,
+      description: `${newItem.name} ${newItem.store && newItem.store !== "Unassigned" ? `moved to ${newItem.store}` : 'updated'}`,
     });
   };
 
@@ -71,7 +75,7 @@ export const useUpdateActions = ({
     setGroceryItems(prevItems => {
       const newItems = prevItems.map(item => {
         if (itemIdsToUpdate.has(item.id)) {
-          const normalizedStore = validateStore(updates.store || item.store || "Unassigned");
+          const normalizedStore = normalizeStoreValue(updates.store || item.store);
           return { 
             ...item, 
             ...updates,
@@ -90,7 +94,7 @@ export const useUpdateActions = ({
     setManualItems(prevItems => {
       const updatedManualItems = prevItems.map(item => {
         if (itemIdsToUpdate.has(item.id)) {
-          const normalizedStore = validateStore(updates.store || item.store || "Unassigned");
+          const normalizedStore = normalizeStoreValue(updates.store || item.store);
           return { 
             ...item, 
             ...updates,

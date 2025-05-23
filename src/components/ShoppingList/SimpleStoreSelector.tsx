@@ -23,7 +23,6 @@ export const SimpleStoreSelector = ({
   const handleStoreChange = (value: string) => {
     console.log(`SimpleStoreSelector: Changing ${item.name} from store: '${item.store}' to store: '${value}'`);
     
-    // Don't normalize here - pass the raw value and let the update handler deal with it
     const updatedItem = {
       ...item,
       store: value,
@@ -33,10 +32,9 @@ export const SimpleStoreSelector = ({
     onStoreChange(updatedItem, value);
   };
 
-  // Determine current value for display
   const currentValue = item.store || "Unassigned";
   
-  console.log(`SimpleStoreSelector: Rendering ${item.name} with store: '${item.store}' -> display value: '${currentValue}'`);
+  console.log(`SimpleStoreSelector: Rendering ${item.name} with current store: '${currentValue}'`);
 
   return (
     <Select 
@@ -44,7 +42,7 @@ export const SimpleStoreSelector = ({
       onValueChange={handleStoreChange}
     >
       <SelectTrigger className="w-32 h-8 text-xs">
-        <SelectValue placeholder="Select store" />
+        <SelectValue />
       </SelectTrigger>
       <SelectContent>
         <SelectItem value="Unassigned">Unassigned</SelectItem>

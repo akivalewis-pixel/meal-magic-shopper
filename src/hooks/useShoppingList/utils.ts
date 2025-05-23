@@ -5,14 +5,13 @@ export const normalizeStoreValue = (store: string | undefined): string => {
   if (!store || store.trim() === "" || store === "undefined" || store === "null") {
     return "Unassigned";
   }
-  return store;
+  return store.trim();
 };
 
 export const normalizeGroceryItem = (item: GroceryItem): GroceryItem => {
   return {
     ...item,
     store: normalizeStoreValue(item.store),
-    // Force update timestamp to ensure re-render
     __updateTimestamp: Date.now()
   };
 };

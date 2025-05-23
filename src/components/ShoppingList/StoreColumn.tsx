@@ -36,15 +36,18 @@ export const StoreColumn = ({
     e.dataTransfer.dropEffect = "move";
   };
 
+  const handleDrop = (e: React.DragEvent, targetCategory?: GroceryCategory) => {
+    e.preventDefault();
+    console.log(`StoreColumn - Drop on store: ${storeName}, category: ${targetCategory || 'none'}`);
+    onDrop(e, storeName, targetCategory);
+  };
+
   return (
     <div className="flex-1 min-w-[280px]">
       <div 
         className="bg-white rounded-lg shadow-sm border p-4 h-full"
         onDragOver={handleDragOver}
-        onDrop={(e) => {
-          console.log(`Dropping on store: ${storeName}`);
-          onDrop(e, storeName);
-        }}
+        onDrop={(e) => handleDrop(e)}
       >
         <h3 className="text-lg font-semibold mb-4 sticky top-0 bg-white pb-2 border-b">
           {storeName}
@@ -64,9 +67,8 @@ export const StoreColumn = ({
                   )}
                   onDragOver={handleDragOver}
                   onDrop={(e) => {
-                    console.log(`Dropping on category: ${categoryName} in store: ${storeName}`);
-                    e.stopPropagation(); // Prevent bubbling to store drop handler
-                    onDrop(e, storeName, categoryName as GroceryCategory);
+                    e.stopPropagation();
+                    handleDrop(e, categoryName as GroceryCategory);
                   }}
                 >
                   {items.length > 0 ? (
