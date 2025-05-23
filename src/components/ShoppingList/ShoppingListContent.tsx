@@ -63,6 +63,15 @@ export const ShoppingListContent = ({
     }
   };
 
+  console.log("ShoppingListContent - View mode:", viewMode);
+  console.log("ShoppingListContent - Grouped items:", groupedItems);
+  console.log("ShoppingListContent - Items count per store:", 
+    Object.entries(groupedItems).map(([store, categories]) => ({
+      store,
+      totalItems: Object.values(categories).flat().length
+    }))
+  );
+
   return (
     <>
       <div className="bg-white rounded-lg shadow p-4">

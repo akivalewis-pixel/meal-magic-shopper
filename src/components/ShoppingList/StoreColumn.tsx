@@ -32,9 +32,13 @@ export const StoreColumn = ({
   };
 
   console.log("StoreColumn - Rendering:", storeName, "Categories:", Object.keys(categories));
+  Object.entries(categories).forEach(([category, items]) => {
+    console.log(`StoreColumn - Category '${category}' contains ${items.length} items:`, 
+      items.map(item => item.name));
+  });
 
   return (
-    <div className="flex-1 min-w-0">
+    <div className="flex-1 min-w-[280px]">
       <div 
         className="bg-white rounded-lg shadow-sm border p-4 h-full"
         onDragOver={onDragOver}
@@ -46,9 +50,10 @@ export const StoreColumn = ({
         
         <div className="space-y-4">
           {Object.entries(categories).map(([categoryName, items]) => {
-            console.log("Rendering category:", categoryName, "with items:", items.length);
+            console.log(`Rendering category: ${categoryName} with ${items.length} items`);
+            
             return (
-              <div key={categoryName}>
+              <div key={categoryName} className="mb-4">
                 <h4 className="text-sm font-medium text-muted-foreground mb-2">
                   {getDisplayCategoryName(categoryName)}
                 </h4>
@@ -60,20 +65,20 @@ export const StoreColumn = ({
                   onDragOver={onDragOver}
                   onDrop={(e) => onDrop(e, storeName, categoryName as GroceryCategory)}
                 >
-                  {items.map(item => {
-                    console.log("Rendering ingredient button for:", item.name);
-                    return (
-                      <IngredientButton
-                        key={item.id}
-                        item={item}
-                        isSelected={selectedItems.includes(item.id)}
-                        onSelect={onSelectItem}
-                        onDoubleClick={onDoubleClickItem}
-                        onDragStart={onDragStart}
-                      />
-                    );
-                  })}
-                  {items.length === 0 && (
+                  {items.length > 0 ? (
+                    <div className="space-y-2">
+                      {items.map(item => (
+                        <IngredientButton
+                          key={item.id}
+                          item={item}
+                          isSelected={selectedItems.includes(item.id)}
+                          onSelect={onSelectItem}
+                          onDoubleClick={onDoubleClickItem}
+                          onDragStart={onDragStart}
+                        />
+                      ))}
+                    </div>
+                  ) : (
                     <div className="text-center text-muted-foreground text-sm py-4">
                       Drop items here
                     </div>

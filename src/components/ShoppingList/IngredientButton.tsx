@@ -20,11 +20,13 @@ export const IngredientButton = ({
   onDragStart
 }: IngredientButtonProps) => {
   const handleClick = (e: React.MouseEvent) => {
+    console.log("Ingredient button clicked:", item.name);
     const isMultiSelect = e.ctrlKey || e.metaKey || e.shiftKey;
     onSelect(item.id, isMultiSelect);
   };
 
   const handleDoubleClick = () => {
+    console.log("Ingredient button double-clicked:", item.name);
     onDoubleClick(item);
   };
 

@@ -29,12 +29,14 @@ export const ShoppingListBoard = ({
     Object.values(categories).flat()
   );
 
-  console.log("ShoppingListBoard - All items:", allItems.length);
-  console.log("ShoppingListBoard - Grouped items:", groupedItems);
+  console.log("ShoppingListBoard - Grouped items structure:", groupedItems);
+  console.log("ShoppingListBoard - All items count:", allItems.length);
+  console.log("ShoppingListBoard - All items:", allItems.map(item => ({ name: item.name, store: item.store || 'Unassigned' })));
 
   const selectedItemObjects = allItems.filter(item => selectedItems.includes(item.id));
 
   const handleSelectItem = (id: string, isMultiSelect: boolean) => {
+    console.log("Selecting item:", id, "Multi-select:", isMultiSelect);
     if (isMultiSelect) {
       setSelectedItems(prev => 
         prev.includes(id) 
@@ -47,15 +49,18 @@ export const ShoppingListBoard = ({
   };
 
   const handleDoubleClickItem = (item: GroceryItem) => {
+    console.log("Double-clicking item:", item.name);
     setEditingItem(item);
   };
 
   const handleSaveItem = (updatedItem: GroceryItem) => {
+    console.log("Saving item:", updatedItem);
     onUpdateItem(updatedItem);
     setEditingItem(null);
   };
 
   const handleDragStart = (e: React.DragEvent, item: GroceryItem) => {
+    console.log("Dragging item:", item.name);
     setDraggedItem(item);
     e.dataTransfer.effectAllowed = "move";
   };
@@ -69,6 +74,8 @@ export const ShoppingListBoard = ({
     e.preventDefault();
     
     if (!draggedItem) return;
+
+    console.log("Dropping item:", draggedItem.name, "to store:", targetStore, "category:", targetCategory);
 
     const updates: Partial<GroceryItem> = {
       store: targetStore === "Unassigned" ? "" : targetStore

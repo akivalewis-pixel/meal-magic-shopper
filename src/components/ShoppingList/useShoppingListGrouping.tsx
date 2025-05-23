@@ -28,16 +28,15 @@ export function useShoppingListGrouping(
       sortBy
     });
     
+    console.log("Raw grocery items:", groceryItems.map(item => ({
+      id: item.id,
+      name: item.name,
+      category: item.category,
+      store: item.store || "Unassigned"
+    })));
+    
     // Select which items array to use based on search mode
     const itemsToProcess = searchArchivedItems ? archivedItems : groceryItems;
-    
-    // Debug log to see what items we're processing
-    console.log("Processing items:", itemsToProcess.map(item => ({
-      name: item.name,
-      store: item.store || "Unassigned",
-      category: item.category,
-      department: item.department || "Unassigned"
-    })));
     
     // Filter items based on search, checked status, and store
     let filteredItems = itemsToProcess.filter(item => {
@@ -51,6 +50,8 @@ export function useShoppingListGrouping(
         
       return matchesSearch && shouldShow && matchesStore;
     });
+
+    console.log("Filtered items count:", filteredItems.length);
 
     // Group items by store and then by department/category
     if (groupByStore) {
@@ -80,7 +81,14 @@ export function useShoppingListGrouping(
         byStore[store][secondaryKey].push(item);
       });
       
-      console.log("Grouped items by store:", Object.keys(byStore));
+      console.log("Grouped items by store:", 
+        Object.entries(byStore).map(([store, categories]) => ({
+          store,
+          categoryCount: Object.keys(categories).length,
+          totalItems: Object.values(categories).flat().length
+        }))
+      );
+      
       return byStore;
     } else {
       // Group by category or department only
@@ -102,7 +110,13 @@ export function useShoppingListGrouping(
         byPrimary[primaryKey].push(item);
       });
       
-      console.log("Grouped items by category/department:", Object.keys(byPrimary));
+      console.log("Grouped items by category/department:", 
+        Object.entries(byPrimary).map(([category, items]) => ({
+          category,
+          itemCount: items.length
+        }))
+      );
+      
       return { "All Stores": byPrimary };
     }
   }, [groceryItems, archivedItems, searchArchivedItems, searchTerm, showChecked, selectedStore, groupByStore, sortBy]);
