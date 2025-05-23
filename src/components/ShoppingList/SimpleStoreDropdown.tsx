@@ -1,13 +1,6 @@
 
 import React from "react";
 import { GroceryItem } from "@/types";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 
 interface SimpleStoreDropdownProps {
   item: GroceryItem;
@@ -20,13 +13,14 @@ export const SimpleStoreDropdown = ({
   availableStores,
   onStoreChange
 }: SimpleStoreDropdownProps) => {
-  const handleChange = (newStore: string) => {
+  const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const newStore = e.target.value;
     console.log("SimpleStoreDropdown: Store change for:", item.name, "from:", item.store, "to:", newStore);
     
     const updatedItem = { 
       ...item, 
       store: newStore,
-      __updateTimestamp: Date.now() // Force re-render
+      __updateTimestamp: Date.now()
     };
     
     onStoreChange(updatedItem, newStore);
@@ -37,33 +31,19 @@ export const SimpleStoreDropdown = ({
   console.log("SimpleStoreDropdown: Rendering", item.name, "with store:", currentStore, "timestamp:", item.__updateTimestamp);
 
   return (
-    <Select 
-      value={currentStore} 
-      onValueChange={handleChange}
-      key={`${item.id}-${item.__updateTimestamp || 0}`} // Force re-render on updates
+    <select
+      value={currentStore}
+      onChange={handleChange}
+      className="w-32 h-8 text-xs bg-white border border-gray-300 rounded px-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
     >
-      <SelectTrigger className="w-32 h-8 text-xs bg-white border border-gray-300">
-        <SelectValue placeholder="Select store" />
-      </SelectTrigger>
-      <SelectContent className="bg-white border shadow-lg z-[100]">
-        <SelectItem 
-          value="Unassigned" 
-          className="bg-white hover:bg-gray-100 cursor-pointer"
-        >
-          Unassigned
-        </SelectItem>
-        {availableStores
-          .filter(store => store !== "Unassigned")
-          .map(store => (
-            <SelectItem 
-              key={store} 
-              value={store} 
-              className="bg-white hover:bg-gray-100 cursor-pointer"
-            >
-              {store}
-            </SelectItem>
-          ))}
-      </SelectContent>
-    </Select>
+      <option value="Unassigned">Unassigned</option>
+      {availableStores
+        .filter(store => store !== "Unassigned")
+        .map(store => (
+          <option key={store} value={store}>
+            {store}
+          </option>
+        ))}
+    </select>
   );
 };
