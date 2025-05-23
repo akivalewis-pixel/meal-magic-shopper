@@ -26,7 +26,7 @@ export const useUpdateActions = ({
     // Create a completely new item object with a unique timestamp
     const newItem = { 
       ...updatedItem,
-      store: updatedItem.store || "Unassigned",
+      store: validateStore(updatedItem.store || "Unassigned"),
       __updateTimestamp: Date.now()
     };
     
@@ -70,7 +70,7 @@ export const useUpdateActions = ({
           return { 
             ...item, 
             ...updates,
-            store: updates.store || item.store || "Unassigned",
+            store: validateStore(updates.store || item.store || "Unassigned"),
             __updateTimestamp: updateTimestamp 
           };
         }
@@ -81,16 +81,17 @@ export const useUpdateActions = ({
     });
     
     setManualItems(prevItems => {
-      return prevItems.map(item => {
+      const updatedManualItems = prevItems.map(item => {
         if (itemIdsToUpdate.has(item.id)) {
           return { 
             ...item, 
             ...updates,
-            store: updates.store || item.store || "Unassigned"
+            store: validateStore(updates.store || item.store || "Unassigned")
           };
         }
         return item;
       });
+      return updatedManualItems;
     });
 
     const updateType = updates.store ? 'store' : updates.category ? 'category' : 'items';

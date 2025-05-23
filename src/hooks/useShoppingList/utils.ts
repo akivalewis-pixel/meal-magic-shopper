@@ -11,7 +11,9 @@ export const normalizeStoreValue = (store: string | undefined): string => {
 export const normalizeGroceryItem = (item: GroceryItem): GroceryItem => {
   return {
     ...item,
-    store: normalizeStoreValue(item.store)
+    store: normalizeStoreValue(item.store),
+    // Add timestamp to force re-render when needed
+    __updateTimestamp: item.__updateTimestamp || Date.now()
   };
 };
 

@@ -57,13 +57,10 @@ export const ShoppingListBoard = ({
 
   const handleDragStart = (e: React.DragEvent, item: GroceryItem) => {
     console.log("Board - Drag start:", item.name, "from store:", item.store || "Unassigned");
-    setDraggedItem(item);
+    e.dataTransfer.setData("text/plain", item.id);
+    e.dataTransfer.setData("application/json", JSON.stringify(item));
     e.dataTransfer.effectAllowed = "move";
-    e.dataTransfer.setData("application/json", JSON.stringify({
-      id: item.id,
-      name: item.name,
-      currentStore: item.store || "Unassigned"
-    }));
+    setDraggedItem(item);
   };
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -73,66 +70,55 @@ export const ShoppingListBoard = ({
 
   const handleDrop = (e: React.DragEvent, targetStore: string, targetCategory?: GroceryCategory) => {
     e.preventDefault();
+    console.log("Drop event triggered", targetStore, targetCategory);
     
-    if (!draggedItem) {
-      console.log("Board - No dragged item found");
-      try {
-        // Try to get the item data from the dataTransfer
-        const data = e.dataTransfer.getData("application/json");
-        if (data) {
-          const parsedData = JSON.parse(data);
-          console.log("Found data in transfer:", parsedData);
-          
-          // Find the actual item
-          const item = allItems.find(i => i.id === parsedData.id);
-          if (item) {
-            console.log("Found item in allItems:", item);
-            
-            // Apply updates directly
-            const updates: Partial<GroceryItem> = {
-              store: targetStore
-            };
-            
-            if (targetCategory) {
-              updates.category = targetCategory;
-            }
-            
-            console.log("Applying updates:", updates);
-            onUpdateItem({ ...item, ...updates });
-            return;
+    try {
+      // Try to get the item from the state first
+      let itemToUpdate = draggedItem;
+      
+      // If we don't have it in state, try to get it from data transfer
+      if (!itemToUpdate) {
+        const jsonData = e.dataTransfer.getData("application/json");
+        const itemId = e.dataTransfer.getData("text/plain");
+        
+        console.log("Drop data:", { jsonData, itemId });
+        
+        if (jsonData) {
+          try {
+            itemToUpdate = JSON.parse(jsonData);
+          } catch (err) {
+            console.error("Failed to parse dragged item data:", err);
           }
         }
-      } catch (error) {
-        console.error("Error parsing drag data:", error);
+        
+        // If we still don't have it, try to find it by ID
+        if (!itemToUpdate && itemId) {
+          itemToUpdate = allItems.find(item => item.id === itemId);
+        }
       }
-      return;
+      
+      if (!itemToUpdate) {
+        console.error("No dragged item found");
+        return;
+      }
+      
+      console.log("Found item to update:", itemToUpdate.name);
+      
+      // Create updated item with new store/category
+      const updatedItem = { 
+        ...itemToUpdate,
+        store: targetStore !== "Unassigned" ? targetStore : "Unassigned",
+        ...(targetCategory && { category: targetCategory }),
+        __updateTimestamp: Date.now()
+      };
+      
+      console.log("Applying update:", updatedItem);
+      onUpdateItem(updatedItem);
+    } catch (error) {
+      console.error("Error in drop handler:", error);
+    } finally {
+      setDraggedItem(null);
     }
-
-    console.log("Board - Drop event:", {
-      itemName: draggedItem.name,
-      fromStore: draggedItem.store || "Unassigned", 
-      toStore: targetStore,
-      targetCategory
-    });
-
-    // Normalize the target store value
-    const normalizedTargetStore = targetStore === "Unassigned" ? "Unassigned" : targetStore;
-    
-    const updates: Partial<GroceryItem> = {
-      store: normalizedTargetStore
-    };
-
-    if (targetCategory) {
-      updates.category = targetCategory;
-    }
-
-    console.log("Board - Applying updates to dragged item:", updates);
-    
-    // Create updated item and call update
-    const updatedItem = { ...draggedItem, ...updates };
-    onUpdateItem(updatedItem);
-    
-    setDraggedItem(null);
   };
 
   const handleUpdateMultiple = (items: GroceryItem[], updates: Partial<GroceryItem>) => {
@@ -163,7 +149,7 @@ export const ShoppingListBoard = ({
           console.log("Board - Rendering store column:", storeName, "with categories:", Object.keys(categories));
           return (
             <StoreColumn
-              key={`${storeName}-${Date.now()}-${Object.keys(categories).length}`}
+              key={`${storeName}-${Object.keys(categories).length}`}
               storeName={storeName}
               categories={categories}
               selectedItems={selectedItems}

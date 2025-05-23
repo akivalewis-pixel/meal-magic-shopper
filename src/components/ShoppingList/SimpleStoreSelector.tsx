@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useEffect } from "react";
 import { GroceryItem } from "@/types";
 import {
   Select,
@@ -22,7 +22,13 @@ export const SimpleStoreSelector = ({
 }: SimpleStoreSelectorProps) => {
   const handleStoreChange = (value: string) => {
     console.log(`SimpleStoreSelector: Changing ${item.name} to store: ${value}`);
-    onStoreChange(item, value);
+    // Create a new item object to ensure rendering
+    const updatedItem = {
+      ...item,
+      store: value,
+      __updateTimestamp: Date.now()
+    };
+    onStoreChange(updatedItem, value);
   };
 
   // Determine current value - treat empty/undefined as "Unassigned"
@@ -31,7 +37,11 @@ export const SimpleStoreSelector = ({
   console.log(`SimpleStoreSelector: Rendering ${item.name} with current store: '${item.store}' -> display value: '${currentValue}'`);
 
   return (
-    <Select value={currentValue} onValueChange={handleStoreChange}>
+    <Select 
+      value={currentValue} 
+      onValueChange={handleStoreChange}
+      defaultValue="Unassigned"
+    >
       <SelectTrigger className="w-32 h-8 text-xs">
         <SelectValue />
       </SelectTrigger>

@@ -32,23 +32,18 @@ export const IngredientButton = ({
 
   const handleDragStart = (e: React.DragEvent) => {
     console.log("Drag starting for item:", item.name);
-    e.stopPropagation();
     onDragStart(e, item);
     
-    // Set a delay to make drag visually better
+    // Add a visual indicator for the dragged element
+    const target = e.currentTarget as HTMLElement;
     setTimeout(() => {
-      const draggedElement = e.currentTarget as HTMLElement;
-      if (draggedElement) {
-        draggedElement.classList.add("opacity-50");
-      }
+      if (target) target.classList.add("opacity-50");
     }, 0);
   };
 
   const handleDragEnd = (e: React.DragEvent) => {
-    const draggedElement = e.currentTarget as HTMLElement;
-    if (draggedElement) {
-      draggedElement.classList.remove("opacity-50");
-    }
+    const target = e.currentTarget as HTMLElement;
+    if (target) target.classList.remove("opacity-50");
   };
 
   return (

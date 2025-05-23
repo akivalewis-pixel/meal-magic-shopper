@@ -30,18 +30,19 @@ export const StoreColumn = ({
   const getDisplayCategoryName = (categoryName: string): string => {
     return customCategoryNames[categoryName] || categoryName;
   };
+  
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+  };
 
   return (
     <div className="flex-1 min-w-[280px]">
       <div 
         className="bg-white rounded-lg shadow-sm border p-4 h-full"
-        onDragOver={(e) => {
-          e.preventDefault();
-          e.dataTransfer.dropEffect = "move";
-          console.log("Dragging over store:", storeName);
-        }}
+        onDragOver={handleDragOver}
         onDrop={(e) => {
-          console.log("Dropping on store:", storeName);
+          console.log(`Dropping on store: ${storeName}`);
           onDrop(e, storeName);
         }}
       >
@@ -51,10 +52,8 @@ export const StoreColumn = ({
         
         <div className="space-y-4">
           {Object.entries(categories).map(([categoryName, items]) => {
-            const categoryKey = `${storeName}-${categoryName}-${items.length}-${Date.now()}`;
-            
             return (
-              <div key={categoryKey} className="mb-4">
+              <div key={`${storeName}-${categoryName}`} className="mb-4">
                 <h4 className="text-sm font-medium text-muted-foreground mb-2">
                   {getDisplayCategoryName(categoryName)}
                 </h4>
@@ -63,13 +62,10 @@ export const StoreColumn = ({
                     "min-h-[60px] p-2 rounded border-2 border-dashed border-muted transition-colors",
                     "hover:border-primary/50"
                   )}
-                  onDragOver={(e) => {
-                    e.preventDefault();
-                    e.dataTransfer.dropEffect = "move";
-                    console.log("Dragging over category:", categoryName, "in store:", storeName);
-                  }}
+                  onDragOver={handleDragOver}
                   onDrop={(e) => {
-                    console.log("Dropping on category:", categoryName, "in store:", storeName);
+                    console.log(`Dropping on category: ${categoryName} in store: ${storeName}`);
+                    e.stopPropagation(); // Prevent bubbling to store drop handler
                     onDrop(e, storeName, categoryName as GroceryCategory);
                   }}
                 >
@@ -77,7 +73,7 @@ export const StoreColumn = ({
                     <div className="space-y-2">
                       {items.map(item => (
                         <IngredientButton
-                          key={item.id}
+                          key={`${item.id}-${item.__updateTimestamp || 0}`}
                           item={item}
                           isSelected={selectedItems.includes(item.id)}
                           onSelect={onSelectItem}
