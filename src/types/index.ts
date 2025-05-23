@@ -1,4 +1,3 @@
-
 export type DietaryPreference = 'vegetarian' | 'vegan' | 'kosher' | 'halal' | 'gluten-free' | 'dairy-free' | 'nut-free' | 'none';
 
 export type GroceryCategory = 
@@ -20,6 +19,7 @@ export interface GroceryItem {
   meal?: string;
   store?: string;
   department?: string;
+  __updateTimestamp?: number; // Added to track UI updates and force re-renders
 }
 
 export interface Meal {
@@ -30,9 +30,9 @@ export interface Meal {
   ingredients: string[];
   dietaryPreferences: DietaryPreference[];
   notes?: string;
-  rating?: number; // 1-5 star rating
   lastUsed?: Date; // When this meal was last used
   weekId?: string; // To track which week this meal belongs to
+  rating?: number; // 1-5 star rating
 }
 
 export interface FamilyPreference {
