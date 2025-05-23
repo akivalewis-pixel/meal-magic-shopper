@@ -4,7 +4,7 @@ import { groceryCategories } from "@/utils/constants";
 
 export const sortGroceryItems = (items: GroceryItem[]): GroceryItem[] => {
   return [...items].sort((a, b) => {
-    // First sort by store (with "Unassigned" at the end)
+    // Normalize store values for consistent sorting
     const storeA = a.store || "Unassigned";
     const storeB = b.store || "Unassigned";
     

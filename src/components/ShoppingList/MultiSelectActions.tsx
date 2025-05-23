@@ -31,7 +31,9 @@ export const MultiSelectActions = ({
 
   const handleMoveToStore = () => {
     if (selectedStore) {
+      console.log("MultiSelect - Moving items to store:", selectedStore);
       const storeValue = selectedStore === "unassigned" ? "" : selectedStore;
+      console.log("MultiSelect - Normalized store value:", storeValue);
       onUpdateMultiple(selectedItems, { store: storeValue });
       setSelectedStore("");
     }
@@ -39,6 +41,7 @@ export const MultiSelectActions = ({
 
   const handleMoveToCategory = () => {
     if (selectedCategory) {
+      console.log("MultiSelect - Moving items to category:", selectedCategory);
       onUpdateMultiple(selectedItems, { category: selectedCategory as GroceryCategory });
       setSelectedCategory("");
     }

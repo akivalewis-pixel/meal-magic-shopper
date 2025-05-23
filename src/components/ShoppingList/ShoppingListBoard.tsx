@@ -60,9 +60,10 @@ export const ShoppingListBoard = ({
   };
 
   const handleDragStart = (e: React.DragEvent, item: GroceryItem) => {
-    console.log("Dragging item:", item.name);
+    console.log("Dragging item:", item.name, "from store:", item.store || "Unassigned");
     setDraggedItem(item);
     e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.setData("text/plain", JSON.stringify(item));
   };
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -85,12 +86,17 @@ export const ShoppingListBoard = ({
       updates.category = targetCategory;
     }
 
+    console.log("Applying updates:", updates, "to item:", draggedItem.name);
     onUpdateItem({ ...draggedItem, ...updates });
     setDraggedItem(null);
   };
 
   const handleUpdateMultiple = (items: GroceryItem[], updates: Partial<GroceryItem>) => {
-    console.log("Updating multiple items:", items.length, "updates:", updates);
+    console.log("Board - Updating multiple items:", items.length, "updates:", updates);
+    // Normalize store value for consistency
+    if (updates.store !== undefined) {
+      updates.store = updates.store === "Unassigned" ? "" : updates.store;
+    }
     onUpdateMultiple(items, updates);
     setSelectedItems([]);
   };
