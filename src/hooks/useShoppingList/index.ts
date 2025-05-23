@@ -4,7 +4,7 @@ import { GroceryItem, Meal } from "@/types";
 import { generateShoppingList } from "@/utils/groceryUtils";
 import { useShoppingListStorage } from "./useShoppingListStorage";
 import { useShoppingListActions } from "./useShoppingListActions";
-import { sortGroceryItems, shouldFilterFromShoppingList } from "./utils";
+import { sortGroceryItems, shouldFilterFromShoppingList, normalizeGroceryItem } from "./utils";
 
 export function useShoppingList(meals: Meal[], pantryItems: string[] = []) {
   const [groceryItems, setGroceryItems] = useState<GroceryItem[]>([]);
@@ -39,15 +39,19 @@ export function useShoppingList(meals: Meal[], pantryItems: string[] = []) {
       shoppingList = generateShoppingList(activeMeals, pantryItems, []);
     }
     
+    // Normalize all items from meals to ensure consistent store values
+    shoppingList = shoppingList.map(normalizeGroceryItem);
+    
     // Add manually added items that aren't in the list already
     manualItems.forEach(manualItem => {
+      const normalizedManualItem = normalizeGroceryItem(manualItem);
       const existingItem = shoppingList.find(item => 
-        item.name.toLowerCase() === manualItem.name.toLowerCase() && 
-        (!item.meal || item.meal === manualItem.meal)
+        item.name.toLowerCase() === normalizedManualItem.name.toLowerCase() && 
+        (!item.meal || item.meal === normalizedManualItem.meal)
       );
       
       if (!existingItem) {
-        shoppingList.push(manualItem);
+        shoppingList.push(normalizedManualItem);
       }
     });
     
@@ -55,6 +59,9 @@ export function useShoppingList(meals: Meal[], pantryItems: string[] = []) {
     const filteredShoppingList = shoppingList.filter(item => 
       !shouldFilterFromShoppingList(item, archivedItems)
     );
+    
+    console.log("useShoppingList - Final shopping list with normalized stores:", 
+      filteredShoppingList.map(item => ({ name: item.name, store: item.store })));
     
     setGroceryItems(sortGroceryItems(filteredShoppingList));
   }, [meals, pantryItems, archivedItems, manualItems]);

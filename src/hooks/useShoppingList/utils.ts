@@ -10,6 +10,13 @@ export const normalizeStoreValue = (store: string | undefined): string => {
   return store;
 };
 
+export const normalizeGroceryItem = (item: GroceryItem): GroceryItem => {
+  return {
+    ...item,
+    store: normalizeStoreValue(item.store)
+  };
+};
+
 export const sortGroceryItems = (items: GroceryItem[]): GroceryItem[] => {
   return [...items].sort((a, b) => {
     // Normalize store values for consistent sorting

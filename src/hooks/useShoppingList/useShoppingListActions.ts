@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { GroceryItem } from "@/types";
-import { sortGroceryItems, findMatchingArchivedItem, normalizeStoreValue } from "./utils";
+import { sortGroceryItems, findMatchingArchivedItem, normalizeStoreValue, normalizeGroceryItem } from "./utils";
 
 interface UseShoppingListActionsProps {
   groceryItems: GroceryItem[];
@@ -34,23 +34,22 @@ export const useShoppingListActions = ({
   };
 
   const handleUpdateGroceryItem = (updatedItem: GroceryItem) => {
-    console.log("Updating single grocery item:", updatedItem);
+    console.log("useShoppingListActions - Updating single item:", updatedItem.name, "to store:", updatedItem.store);
     
-    // Normalize the store value to ensure consistency
-    const normalizedItem = {
-      ...updatedItem,
-      store: normalizeStoreValue(updatedItem.store)
-    };
+    // Normalize the entire item to ensure consistency
+    const normalizedItem = normalizeGroceryItem(updatedItem);
     
-    console.log("Normalized item store value:", normalizedItem.store);
+    console.log("useShoppingListActions - Normalized item store:", normalizedItem.store);
     
-    // Update in groceryItems - this triggers resorting
+    // Update in groceryItems with proper state management
     setGroceryItems(prevItems => {
       const newItems = prevItems.map(item =>
         item.id === normalizedItem.id ? normalizedItem : item
       );
-      // Re-sort after update to ensure stores are properly grouped
-      return sortGroceryItems(newItems);
+      const sortedItems = sortGroceryItems(newItems);
+      console.log("useShoppingListActions - After single update, all items:", 
+        sortedItems.map(item => ({ name: item.name, store: item.store })));
+      return sortedItems;
     });
     
     // Update in manualItems if it exists there
@@ -64,7 +63,7 @@ export const useShoppingListActions = ({
       return prevItems;
     });
 
-    // If this is a store update, display a toast
+    // Show toast for store updates
     if (normalizedItem.store && normalizedItem.store !== "Unassigned") {
       toast({
         title: "Store Updated",
@@ -74,32 +73,31 @@ export const useShoppingListActions = ({
   };
 
   const handleUpdateMultipleGroceryItems = (items: GroceryItem[], updates: Partial<GroceryItem>) => {
-    console.log("Updating multiple grocery items:", items.length, "with updates:", updates);
+    console.log("useShoppingListActions - Bulk update:", items.length, "items with:", updates);
     
-    // Normalize store value if present
+    // Normalize updates
     const normalizedUpdates = { ...updates };
     if (normalizedUpdates.store !== undefined) {
       normalizedUpdates.store = normalizeStoreValue(normalizedUpdates.store);
-      console.log("Normalized bulk update store value:", normalizedUpdates.store);
+      console.log("useShoppingListActions - Normalized bulk store value:", normalizedUpdates.store);
     }
     
-    // Create a map of item IDs to updates for efficient lookup
     const itemIdsToUpdate = new Set(items.map(item => item.id));
     
     // Update groceryItems with proper state management
     setGroceryItems(prevItems => {
-      console.log("Previous items count:", prevItems.length);
       const newItems = prevItems.map(item => {
         if (itemIdsToUpdate.has(item.id)) {
-          const updatedItem = { ...item, ...normalizedUpdates };
-          console.log("Updating item:", item.name, "from store:", item.store, "to store:", updatedItem.store);
+          const updatedItem = normalizeGroceryItem({ ...item, ...normalizedUpdates });
+          console.log("useShoppingListActions - Bulk updating:", item.name, "from:", item.store, "to:", updatedItem.store);
           return updatedItem;
         }
         return item;
       });
-      // Re-sort after bulk update to ensure proper grouping
+      
       const sortedItems = sortGroceryItems(newItems);
-      console.log("After bulk update and sort, items count:", sortedItems.length);
+      console.log("useShoppingListActions - After bulk update, all items:", 
+        sortedItems.map(item => ({ name: item.name, store: item.store })));
       return sortedItems;
     });
     
@@ -107,7 +105,7 @@ export const useShoppingListActions = ({
     setManualItems(prevItems => {
       const newItems = prevItems.map(item => {
         if (itemIdsToUpdate.has(item.id)) {
-          return { ...item, ...normalizedUpdates };
+          return normalizeGroceryItem({ ...item, ...normalizedUpdates });
         }
         return item;
       });
@@ -146,18 +144,18 @@ export const useShoppingListActions = ({
       if (matchingArchivedItem.store) newItem.store = matchingArchivedItem.store;
     }
     
-    // Normalize store value
-    newItem.store = normalizeStoreValue(newItem.store);
+    // Normalize the new item
+    const normalizedItem = normalizeGroceryItem(newItem);
     
     // Add to manual items
-    setManualItems(prev => [...prev, newItem]);
+    setManualItems(prev => [...prev, normalizedItem]);
     
     // Add to grocery items directly to ensure immediate visibility
-    setGroceryItems(prevItems => sortGroceryItems([...prevItems, newItem]));
+    setGroceryItems(prevItems => sortGroceryItems([...prevItems, normalizedItem]));
     
     toast({
       title: "Item Added",
-      description: `${newItem.name} has been added to your shopping list`,
+      description: `${normalizedItem.name} has been added to your shopping list`,
     });
   };
   
