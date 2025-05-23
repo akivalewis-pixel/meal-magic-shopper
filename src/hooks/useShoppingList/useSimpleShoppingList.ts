@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { GroceryItem, Meal } from "@/types";
 import { generateShoppingList } from "@/utils/groceryUtils";
@@ -61,9 +60,14 @@ export function useSimpleShoppingList(meals: Meal[], pantryItems: string[] = [])
       const newItems = prevItems.map(item => {
         if (item.id === updatedItem.id) {
           console.log("useSimpleShoppingList: Found matching item, updating:", item.name, "from store:", item.store, "to store:", updatedItem.store);
+          
+          // Keep the store value as-is, don't convert to undefined
+          const finalStore = updatedItem.store === "Unassigned" ? "Unassigned" : updatedItem.store;
+          
           return { 
             ...item,
             ...updatedItem,
+            store: finalStore,
             __updateTimestamp: Date.now()
           };
         }

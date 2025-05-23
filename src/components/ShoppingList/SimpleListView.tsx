@@ -39,7 +39,7 @@ export const SimpleListView = ({
     // Create a new item object with the updated store
     const itemWithNewStore = { 
       ...updatedItem, 
-      store: newStore === "Unassigned" ? undefined : newStore,
+      store: newStore, // Keep the store value as-is
       __updateTimestamp: Date.now()
     };
     
@@ -119,7 +119,7 @@ export const SimpleListView = ({
   return (
     <div className="space-y-6">
       {Object.entries(groupedItems).map(([storeName, storeItems]) => (
-        <div key={`${storeName}-${storeItems.length}`}>
+        <div key={`${storeName}-${storeItems.length}-${storeItems.map(i => i.__updateTimestamp).join('-')}`}>
           {groupByStore && (
             <h3 className="text-lg font-semibold mb-4 pb-2 border-b">
               {storeName} ({storeItems.length} items)
