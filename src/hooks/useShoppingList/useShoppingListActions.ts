@@ -35,7 +35,7 @@ export const useShoppingListActions = ({
   };
 
   const handleUpdateGroceryItem = (updatedItem: GroceryItem) => {
-    console.log("Updating grocery item:", updatedItem);
+    console.log("Updating single grocery item:", updatedItem);
     
     // Update in groceryItems - this triggers resorting
     setGroceryItems(prevItems => {
@@ -72,16 +72,21 @@ export const useShoppingListActions = ({
     // Create a map of item IDs to updates for efficient lookup
     const itemIdsToUpdate = new Set(items.map(item => item.id));
     
-    // Update groceryItems
+    // Update groceryItems with proper state management
     setGroceryItems(prevItems => {
+      console.log("Previous items count:", prevItems.length);
       const newItems = prevItems.map(item => {
         if (itemIdsToUpdate.has(item.id)) {
-          return { ...item, ...updates };
+          const updatedItem = { ...item, ...updates };
+          console.log("Updating item:", item.name, "from store:", item.store, "to store:", updatedItem.store);
+          return updatedItem;
         }
         return item;
       });
-      // Re-sort after bulk update
-      return sortGroceryItems(newItems);
+      // Re-sort after bulk update to ensure proper grouping
+      const sortedItems = sortGroceryItems(newItems);
+      console.log("After bulk update and sort, items count:", sortedItems.length);
+      return sortedItems;
     });
     
     // Update manualItems if any of the updated items exist there
@@ -97,9 +102,10 @@ export const useShoppingListActions = ({
 
     // Show success toast
     const updateType = updates.store ? 'store' : updates.category ? 'category' : 'items';
+    const updateValue = updates.store || updates.category || 'updated';
     toast({
       title: "Items Updated",
-      description: `${items.length} item${items.length > 1 ? 's' : ''} ${updateType} updated successfully`,
+      description: `${items.length} item${items.length > 1 ? 's' : ''} moved to ${updateValue}`,
     });
   };
 
