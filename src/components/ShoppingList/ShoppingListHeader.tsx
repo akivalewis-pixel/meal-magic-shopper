@@ -1,7 +1,7 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { Edit, Plus, List } from "lucide-react";
+import { Plus, Settings, RefreshCw } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,62 +13,80 @@ interface ShoppingListHeaderProps {
   onEditStores: () => void;
   onSortChange: (value: "store" | "department" | "category") => void;
   sortBy: "store" | "department" | "category";
-  onAddItem?: () => void;
-  canAddItem?: boolean;
+  onAddItem: () => void;
+  canAddItem: boolean;
+  onResetList?: () => void;
 }
 
-export const ShoppingListHeader = ({ 
-  onEditStores, 
+export const ShoppingListHeader = ({
+  onEditStores,
   onSortChange,
   sortBy,
   onAddItem,
-  canAddItem = false
+  canAddItem,
+  onResetList
 }: ShoppingListHeaderProps) => {
   return (
-    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4">
-      <h2 className="text-2xl font-bold text-carrot-dark mb-4 sm:mb-0">Shopping List</h2>
-      <div className="flex gap-2">
-        {/* Combined Add dropdown menu */}
+    <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between mb-6">
+      <h2 className="text-2xl font-bold text-gray-800">Shopping List</h2>
+      
+      <div className="flex flex-wrap gap-2">
+        {canAddItem && (
+          <Button onClick={onAddItem} className="flex items-center gap-2">
+            <Plus className="h-4 w-4" />
+            Add Item
+          </Button>
+        )}
+        
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline">
-              <Plus className="mr-2 h-4 w-4" />
+            <Button variant="outline" className="flex items-center gap-2">
+              <Plus className="h-4 w-4" />
               Add
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            {canAddItem && onAddItem && (
+          <DropdownMenuContent>
+            {canAddItem && (
               <DropdownMenuItem onClick={onAddItem}>
                 Add Item
               </DropdownMenuItem>
             )}
             <DropdownMenuItem onClick={onEditStores}>
-              <Edit className="mr-2 h-4 w-4" />
-              Manage Stores
+              Add/Edit Stores
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
-        
-        {/* Sort dropdown menu */}
+
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline">
-              <List className="mr-2 h-4 w-4" />
-              Sort By: {sortBy === "store" ? "Store" : sortBy === "department" ? "Department" : "Category"}
+            <Button variant="outline" className="flex items-center gap-2">
+              <Settings className="h-4 w-4" />
+              Sort by {sortBy}
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
+          <DropdownMenuContent>
             <DropdownMenuItem onClick={() => onSortChange("store")}>
-              Store
+              Sort by Store
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => onSortChange("department")}>
-              Department
+              Sort by Department
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => onSortChange("category")}>
-              Category
+              Sort by Category
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
+
+        {onResetList && (
+          <Button 
+            variant="outline" 
+            onClick={onResetList}
+            className="flex items-center gap-2 text-red-600 hover:text-red-700"
+          >
+            <RefreshCw className="h-4 w-4" />
+            Reset List
+          </Button>
+        )}
       </div>
     </div>
   );

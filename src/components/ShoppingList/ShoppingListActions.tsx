@@ -19,20 +19,18 @@ interface ShoppingListActionsProps {
   availableStores: string[];
   setIsAddingItem: (value: boolean) => void;
   canAddItem: boolean;
+  onResetList?: () => void;
 }
 
 export const ShoppingListActions = ({
   searchTerm,
   setSearchTerm,
-  showChecked,
-  selectedStore,
-  setSelectedStore,
   sortBy,
   setSortBy,
   setIsEditingStores,
-  availableStores,
   setIsAddingItem,
-  canAddItem
+  canAddItem,
+  onResetList
 }: ShoppingListActionsProps) => {
   return (
     <>
@@ -42,15 +40,20 @@ export const ShoppingListActions = ({
         sortBy={sortBy}
         onAddItem={() => setIsAddingItem(true)}
         canAddItem={canAddItem}
+        onResetList={onResetList}
       />
       
-      <ShoppingListFilters 
-        searchTerm={searchTerm}
-        onSearchChange={setSearchTerm}
-        selectedStore={selectedStore}
-        onStoreFilterChange={setSelectedStore}
-        availableStores={availableStores}
-      />
+      <div className="mb-6">
+        <div className="flex-1">
+          <input
+            type="text"
+            placeholder="Search ingredients..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          />
+        </div>
+      </div>
     </>
   );
 };

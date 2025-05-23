@@ -18,6 +18,7 @@ interface ShoppingListSectionProps {
   availableStores: string[];
   onUpdateStores?: (stores: string[]) => void;
   archivedItems?: GroceryItem[];
+  onResetList?: () => void;
 }
 
 export const ShoppingListSection = ({
@@ -29,7 +30,8 @@ export const ShoppingListSection = ({
   onArchiveItem,
   availableStores = ["Any Store", "Supermarket", "Farmers Market", "Specialty Store"],
   onUpdateStores,
-  archivedItems = []
+  archivedItems = [],
+  onResetList
 }: ShoppingListSectionProps) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [showChecked, setShowChecked] = useState(true);
@@ -57,7 +59,12 @@ export const ShoppingListSection = ({
 
   const handleStoreChange = (item: GroceryItem, store: string) => {
     console.log("Store changed for", item.name, "to", store);
-    onUpdateItem({ ...item, store });
+    const updatedItem = { 
+      ...item, 
+      store: store,
+      __updateTimestamp: Date.now() // Force re-render
+    };
+    onUpdateItem(updatedItem);
   };
   
   const handleSaveStores = (updatedStores: string[]) => {
@@ -111,6 +118,7 @@ export const ShoppingListSection = ({
             availableStores={availableStores}
             setIsAddingItem={setIsAddingItem}
             canAddItem={!!onAddItem}
+            onResetList={onResetList}
           />
           
           <div className="flex items-center gap-2">

@@ -2,15 +2,8 @@
 import React, { useState, useEffect, useRef } from "react";
 import { GroceryItem } from "@/types";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
-} from "@/components/ui/select";
+import { SimpleStoreSelector } from "./SimpleStoreSelector";
 
 interface ShoppingListItemProps {
   item: GroceryItem;
@@ -87,21 +80,8 @@ export const ShoppingListItem = ({
     }
   };
 
-  // Handle store change directly with immediate update
-  const handleStoreChange = (value: string) => {
-    console.log("Store change in ShoppingListItem:", item.name, "to", value);
-    const storeValue = value === "unassigned" ? "" : value;
-    // Create a new item with updated store value to ensure the state is updated properly
-    const updatedItem = { ...item, store: storeValue };
-    // Pass the updated item to the parent component
-    onStoreChange(updatedItem, storeValue);
-  };
-
-  // Get the current store value for the select
-  const currentStoreValue = item.store || "unassigned";
-
   return (
-    <li className="flex items-center gap-3 flex-wrap">
+    <li className="flex items-center gap-3 flex-wrap py-2 border-b border-gray-100">
       <Checkbox
         id={item.id}
         checked={item.checked}
@@ -126,38 +106,35 @@ export const ShoppingListItem = ({
           />
         ) : (
           <div className="flex items-center gap-2 cursor-pointer">
-            <span>{item.name}</span>
+            <span className="font-medium">{item.name}</span>
             {item.meal && (
-              <span className="text-xs text-gray-500">({item.meal})</span>
+              <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                {item.meal}
+              </span>
             )}
           </div>
         )}
       </div>
       
-      <div className="flex items-center gap-2 ml-auto sm:ml-0">
+      <div className="flex items-center gap-2">
         <Input
-          className="w-[80px] h-8 text-sm"
+          className="w-20 h-8 text-sm text-center"
           value={quantityValue}
           onChange={handleQuantityChange}
           onClick={(e) => e.stopPropagation()}
           disabled={isArchiveView}
+          placeholder="Qty"
         />
         
-        <Select 
-          value={currentStoreValue}
-          onValueChange={handleStoreChange}
-          disabled={isArchiveView}
-        >
-          <SelectTrigger className="w-[120px] h-8 text-xs">
-            <SelectValue placeholder="Select Store" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="unassigned">Unassigned</SelectItem>
-            {availableStores.filter(store => store !== "Any Store").map(store => (
-              <SelectItem key={store} value={store}>{store}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <SimpleStoreSelector
+          item={item}
+          availableStores={availableStores}
+          onStoreChange={onStoreChange}
+        />
+        
+        <div className="text-xs text-gray-500 min-w-16 text-center">
+          {item.category}
+        </div>
       </div>
     </li>
   );

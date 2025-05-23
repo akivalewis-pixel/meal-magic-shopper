@@ -66,6 +66,7 @@ const Index = () => {
           onUpdateStores={handleUpdateStores}
           onAddItem={handleAddGroceryItem}
           onArchiveItem={handleArchiveItem}
+          onResetList={resetShoppingList}
         />
         
         <WeeklyMealPlansSection

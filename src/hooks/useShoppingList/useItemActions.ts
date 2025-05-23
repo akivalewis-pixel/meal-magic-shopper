@@ -79,11 +79,23 @@ export const useItemActions = ({
   };
 
   const resetShoppingList = () => {
+    // Archive all current items
+    const currentTime = Date.now();
+    const itemsToArchive = groceryItems.map(item => ({
+      ...item,
+      checked: true,
+      id: `archived-${currentTime}-${item.id}` // Ensure unique IDs in archive
+    }));
+    
+    setArchivedItems(prev => [...prev, ...itemsToArchive]);
+    
+    // Clear current lists
+    setGroceryItems([]);
     setManualItems([]);
     
     toast({
       title: "Shopping List Reset",
-      description: "Your shopping list has been reset.",
+      description: `${itemsToArchive.length} items have been archived and the shopping list has been cleared.`,
     });
   };
 
