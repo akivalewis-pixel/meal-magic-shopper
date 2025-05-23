@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { GroceryItem, Meal } from "@/types";
 import { generateShoppingList } from "@/utils/groceryUtils";
@@ -52,18 +53,23 @@ export function useSimpleShoppingList(meals: Meal[], pantryItems: string[] = [])
   }, [meals, pantryItems]);
 
   const updateItem = (updatedItem: GroceryItem) => {
-    console.log("updateItem called:", updatedItem.name, "new store:", updatedItem.store);
+    console.log("useSimpleShoppingList updateItem called:", updatedItem.name, "new store:", updatedItem.store);
     
-    setGroceryItems(prev => {
-      const newItems = prev.map(item => {
+    setGroceryItems(prevItems => {
+      console.log("useSimpleShoppingList: Previous items:", prevItems.map(i => ({ name: i.name, store: i.store })));
+      
+      const newItems = prevItems.map(item => {
         if (item.id === updatedItem.id) {
-          console.log("Updating item:", item.name, "from store:", item.store, "to store:", updatedItem.store);
-          return { ...updatedItem };
+          console.log("useSimpleShoppingList: Found matching item, updating:", item.name, "from store:", item.store, "to store:", updatedItem.store);
+          return { 
+            ...updatedItem,
+            __updateTimestamp: Date.now()
+          };
         }
         return item;
       });
       
-      console.log("Updated grocery items:", newItems.map(i => ({ name: i.name, store: i.store })));
+      console.log("useSimpleShoppingList: New items after update:", newItems.map(i => ({ name: i.name, store: i.store })));
       return newItems;
     });
 
