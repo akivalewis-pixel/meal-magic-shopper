@@ -31,6 +31,8 @@ export const StoreColumn = ({
     return customCategoryNames[categoryName] || categoryName;
   };
 
+  console.log("StoreColumn - Rendering:", storeName, "Categories:", Object.keys(categories));
+
   return (
     <div className="flex-1 min-w-0">
       <div 
@@ -43,37 +45,43 @@ export const StoreColumn = ({
         </h3>
         
         <div className="space-y-4">
-          {Object.entries(categories).map(([categoryName, items]) => (
-            <div key={categoryName}>
-              <h4 className="text-sm font-medium text-muted-foreground mb-2">
-                {getDisplayCategoryName(categoryName)}
-              </h4>
-              <div 
-                className={cn(
-                  "min-h-[60px] p-2 rounded border-2 border-dashed border-muted transition-colors",
-                  "hover:border-primary/50"
-                )}
-                onDragOver={onDragOver}
-                onDrop={(e) => onDrop(e, storeName, categoryName as GroceryCategory)}
-              >
-                {items.map(item => (
-                  <IngredientButton
-                    key={item.id}
-                    item={item}
-                    isSelected={selectedItems.includes(item.id)}
-                    onSelect={onSelectItem}
-                    onDoubleClick={onDoubleClickItem}
-                    onDragStart={onDragStart}
-                  />
-                ))}
-                {items.length === 0 && (
-                  <div className="text-center text-muted-foreground text-sm py-4">
-                    Drop items here
-                  </div>
-                )}
+          {Object.entries(categories).map(([categoryName, items]) => {
+            console.log("Rendering category:", categoryName, "with items:", items.length);
+            return (
+              <div key={categoryName}>
+                <h4 className="text-sm font-medium text-muted-foreground mb-2">
+                  {getDisplayCategoryName(categoryName)}
+                </h4>
+                <div 
+                  className={cn(
+                    "min-h-[60px] p-2 rounded border-2 border-dashed border-muted transition-colors",
+                    "hover:border-primary/50"
+                  )}
+                  onDragOver={onDragOver}
+                  onDrop={(e) => onDrop(e, storeName, categoryName as GroceryCategory)}
+                >
+                  {items.map(item => {
+                    console.log("Rendering ingredient button for:", item.name);
+                    return (
+                      <IngredientButton
+                        key={item.id}
+                        item={item}
+                        isSelected={selectedItems.includes(item.id)}
+                        onSelect={onSelectItem}
+                        onDoubleClick={onDoubleClickItem}
+                        onDragStart={onDragStart}
+                      />
+                    );
+                  })}
+                  {items.length === 0 && (
+                    <div className="text-center text-muted-foreground text-sm py-4">
+                      Drop items here
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </div>

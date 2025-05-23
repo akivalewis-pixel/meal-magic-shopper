@@ -29,6 +29,9 @@ export const ShoppingListBoard = ({
     Object.values(categories).flat()
   );
 
+  console.log("ShoppingListBoard - All items:", allItems.length);
+  console.log("ShoppingListBoard - Grouped items:", groupedItems);
+
   const selectedItemObjects = allItems.filter(item => selectedItems.includes(item.id));
 
   const handleSelectItem = (id: string, isMultiSelect: boolean) => {
@@ -102,20 +105,23 @@ export const ShoppingListBoard = ({
       />
       
       <div className="flex gap-4 overflow-x-auto pb-4">
-        {Object.entries(groupedItems).map(([storeName, categories]) => (
-          <StoreColumn
-            key={storeName}
-            storeName={storeName}
-            categories={categories}
-            selectedItems={selectedItems}
-            onSelectItem={handleSelectItem}
-            onDoubleClickItem={handleDoubleClickItem}
-            onDragStart={handleDragStart}
-            onDragOver={handleDragOver}
-            onDrop={handleDrop}
-            customCategoryNames={customCategoryNames}
-          />
-        ))}
+        {Object.entries(groupedItems).map(([storeName, categories]) => {
+          console.log("Rendering store column:", storeName, "with categories:", Object.keys(categories));
+          return (
+            <StoreColumn
+              key={storeName}
+              storeName={storeName}
+              categories={categories}
+              selectedItems={selectedItems}
+              onSelectItem={handleSelectItem}
+              onDoubleClickItem={handleDoubleClickItem}
+              onDragStart={handleDragStart}
+              onDragOver={handleDragOver}
+              onDrop={handleDrop}
+              customCategoryNames={customCategoryNames}
+            />
+          );
+        })}
       </div>
 
       <IngredientEditDialog
