@@ -7,6 +7,7 @@ import { WeeklyMealPlansSection } from "@/components/WeeklyMealPlansSection";
 import { Footer } from "@/components/Footer";
 import { PrintButton } from "@/components/PrintButton";
 import { useMealPlan } from "@/hooks/useMealPlan";
+import { useSimpleShoppingList } from "@/hooks/useShoppingList/useSimpleShoppingList";
 
 const Index = () => {
   // Custom hooks for state management
@@ -21,13 +22,16 @@ const Index = () => {
     handleResetMealPlan
   } = useMealPlan();
 
+  // Get the shopping list items for printing
+  const { groceryItems } = useSimpleShoppingList(meals, []);
+
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
       
       <main className="flex-1">
         <div className="container mx-auto px-4 py-4 flex justify-end">
-          <PrintButton meals={meals} groceryItems={[]} />
+          <PrintButton meals={meals} groceryItems={groceryItems} />
         </div>
         
         <MealPlanSection 

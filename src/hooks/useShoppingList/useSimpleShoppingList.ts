@@ -114,18 +114,11 @@ export function useSimpleShoppingList(meals: Meal[], pantryItems: string[] = [])
     setAllItems(prevItems => {
       const updatedItems = prevItems.map(item => {
         if (item.id === updatedItem.id) {
-          console.log("useSimpleShoppingList: Updating item:", item.name, "with:", {
-            oldQuantity: item.quantity,
-            newQuantity: updatedItem.quantity,
-            oldName: item.name,
-            newName: updatedItem.name,
-            oldStore: item.store,
-            newStore: updatedItem.store
-          });
+          console.log("useSimpleShoppingList: Updating item:", item.name, "with full updatedItem:", updatedItem);
           
+          // Apply ALL properties from updatedItem, not just selective ones
           const updated = {
-            ...item,
-            ...updatedItem, // Apply all updates from the updatedItem
+            ...updatedItem, // This ensures ALL properties are copied over
             __updateTimestamp: Date.now()
           };
           console.log("useSimpleShoppingList: Updated item result:", updated);
