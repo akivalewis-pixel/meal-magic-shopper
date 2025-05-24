@@ -1,7 +1,9 @@
-import { useState, useEffect, useRef } from "react";
+
+import { useState, useEffect, useRef, useCallback } from "react";
 import { GroceryItem, Meal } from "@/types";
 import { generateShoppingList } from "@/utils/groceryUtils";
 import { useToast } from "@/hooks/use-toast";
+import { useOptimisticUpdates } from "./useOptimisticUpdates";
 
 export function useSimpleShoppingList(meals: Meal[], pantryItems: string[] = []) {
   const [allItems, setAllItems] = useState<GroceryItem[]>([]);
@@ -10,10 +12,12 @@ export function useSimpleShoppingList(meals: Meal[], pantryItems: string[] = [])
     "Unassigned", "Supermarket", "Farmers Market", "Specialty Store"
   ]);
   
-  // Use a ref to persistently track store assignments across renders
+  // Enhanced persistent store assignments
   const storeAssignments = useRef<Map<string, string>>(new Map());
+  const lastSavedAssignments = useRef<string>('');
   
   const { toast } = useToast();
+  const { applyOptimisticUpdate, confirmUpdate, applyOptimisticUpdatesToItems } = useOptimisticUpdates();
 
   // Load from localStorage on mount
   useEffect(() => {
@@ -39,19 +43,32 @@ export function useSimpleShoppingList(meals: Meal[], pantryItems: string[] = [])
       });
     }
     if (savedAssignments) {
-      storeAssignments.current = new Map(JSON.parse(savedAssignments));
+      const assignments = JSON.parse(savedAssignments);
+      storeAssignments.current = new Map(assignments);
+      lastSavedAssignments.current = savedAssignments;
+      console.log("useSimpleShoppingList: Loaded store assignments:", assignments);
     }
   }, []);
 
-  // Save to localStorage when state changes
-  useEffect(() => {
+  // Enhanced save to localStorage with assignment persistence
+  const saveToLocalStorage = useCallback(() => {
     localStorage.setItem('shoppingList_stores', JSON.stringify(availableStores));
     localStorage.setItem('shoppingList_archived', JSON.stringify(archivedItems));
     localStorage.setItem('shoppingList_allItems', JSON.stringify(allItems));
-    localStorage.setItem('shoppingList_storeAssignments', JSON.stringify(Array.from(storeAssignments.current.entries())));
+    
+    const currentAssignments = JSON.stringify(Array.from(storeAssignments.current.entries()));
+    if (currentAssignments !== lastSavedAssignments.current) {
+      localStorage.setItem('shoppingList_storeAssignments', currentAssignments);
+      lastSavedAssignments.current = currentAssignments;
+      console.log("useSimpleShoppingList: Saved store assignments:", currentAssignments);
+    }
   }, [availableStores, archivedItems, allItems]);
 
-  // Generate shopping list from meals and merge with existing items
+  useEffect(() => {
+    saveToLocalStorage();
+  }, [saveToLocalStorage]);
+
+  // Generate shopping list from meals with enhanced store assignment
   useEffect(() => {
     console.log("useSimpleShoppingList: Regenerating list with", meals.length, "meals");
     
@@ -62,10 +79,12 @@ export function useSimpleShoppingList(meals: Meal[], pantryItems: string[] = [])
       mealItems = generateShoppingList(activeMeals, pantryItems, []);
     }
     
-    // Normalize meal items and apply stored assignments
+    // Apply stored assignments with enhanced persistence
     const normalizedMealItems = mealItems.map(item => {
       const storedStore = storeAssignments.current.get(item.name.toLowerCase());
       const assignedStore = storedStore || "Unassigned";
+      
+      console.log("useSimpleShoppingList: Assigning store for", item.name, "stored:", storedStore, "final:", assignedStore);
       
       return {
         ...item,
@@ -86,7 +105,7 @@ export function useSimpleShoppingList(meals: Meal[], pantryItems: string[] = [])
     
     const combinedItems = [...normalizedMealItems, ...manualItems];
     
-    console.log("useSimpleShoppingList: Combined items with preserved stores:", 
+    console.log("useSimpleShoppingList: Final combined items:", 
       combinedItems.map(i => ({ 
         name: i.name, 
         store: i.store, 
@@ -97,47 +116,59 @@ export function useSimpleShoppingList(meals: Meal[], pantryItems: string[] = [])
     setAllItems(combinedItems);
   }, [meals, pantryItems]);
 
-  const updateItem = (updatedItem: GroceryItem) => {
-    console.log("useSimpleShoppingList updateItem called:", updatedItem.name, "updates:", {
+  // Enhanced updateItem with optimistic updates and better persistence
+  const updateItem = useCallback((updatedItem: GroceryItem) => {
+    console.log("useSimpleShoppingList: updateItem called with:", {
+      name: updatedItem.name,
       store: updatedItem.store,
       quantity: updatedItem.quantity,
-      name: updatedItem.name
+      id: updatedItem.id
     });
     
-    // Update store assignment in persistent storage if store changed
+    // Apply optimistic update immediately for UI responsiveness
+    if (updatedItem.store !== undefined) {
+      applyOptimisticUpdate(updatedItem.id, { store: updatedItem.store });
+    }
+    if (updatedItem.quantity !== undefined) {
+      applyOptimisticUpdate(updatedItem.id, { quantity: updatedItem.quantity });
+    }
+    if (updatedItem.name !== undefined) {
+      applyOptimisticUpdate(updatedItem.id, { name: updatedItem.name });
+    }
+    
+    // Update store assignment persistence immediately
     if (updatedItem.store && updatedItem.store !== "Unassigned") {
       storeAssignments.current.set(updatedItem.name.toLowerCase(), updatedItem.store);
+      console.log("useSimpleShoppingList: Stored assignment:", updatedItem.name, "->", updatedItem.store);
     } else if (updatedItem.store === "Unassigned") {
       storeAssignments.current.delete(updatedItem.name.toLowerCase());
     }
     
+    // Update the actual state
     setAllItems(prevItems => {
       const updatedItems = prevItems.map(item => {
         if (item.id === updatedItem.id) {
-          console.log("useSimpleShoppingList: Updating item:", item.name, "with full updatedItem:", updatedItem);
-          
-          // Apply ALL properties from updatedItem, not just selective ones
           const updated = {
-            ...updatedItem, // This ensures ALL properties are copied over
+            ...updatedItem,
             __updateTimestamp: Date.now()
           };
-          console.log("useSimpleShoppingList: Updated item result:", updated);
+          console.log("useSimpleShoppingList: State updated for:", updated.name, "store:", updated.store);
+          
+          // Confirm the optimistic update
+          setTimeout(() => confirmUpdate(updatedItem.id), 100);
+          
           return updated;
         }
         return item;
       });
       
-      console.log("useSimpleShoppingList: All items after update:", updatedItems.map(i => ({ 
-        id: i.id,
-        name: i.name, 
-        quantity: i.quantity,
-        store: i.store,
-        timestamp: i.__updateTimestamp 
-      })));
       return updatedItems;
     });
 
-    // Determine what was updated for the toast message
+    // Save assignments immediately
+    setTimeout(saveToLocalStorage, 100);
+
+    // Show toast feedback
     const changes = [];
     if (updatedItem.store && updatedItem.store !== "Unassigned") {
       changes.push(`moved to ${updatedItem.store}`);
@@ -152,17 +183,17 @@ export function useSimpleShoppingList(meals: Meal[], pantryItems: string[] = [])
       title: "Item Updated", 
       description: `${updatedItem.name} ${description}`,
     });
-  };
+  }, [applyOptimisticUpdate, confirmUpdate, saveToLocalStorage, toast]);
 
-  const toggleItem = (id: string) => {
+  const toggleItem = useCallback((id: string) => {
     setAllItems(prev => 
       prev.map(item => 
         item.id === id ? { ...item, checked: !item.checked } : item
       )
     );
-  };
+  }, []);
 
-  const archiveItem = (id: string) => {
+  const archiveItem = useCallback((id: string) => {
     const item = allItems.find(i => i.id === id);
     if (!item) return;
 
@@ -173,9 +204,9 @@ export function useSimpleShoppingList(meals: Meal[], pantryItems: string[] = [])
       title: "Item Archived",
       description: `${item.name} moved to archive`,
     });
-  };
+  }, [allItems, toast]);
 
-  const addItem = (newItem: GroceryItem) => {
+  const addItem = useCallback((newItem: GroceryItem) => {
     const itemWithId = {
       ...newItem,
       id: `manual-${Date.now()}-${Math.random()}`,
@@ -191,9 +222,9 @@ export function useSimpleShoppingList(meals: Meal[], pantryItems: string[] = [])
       title: "Item Added",
       description: `${newItem.name} added to shopping list`,
     });
-  };
+  }, [toast]);
 
-  const updateStores = (newStores: string[]) => {
+  const updateStores = useCallback((newStores: string[]) => {
     setAvailableStores(newStores);
     
     // Update items that have invalid stores
@@ -210,9 +241,9 @@ export function useSimpleShoppingList(meals: Meal[], pantryItems: string[] = [])
       title: "Stores Updated",
       description: "Store list has been updated",
     });
-  };
+  }, [toast]);
 
-  const resetList = () => {
+  const resetList = useCallback(() => {
     const itemsToArchive = allItems.map(item => ({
       ...item,
       checked: true,
@@ -226,10 +257,13 @@ export function useSimpleShoppingList(meals: Meal[], pantryItems: string[] = [])
       title: "List Reset",
       description: `${itemsToArchive.length} items archived`,
     });
-  };
+  }, [allItems, toast]);
+
+  // Apply optimistic updates to the grocery items before returning
+  const groceryItemsWithOptimisticUpdates = applyOptimisticUpdatesToItems(allItems);
 
   return {
-    groceryItems: allItems,
+    groceryItems: groceryItemsWithOptimisticUpdates,
     archivedItems,
     availableStores,
     updateItem,

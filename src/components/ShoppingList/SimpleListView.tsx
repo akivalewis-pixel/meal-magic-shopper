@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useMemo } from "react";
 import { GroceryItem } from "@/types";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -55,32 +55,58 @@ export const SimpleListView = ({
     onUpdateItem(updatedItem);
   };
 
-  // Group items by store
-  const groupedItems = React.useMemo(() => {
-    console.log("SimpleListView: Grouping", items.length, "items");
+  // Enhanced grouping with better dependencies and sorting
+  const groupedItems = useMemo(() => {
+    console.log("SimpleListView: Grouping", items.length, "items, groupByStore:", groupByStore);
+    
+    // Create a stable key for each item that includes store info
+    const itemsWithKeys = items.map(item => ({
+      ...item,
+      groupKey: `${item.id}-${item.store || 'Unassigned'}-${item.__updateTimestamp || 0}`
+    }));
     
     const currentGrouping: Record<string, GroceryItem[]> = {};
     
     if (groupByStore) {
-      items.forEach(item => {
+      itemsWithKeys.forEach(item => {
         const store = item.store || "Unassigned";
         if (!currentGrouping[store]) {
           currentGrouping[store] = [];
         }
         currentGrouping[store].push(item);
       });
+      
+      // Sort items within each store by category
+      Object.keys(currentGrouping).forEach(store => {
+        currentGrouping[store].sort((a, b) => {
+          if (a.category !== b.category) {
+            return a.category.localeCompare(b.category);
+          }
+          return a.name.localeCompare(b.name);
+        });
+      });
     } else {
-      currentGrouping["All Items"] = [...items];
+      currentGrouping["All Items"] = [...itemsWithKeys];
     }
     
+    console.log("SimpleListView: Grouped result:", 
+      Object.entries(currentGrouping).map(([store, storeItems]) => ({
+        store,
+        itemCount: storeItems.length,
+        items: storeItems.map(i => ({ name: i.name, store: i.store }))
+      }))
+    );
+    
     return currentGrouping;
-  }, [items, groupByStore]);
+  }, [items, groupByStore, items.map(i => i.__updateTimestamp).join(',')]);
 
   const renderItem = (item: GroceryItem) => {
-    console.log("SimpleListView: Rendering item", item.name, "with quantity:", item.quantity, "timestamp:", item.__updateTimestamp);
+    const itemKey = `${item.id}-${item.store || 'Unassigned'}-${item.__updateTimestamp || 0}`;
+    
+    console.log("SimpleListView: Rendering item", item.name, "with key:", itemKey, "store:", item.store);
     
     return (
-      <li key={`${item.id}-${item.__updateTimestamp || 0}`} className="flex items-center gap-3 py-2 border-b border-gray-100">
+      <li key={itemKey} className="flex items-center gap-3 py-2 border-b border-gray-100">
         <Checkbox
           checked={item.checked}
           onCheckedChange={() => onToggleItem(item.id)}
@@ -88,7 +114,6 @@ export const SimpleListView = ({
         
         <div className={`flex-1 ${item.checked ? "line-through opacity-50" : ""}`}>
           <Input
-            key={`name-${item.id}-${item.__updateTimestamp || 0}`}
             value={item.name}
             onChange={(e) => handleNameChange(item, e.target.value)}
             className="border-none p-0 h-auto font-medium"
@@ -101,7 +126,6 @@ export const SimpleListView = ({
         </div>
         
         <Input
-          key={`quantity-${item.id}-${item.__updateTimestamp || 0}`}
           value={item.quantity}
           onChange={(e) => handleQuantityChange(item, e.target.value)}
           className="w-20 h-8 text-center"
@@ -125,7 +149,7 @@ export const SimpleListView = ({
   return (
     <div className="space-y-6">
       {Object.entries(groupedItems).map(([storeName, storeItems]) => (
-        <div key={storeName}>
+        <div key={`${storeName}-${storeItems.length}`}>
           {groupByStore && (
             <h3 className="text-lg font-semibold mb-4 pb-2 border-b">
               {storeName} ({storeItems.length} items)
