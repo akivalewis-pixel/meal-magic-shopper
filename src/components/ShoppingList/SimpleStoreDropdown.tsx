@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useCallback } from "react";
 import { GroceryItem } from "@/types";
 
 interface SimpleStoreDropdownProps {
@@ -14,20 +14,10 @@ export const SimpleStoreDropdown = ({
   onStoreChange
 }: SimpleStoreDropdownProps) => {
   const [isUpdating, setIsUpdating] = useState(false);
-  const [localStore, setLocalStore] = useState(item.store || "Unassigned");
 
-  // Update local state when item prop changes
-  useEffect(() => {
-    setLocalStore(item.store || "Unassigned");
-    setIsUpdating(false);
-  }, [item.store, item.__updateTimestamp]);
-
-  const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+  const handleChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
     const newStore = e.target.value;
-    console.log("SimpleStoreDropdown: Store change for:", item.name, "from:", item.store, "to:", newStore);
     
-    // Optimistic update - change local state immediately
-    setLocalStore(newStore);
     setIsUpdating(true);
     
     const updatedItem = { 
@@ -36,19 +26,18 @@ export const SimpleStoreDropdown = ({
       __updateTimestamp: Date.now()
     };
     
-    // Call the parent callback
     onStoreChange(updatedItem, newStore);
     
-    // Clear updating state after a short delay
-    setTimeout(() => setIsUpdating(false), 500);
-  };
+    // Clear updating state quickly
+    setTimeout(() => setIsUpdating(false), 300);
+  }, [item, onStoreChange]);
 
-  console.log("SimpleStoreDropdown: Rendering", item.name, "with store:", localStore, "updating:", isUpdating);
+  const currentStore = item.store || "Unassigned";
 
   return (
     <div className="relative">
       <select
-        value={localStore}
+        value={currentStore}
         onChange={handleChange}
         className={`w-32 h-8 text-xs bg-white border rounded px-2 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors ${
           isUpdating 

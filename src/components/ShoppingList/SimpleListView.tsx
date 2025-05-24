@@ -1,5 +1,5 @@
 
-import React, { useMemo } from "react";
+import React, { useMemo, useCallback } from "react";
 import { GroceryItem } from "@/types";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -21,54 +21,29 @@ export const SimpleListView = ({
   onToggleItem,
   groupByStore
 }: SimpleListViewProps) => {
-  const handleQuantityChange = (item: GroceryItem, quantity: string) => {
-    console.log("SimpleListView: Quantity change for", item.name, "from", item.quantity, "to", quantity);
-    const updatedItem = {
-      ...item,
-      quantity,
-      __updateTimestamp: Date.now()
-    };
-    onUpdateItem(updatedItem);
-  };
 
-  const handleNameChange = (item: GroceryItem, name: string) => {
-    console.log("SimpleListView: Name change for", item.name, "to", name);
-    const updatedItem = {
-      ...item,
-      name,
-      __updateTimestamp: Date.now()
-    };
-    onUpdateItem(updatedItem);
-  };
+  const handleQuantityChange = useCallback((item: GroceryItem, quantity: string) => {
+    onUpdateItem({ ...item, quantity });
+  }, [onUpdateItem]);
 
-  const handleCategoryChange = (item: GroceryItem, category: string) => {
-    const updatedItem = {
-      ...item,
-      category: category as any,
-      __updateTimestamp: Date.now()
-    };
-    onUpdateItem(updatedItem);
-  };
+  const handleNameChange = useCallback((item: GroceryItem, name: string) => {
+    onUpdateItem({ ...item, name });
+  }, [onUpdateItem]);
 
-  const handleStoreChange = (updatedItem: GroceryItem, newStore: string) => {
-    console.log("SimpleListView: Store change for", updatedItem.name, "to", newStore);
-    onUpdateItem(updatedItem);
-  };
+  const handleCategoryChange = useCallback((item: GroceryItem, category: string) => {
+    onUpdateItem({ ...item, category: category as any });
+  }, [onUpdateItem]);
 
-  // Enhanced grouping with better dependencies and sorting
+  const handleStoreChange = useCallback((updatedItem: GroceryItem, newStore: string) => {
+    onUpdateItem(updatedItem);
+  }, [onUpdateItem]);
+
+  // Optimized grouping with stable keys
   const groupedItems = useMemo(() => {
-    console.log("SimpleListView: Grouping", items.length, "items, groupByStore:", groupByStore);
-    
-    // Create a stable key for each item that includes store info
-    const itemsWithKeys = items.map(item => ({
-      ...item,
-      groupKey: `${item.id}-${item.store || 'Unassigned'}-${item.__updateTimestamp || 0}`
-    }));
-    
     const currentGrouping: Record<string, GroceryItem[]> = {};
     
     if (groupByStore) {
-      itemsWithKeys.forEach(item => {
+      items.forEach(item => {
         const store = item.store || "Unassigned";
         if (!currentGrouping[store]) {
           currentGrouping[store] = [];
@@ -76,7 +51,7 @@ export const SimpleListView = ({
         currentGrouping[store].push(item);
       });
       
-      // Sort items within each store by category
+      // Sort items within each store
       Object.keys(currentGrouping).forEach(store => {
         currentGrouping[store].sort((a, b) => {
           if (a.category !== b.category) {
@@ -86,24 +61,14 @@ export const SimpleListView = ({
         });
       });
     } else {
-      currentGrouping["All Items"] = [...itemsWithKeys];
+      currentGrouping["All Items"] = [...items];
     }
     
-    console.log("SimpleListView: Grouped result:", 
-      Object.entries(currentGrouping).map(([store, storeItems]) => ({
-        store,
-        itemCount: storeItems.length,
-        items: storeItems.map(i => ({ name: i.name, store: i.store }))
-      }))
-    );
-    
     return currentGrouping;
-  }, [items, groupByStore, items.map(i => i.__updateTimestamp).join(',')]);
+  }, [items, groupByStore]);
 
-  const renderItem = (item: GroceryItem) => {
-    const itemKey = `${item.id}-${item.store || 'Unassigned'}-${item.__updateTimestamp || 0}`;
-    
-    console.log("SimpleListView: Rendering item", item.name, "with key:", itemKey, "store:", item.store);
+  const renderItem = useCallback((item: GroceryItem) => {
+    const itemKey = `${item.id}-${item.store}-${item.__updateTimestamp}`;
     
     return (
       <li key={itemKey} className="flex items-center gap-3 py-2 border-b border-gray-100">
@@ -144,7 +109,7 @@ export const SimpleListView = ({
         />
       </li>
     );
-  };
+  }, [availableStores, handleQuantityChange, handleNameChange, handleCategoryChange, handleStoreChange, onToggleItem]);
 
   return (
     <div className="space-y-6">

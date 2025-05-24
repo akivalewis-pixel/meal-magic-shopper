@@ -1,9 +1,7 @@
-
 import { useState, useEffect, useRef, useCallback } from "react";
 import { GroceryItem, Meal } from "@/types";
 import { generateShoppingList } from "@/utils/groceryUtils";
 import { useToast } from "@/hooks/use-toast";
-import { useOptimisticUpdates } from "./useOptimisticUpdates";
 
 export function useSimpleShoppingList(meals: Meal[], pantryItems: string[] = []) {
   const [allItems, setAllItems] = useState<GroceryItem[]>([]);
@@ -17,7 +15,6 @@ export function useSimpleShoppingList(meals: Meal[], pantryItems: string[] = [])
   const lastSavedAssignments = useRef<string>('');
   
   const { toast } = useToast();
-  const { applyOptimisticUpdate, confirmUpdate, applyOptimisticUpdatesToItems } = useOptimisticUpdates();
 
   // Load from localStorage on mount
   useEffect(() => {
@@ -125,17 +122,6 @@ export function useSimpleShoppingList(meals: Meal[], pantryItems: string[] = [])
       id: updatedItem.id
     });
     
-    // Apply optimistic update immediately for UI responsiveness
-    if (updatedItem.store !== undefined) {
-      applyOptimisticUpdate(updatedItem.id, { store: updatedItem.store });
-    }
-    if (updatedItem.quantity !== undefined) {
-      applyOptimisticUpdate(updatedItem.id, { quantity: updatedItem.quantity });
-    }
-    if (updatedItem.name !== undefined) {
-      applyOptimisticUpdate(updatedItem.id, { name: updatedItem.name });
-    }
-    
     // Update store assignment persistence immediately
     if (updatedItem.store && updatedItem.store !== "Unassigned") {
       storeAssignments.current.set(updatedItem.name.toLowerCase(), updatedItem.store);
@@ -153,9 +139,6 @@ export function useSimpleShoppingList(meals: Meal[], pantryItems: string[] = [])
             __updateTimestamp: Date.now()
           };
           console.log("useSimpleShoppingList: State updated for:", updated.name, "store:", updated.store);
-          
-          // Confirm the optimistic update
-          setTimeout(() => confirmUpdate(updatedItem.id), 100);
           
           return updated;
         }
@@ -183,7 +166,7 @@ export function useSimpleShoppingList(meals: Meal[], pantryItems: string[] = [])
       title: "Item Updated", 
       description: `${updatedItem.name} ${description}`,
     });
-  }, [applyOptimisticUpdate, confirmUpdate, saveToLocalStorage, toast]);
+  }, [saveToLocalStorage, toast]);
 
   const toggleItem = useCallback((id: string) => {
     setAllItems(prev => 
@@ -259,11 +242,8 @@ export function useSimpleShoppingList(meals: Meal[], pantryItems: string[] = [])
     });
   }, [allItems, toast]);
 
-  // Apply optimistic updates to the grocery items before returning
-  const groceryItemsWithOptimisticUpdates = applyOptimisticUpdatesToItems(allItems);
-
   return {
-    groceryItems: groceryItemsWithOptimisticUpdates,
+    groceryItems: allItems,
     archivedItems,
     availableStores,
     updateItem,
