@@ -10,6 +10,7 @@ export function useShoppingListPersistence(
   const storeAssignments = useRef<Map<string, string>>(new Map());
   const lastSavedAssignments = useRef<string>('');
   const saveTimeoutRef = useRef<NodeJS.Timeout>();
+  const isInitializedRef = useRef(false);
 
   // Load from localStorage on mount
   const loadFromStorage = useCallback(() => {
@@ -26,12 +27,12 @@ export function useShoppingListPersistence(
         assignments: savedAssignments ? JSON.parse(savedAssignments) : null
       };
 
-      if (result.assignments) {
+      if (result.assignments && Array.isArray(result.assignments)) {
         storeAssignments.current = new Map(result.assignments);
         lastSavedAssignments.current = savedAssignments;
       }
 
-      if (result.items) {
+      if (result.items && Array.isArray(result.items)) {
         // Initialize store assignments from loaded items
         result.items.forEach((item: GroceryItem) => {
           if (item.store && item.store !== "Unassigned") {
@@ -40,15 +41,19 @@ export function useShoppingListPersistence(
         });
       }
 
+      isInitializedRef.current = true;
       return result;
     } catch (error) {
       console.warn('Failed to load from localStorage:', error);
+      isInitializedRef.current = true;
       return { stores: null, archived: null, items: null, assignments: null };
     }
   }, []);
 
   // Debounced save to localStorage
   const saveToLocalStorage = useCallback(() => {
+    if (!isInitializedRef.current) return;
+
     // Clear existing timeout
     if (saveTimeoutRef.current) {
       clearTimeout(saveTimeoutRef.current);
@@ -80,11 +85,6 @@ export function useShoppingListPersistence(
       }
     };
   }, []);
-
-  // Auto-save with debouncing
-  useEffect(() => {
-    saveToLocalStorage();
-  }, [saveToLocalStorage]);
 
   return {
     storeAssignments,

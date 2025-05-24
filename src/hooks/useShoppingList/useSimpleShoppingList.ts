@@ -1,5 +1,5 @@
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useCallback, useRef } from "react";
 import { Meal, GroceryItem } from "@/types";
 import { useShoppingListState } from "./useShoppingListState";
 import { useShoppingListPersistence } from "./useShoppingListPersistence";
@@ -17,6 +17,7 @@ export function useSimpleShoppingList(meals: Meal[], pantryItems: string[] = [])
   } = useShoppingListState();
 
   const [manualItems, setManualItems] = useState<GroceryItem[]>([]);
+  const isInitializedRef = useRef(false);
 
   const {
     storeAssignments,
@@ -30,7 +31,7 @@ export function useSimpleShoppingList(meals: Meal[], pantryItems: string[] = [])
     storeAssignments
   );
 
-  // Combine meal items with manual items (memoized)
+  // Memoized combination of meal items with manual items
   const combinedItems = useMemo(() => {
     const manualItemNames = new Set(manualItems.map(item => item.name.toLowerCase()));
     
@@ -42,45 +43,57 @@ export function useSimpleShoppingList(meals: Meal[], pantryItems: string[] = [])
     return [...nonConflictingMealItems, ...manualItems];
   }, [mealItems, manualItems]);
 
+  // Debounced save function to prevent excessive localStorage writes
+  const debouncedSave = useCallback(() => {
+    const timeoutId = setTimeout(saveToLocalStorage, 300);
+    return () => clearTimeout(timeoutId);
+  }, [saveToLocalStorage]);
+
   const actions = useShoppingListActions({
     allItems: combinedItems,
-    setAllItems: (items) => {
+    setAllItems: useCallback((items) => {
       if (typeof items === 'function') {
         const updatedItems = items(combinedItems);
-        // Separate manual items from meal items
         const newManualItems = updatedItems.filter(item => item.id.startsWith('manual-'));
         setManualItems(newManualItems);
       } else {
         const newManualItems = items.filter(item => item.id.startsWith('manual-'));
         setManualItems(newManualItems);
       }
-    },
+      debouncedSave();
+    }, [combinedItems, debouncedSave]),
     archivedItems,
     setArchivedItems,
     storeAssignments,
-    saveToLocalStorage,
+    saveToLocalStorage: debouncedSave,
     setAvailableStores
   });
 
   // Load from localStorage on mount only
   useEffect(() => {
-    const savedData = loadFromStorage();
-    
-    if (savedData.stores) {
-      setAvailableStores(savedData.stores);
-    }
-    if (savedData.archived) {
-      setArchivedItems(savedData.archived);
-    }
-    if (savedData.items) {
-      const savedManualItems = savedData.items.filter(item => item.id.startsWith('manual-'));
-      setManualItems(savedManualItems);
+    if (!isInitializedRef.current) {
+      const savedData = loadFromStorage();
+      
+      if (savedData.stores) {
+        setAvailableStores(savedData.stores);
+      }
+      if (savedData.archived) {
+        setArchivedItems(savedData.archived);
+      }
+      if (savedData.items) {
+        const savedManualItems = savedData.items.filter(item => item.id.startsWith('manual-'));
+        setManualItems(savedManualItems);
+      }
+      
+      isInitializedRef.current = true;
     }
   }, []); // Empty dependency array - load only on mount
 
-  // Update allItems when combinedItems change
+  // Update allItems only when combinedItems change and we're initialized
   useEffect(() => {
-    setAllItems(combinedItems);
+    if (isInitializedRef.current) {
+      setAllItems(combinedItems);
+    }
   }, [combinedItems, setAllItems]);
 
   return {

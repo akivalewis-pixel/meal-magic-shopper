@@ -1,4 +1,3 @@
-
 // Grocery and shopping list related utility functions
 import { GroceryItem, Meal, GroceryCategory } from "@/types";
 import { cleanIngredientName } from "./recipeUtils";
@@ -8,9 +7,6 @@ import { groceryCategories } from "./constants";
  * Generate a shopping list based on meals and pantry items
  */
 export const generateShoppingList = (meals: Meal[], pantryItems: string[], previousItems: GroceryItem[] = []): GroceryItem[] => {
-  console.log("Generating shopping list with", meals.length, "meals");
-  console.log("Pantry items:", pantryItems);
-  
   // Get all ingredients from meals
   const allIngredients = meals.flatMap(meal => 
     meal.ingredients.map(ingredient => {
@@ -31,13 +27,11 @@ export const generateShoppingList = (meals: Meal[], pantryItems: string[], previ
         quantity: quantity,
         checked: false,
         meal: meal.title,
-        store: "Unassigned", // Always start with "Unassigned" instead of empty string
+        store: "Unassigned",
         department: ""
       };
     })
   );
-  
-  console.log("All ingredients before filtering:", allIngredients);
   
   // Filter out ingredients that are already in the pantry (using case-insensitive matching)
   const filteredIngredients = allIngredients.filter(
@@ -46,8 +40,6 @@ export const generateShoppingList = (meals: Meal[], pantryItems: string[], previ
       pantryItem.toLowerCase().includes(item.name.toLowerCase())
     )
   );
-  
-  console.log("Filtered ingredients after pantry check:", filteredIngredients);
   
   // Find existing grocery items by name for preserving data
   const existingItemsByName: Record<string, GroceryItem> = {};

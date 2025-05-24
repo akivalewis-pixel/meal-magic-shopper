@@ -81,7 +81,7 @@ const MemoizedItemRow = React.memo(({
       
       <CategoryEditInput
         item={item}
-        onCategoryChange={handleCategoryChange}
+        onCategoryChange={(item, category) => handleCategoryChange(category)}
       />
     </li>
   );
@@ -89,7 +89,7 @@ const MemoizedItemRow = React.memo(({
 
 MemoizedItemRow.displayName = 'MemoizedItemRow';
 
-export const SimpleListView = ({
+export const SimpleListView = React.memo(({
   items,
   availableStores,
   onUpdateItem,
@@ -130,6 +130,14 @@ export const SimpleListView = ({
     return currentGrouping;
   }, [items, groupByStore]);
 
+  if (items.length === 0) {
+    return (
+      <div className="text-center py-10 text-gray-500">
+        <p>No items in your shopping list</p>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {Object.entries(groupedItems).map(([storeName, storeItems]) => (
@@ -154,4 +162,6 @@ export const SimpleListView = ({
       ))}
     </div>
   );
-};
+});
+
+SimpleListView.displayName = 'SimpleListView';
