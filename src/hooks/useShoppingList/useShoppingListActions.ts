@@ -25,58 +25,29 @@ export function useShoppingListActions({
   const { toast } = useToast();
 
   const updateItem = useCallback((updatedItem: GroceryItem) => {
-    console.log("useShoppingListActions: updateItem called with:", {
-      name: updatedItem.name,
-      store: updatedItem.store,
-      quantity: updatedItem.quantity,
-      id: updatedItem.id
-    });
-    
     // Update store assignment persistence immediately
     if (updatedItem.store && updatedItem.store !== "Unassigned") {
       storeAssignments.current.set(updatedItem.name.toLowerCase(), updatedItem.store);
-      console.log("useShoppingListActions: Stored assignment:", updatedItem.name, "->", updatedItem.store);
     } else if (updatedItem.store === "Unassigned") {
       storeAssignments.current.delete(updatedItem.name.toLowerCase());
     }
     
     // Update the actual state
     setAllItems(prevItems => {
-      const updatedItems = prevItems.map(item => {
+      return prevItems.map(item => {
         if (item.id === updatedItem.id) {
-          const updated = {
+          return {
             ...updatedItem,
             __updateTimestamp: Date.now()
           };
-          console.log("useShoppingListActions: State updated for:", updated.name, "store:", updated.store);
-          
-          return updated;
         }
         return item;
       });
-      
-      return updatedItems;
     });
 
-    // Save assignments immediately
+    // Debounced save
     setTimeout(saveToLocalStorage, 100);
-
-    // Show toast feedback
-    const changes = [];
-    if (updatedItem.store && updatedItem.store !== "Unassigned") {
-      changes.push(`moved to ${updatedItem.store}`);
-    }
-    if (updatedItem.quantity) {
-      changes.push(`quantity set to ${updatedItem.quantity}`);
-    }
-    
-    const description = changes.length > 0 ? changes.join(', ') : 'updated';
-
-    toast({
-      title: "Item Updated", 
-      description: `${updatedItem.name} ${description}`,
-    });
-  }, [setAllItems, storeAssignments, saveToLocalStorage, toast]);
+  }, [setAllItems, storeAssignments, saveToLocalStorage]);
 
   const toggleItem = useCallback((id: string) => {
     setAllItems(prev => 
@@ -102,12 +73,10 @@ export function useShoppingListActions({
   const addItem = useCallback((newItem: GroceryItem) => {
     const itemWithId = {
       ...newItem,
-      id: `manual-${Date.now()}-${Math.random()}`,
+      id: `manual-${newItem.name.toLowerCase().replace(/\s+/g, '-')}-${Date.now()}`,
       store: newItem.store || "Unassigned",
       source: 'manual' as const
     };
-    
-    console.log("useShoppingListActions: Adding manual item:", itemWithId);
     
     setAllItems(prev => [...prev, itemWithId]);
     

@@ -8,7 +8,7 @@ interface SimpleStoreDropdownProps {
   onStoreChange: (item: GroceryItem, store: string) => void;
 }
 
-export const SimpleStoreDropdown = ({
+export const SimpleStoreDropdown = React.memo(({
   item,
   availableStores,
   onStoreChange
@@ -29,7 +29,7 @@ export const SimpleStoreDropdown = ({
     onStoreChange(updatedItem, newStore);
     
     // Clear updating state quickly
-    setTimeout(() => setIsUpdating(false), 300);
+    setTimeout(() => setIsUpdating(false), 200);
   }, [item, onStoreChange]);
 
   const currentStore = item.store || "Unassigned";
@@ -60,4 +60,6 @@ export const SimpleStoreDropdown = ({
       )}
     </div>
   );
-};
+});
+
+SimpleStoreDropdown.displayName = 'SimpleStoreDropdown';

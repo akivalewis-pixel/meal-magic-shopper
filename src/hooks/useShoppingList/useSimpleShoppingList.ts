@@ -1,6 +1,6 @@
 
-import { useEffect } from "react";
-import { Meal } from "@/types";
+import { useEffect, useState, useMemo } from "react";
+import { Meal, GroceryItem } from "@/types";
 import { useShoppingListState } from "./useShoppingListState";
 import { useShoppingListPersistence } from "./useShoppingListPersistence";
 import { useShoppingListGeneration } from "./useShoppingListGeneration";
@@ -16,22 +16,45 @@ export function useSimpleShoppingList(meals: Meal[], pantryItems: string[] = [])
     setAvailableStores
   } = useShoppingListState();
 
+  const [manualItems, setManualItems] = useState<GroceryItem[]>([]);
+
   const {
     storeAssignments,
     loadFromStorage,
     saveToLocalStorage
   } = useShoppingListPersistence(availableStores, archivedItems, allItems);
 
-  const combinedItems = useShoppingListGeneration(
+  const mealItems = useShoppingListGeneration(
     meals,
     pantryItems,
-    allItems,
     storeAssignments
   );
 
+  // Combine meal items with manual items (memoized)
+  const combinedItems = useMemo(() => {
+    const manualItemNames = new Set(manualItems.map(item => item.name.toLowerCase()));
+    
+    // Filter out meal items that conflict with manual items
+    const nonConflictingMealItems = mealItems.filter(item => 
+      !manualItemNames.has(item.name.toLowerCase())
+    );
+    
+    return [...nonConflictingMealItems, ...manualItems];
+  }, [mealItems, manualItems]);
+
   const actions = useShoppingListActions({
-    allItems,
-    setAllItems,
+    allItems: combinedItems,
+    setAllItems: (items) => {
+      if (typeof items === 'function') {
+        const updatedItems = items(combinedItems);
+        // Separate manual items from meal items
+        const newManualItems = updatedItems.filter(item => item.id.startsWith('manual-'));
+        setManualItems(newManualItems);
+      } else {
+        const newManualItems = items.filter(item => item.id.startsWith('manual-'));
+        setManualItems(newManualItems);
+      }
+    },
     archivedItems,
     setArchivedItems,
     storeAssignments,
@@ -39,7 +62,7 @@ export function useSimpleShoppingList(meals: Meal[], pantryItems: string[] = [])
     setAvailableStores
   });
 
-  // Load from localStorage on mount
+  // Load from localStorage on mount only
   useEffect(() => {
     const savedData = loadFromStorage();
     
@@ -50,17 +73,18 @@ export function useSimpleShoppingList(meals: Meal[], pantryItems: string[] = [])
       setArchivedItems(savedData.archived);
     }
     if (savedData.items) {
-      setAllItems(savedData.items);
+      const savedManualItems = savedData.items.filter(item => item.id.startsWith('manual-'));
+      setManualItems(savedManualItems);
     }
-  }, [loadFromStorage, setAvailableStores, setArchivedItems, setAllItems]);
+  }, []); // Empty dependency array - load only on mount
 
-  // Update items when meals change
+  // Update allItems when combinedItems change
   useEffect(() => {
     setAllItems(combinedItems);
   }, [combinedItems, setAllItems]);
 
   return {
-    groceryItems: allItems,
+    groceryItems: combinedItems,
     archivedItems,
     availableStores,
     ...actions
