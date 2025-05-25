@@ -31,17 +31,69 @@ export function useSimpleShoppingList(meals: Meal[], pantryItems: string[] = [])
     storeAssignments
   );
 
-  // Simplified combination of meal items with manual items
+  // Apply store assignments to meal items and combine with manual items
   const combinedItems = useMemo(() => {
     const manualItemNames = new Set(manualItems.map(item => item.name.toLowerCase()));
     
-    // Filter out meal items that conflict with manual items
-    const nonConflictingMealItems = mealItems.filter(item => 
-      !manualItemNames.has(item.name.toLowerCase())
-    );
+    // Filter out meal items that conflict with manual items, and apply store assignments
+    const enhancedMealItems = mealItems
+      .filter(item => !manualItemNames.has(item.name.toLowerCase()))
+      .map(item => {
+        const savedStore = storeAssignments.current.get(item.name.toLowerCase());
+        return {
+          ...item,
+          store: savedStore || item.store || "Unassigned"
+        };
+      });
     
-    return [...nonConflictingMealItems, ...manualItems];
-  }, [mealItems, manualItems]);
+    return [...enhancedMealItems, ...manualItems];
+  }, [mealItems, manualItems, storeAssignments]);
+
+  // Enhanced update function that handles meal-to-manual conversion
+  const updateItem = useCallback((updatedItem: GroceryItem) => {
+    console.log("useSimpleShoppingList: Updating item", updatedItem.name, "with store", updatedItem.store);
+    
+    // Update store assignment immediately
+    if (updatedItem.store && updatedItem.store !== "Unassigned") {
+      storeAssignments.current.set(updatedItem.name.toLowerCase(), updatedItem.store);
+    } else if (updatedItem.store === "Unassigned") {
+      storeAssignments.current.delete(updatedItem.name.toLowerCase());
+    }
+
+    // Check if this is a meal item being edited
+    const isMealItem = updatedItem.id.includes('-') && !updatedItem.id.startsWith('manual-');
+    
+    if (isMealItem) {
+      console.log("useSimpleShoppingList: Converting meal item to manual item:", updatedItem.name);
+      
+      // Create a new manual item to override the meal item
+      const manualItem = {
+        ...updatedItem,
+        id: `manual-${updatedItem.name.toLowerCase().replace(/\s+/g, '-')}-${Date.now()}`,
+        __updateTimestamp: Date.now()
+      };
+      
+      setManualItems(prev => {
+        // Remove any existing manual item with the same name
+        const filtered = prev.filter(item => 
+          item.name.toLowerCase() !== updatedItem.name.toLowerCase()
+        );
+        return [...filtered, manualItem];
+      });
+    } else {
+      // Update existing manual item
+      setManualItems(prev => 
+        prev.map(item => 
+          item.id === updatedItem.id 
+            ? { ...updatedItem, __updateTimestamp: Date.now() }
+            : item
+        )
+      );
+    }
+
+    // Save changes
+    setTimeout(saveToLocalStorage, 100);
+  }, [storeAssignments, setManualItems, saveToLocalStorage]);
 
   // Simplified save function
   const debouncedSave = useCallback(() => {
@@ -53,7 +105,7 @@ export function useSimpleShoppingList(meals: Meal[], pantryItems: string[] = [])
     return () => clearTimeout(timeoutId);
   }, [saveToLocalStorage]);
 
-  // Simplified setAllItems callback
+  // Enhanced setAllItems callback that handles manual items properly
   const handleSetAllItems = useCallback((items: GroceryItem[] | ((prev: GroceryItem[]) => GroceryItem[])) => {
     let updatedItems: GroceryItem[];
     
@@ -63,7 +115,7 @@ export function useSimpleShoppingList(meals: Meal[], pantryItems: string[] = [])
       updatedItems = items;
     }
     
-    // Only update manual items
+    // Update only manual items
     const newManualItems = updatedItems.filter(item => item.id.startsWith('manual-'));
     setManualItems(newManualItems);
     debouncedSave();
@@ -79,7 +131,7 @@ export function useSimpleShoppingList(meals: Meal[], pantryItems: string[] = [])
     setAvailableStores
   });
 
-  // Load from localStorage on mount only
+  // Load from localStorage on mount and apply store assignments
   useEffect(() => {
     if (!isInitializedRef.current) {
       const savedData = loadFromStorage();
@@ -95,11 +147,12 @@ export function useSimpleShoppingList(meals: Meal[], pantryItems: string[] = [])
         setManualItems(savedManualItems);
       }
       
+      console.log("useSimpleShoppingList: Loaded store assignments:", Object.fromEntries(storeAssignments.current));
       isInitializedRef.current = true;
     }
   }, [loadFromStorage, setAvailableStores, setArchivedItems]);
 
-  // Update allItems only when combinedItems change and we're initialized
+  // Update allItems when combinedItems change and we're initialized
   useEffect(() => {
     if (isInitializedRef.current) {
       setAllItems(combinedItems);
@@ -110,6 +163,7 @@ export function useSimpleShoppingList(meals: Meal[], pantryItems: string[] = [])
     groceryItems: combinedItems,
     archivedItems,
     availableStores,
+    updateItem,
     ...actions
   };
 }

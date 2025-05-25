@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState } from "react";
 import { GroceryItem } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -42,16 +42,6 @@ export const NewShoppingList = ({ meals, pantryItems = [] }: NewShoppingListProp
     updateStores,
     resetList
   } = useSimpleShoppingList(meals, pantryItems);
-
-  // Enhanced update handler that forces re-render
-  const handleUpdateItem = useCallback((updatedItem: GroceryItem) => {
-    console.log("NewShoppingList: Updating item", updatedItem.name, "with store", updatedItem.store);
-    const itemWithTimestamp = {
-      ...updatedItem,
-      __updateTimestamp: Date.now()
-    };
-    updateItem(itemWithTimestamp);
-  }, [updateItem]);
 
   // Filter items based on search and store selection
   const filteredItems = groceryItems.filter(item => {
@@ -183,13 +173,13 @@ export const NewShoppingList = ({ meals, pantryItems = [] }: NewShoppingListProp
             <SimpleBoardView
               items={filteredItems}
               availableStores={availableStores}
-              onUpdateItem={handleUpdateItem}
+              onUpdateItem={updateItem}
             />
           ) : (
             <SimpleListView
               items={filteredItems}
               availableStores={availableStores}
-              onUpdateItem={handleUpdateItem}
+              onUpdateItem={updateItem}
               onToggleItem={toggleItem}
               groupByStore={groupByStore}
             />
