@@ -16,6 +16,7 @@ interface DraggableMealProps {
   onRate: (meal: Meal) => void;
   onMove: (meal: Meal, fromDay: string, toDay: string) => void;
   onRemove: () => void;
+  onUpdateMeal?: (updatedMeal: Meal) => void;
 }
 
 export const DraggableMeal = ({ 
@@ -24,7 +25,8 @@ export const DraggableMeal = ({
   onEdit, 
   onRate, 
   onMove, 
-  onRemove 
+  onRemove,
+  onUpdateMeal
 }: DraggableMealProps) => {
   const [{ isDragging }, drag] = useDrag(() => ({
     type: ItemTypes.MEAL,
@@ -44,6 +46,7 @@ export const DraggableMeal = ({
         onEdit={onEdit} 
         onRate={onRate}
         onRemove={onRemove}
+        onUpdateMeal={onUpdateMeal}
       />
     </div>
   );

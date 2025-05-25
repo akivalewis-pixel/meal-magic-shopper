@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { 
@@ -38,6 +37,21 @@ export function useMealPlan() {
     toast({
       title: "Edit Meal",
       description: `You've selected to edit ${meal.title} for ${meal.day}`,
+    });
+  };
+
+  const handleUpdateMeal = (updatedMeal: Meal) => {
+    setMeals(prevMeals => 
+      prevMeals.map(m => 
+        m.id === updatedMeal.id 
+          ? { ...updatedMeal, lastUsed: new Date() }
+          : m
+      )
+    );
+    
+    toast({
+      title: "Meal Updated",
+      description: `${updatedMeal.title} has been updated`,
     });
   };
 
@@ -189,6 +203,7 @@ export function useMealPlan() {
     meals,
     weeklyPlans,
     handleEditMeal,
+    handleUpdateMeal,
     handleRateMeal,
     handleAddMealToDay,
     handleSaveWeeklyPlan,

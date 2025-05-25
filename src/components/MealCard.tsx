@@ -1,8 +1,9 @@
 
-import React from "react";
+import React, { useState, useCallback } from "react";
 import { Meal } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { Star, Edit, ExternalLink, Trash } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -11,14 +12,70 @@ interface MealCardProps {
   onEdit?: (meal: Meal) => void;
   onRate?: (meal: Meal) => void;
   onRemove?: () => void;
+  onUpdateMeal?: (updatedMeal: Meal) => void;
   className?: string;
 }
 
-export const MealCard = ({ meal, onEdit, onRate, onRemove, className }: MealCardProps) => {
+export const MealCard = ({ meal, onEdit, onRate, onRemove, onUpdateMeal, className }: MealCardProps) => {
+  const [localTitle, setLocalTitle] = useState(meal.title);
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
+
+  // Update local title when meal title changes externally
+  React.useEffect(() => {
+    setLocalTitle(meal.title);
+  }, [meal.title]);
+
+  const handleTitleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setLocalTitle(e.target.value);
+  }, []);
+
+  const handleTitleCommit = useCallback(() => {
+    if (localTitle !== meal.title && onUpdateMeal) {
+      const updatedMeal = { 
+        ...meal, 
+        title: localTitle
+      };
+      onUpdateMeal(updatedMeal);
+    }
+    setIsEditingTitle(false);
+  }, [meal, localTitle, onUpdateMeal]);
+
+  const handleTitleKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      handleTitleCommit();
+    } else if (e.key === 'Escape') {
+      setLocalTitle(meal.title);
+      setIsEditingTitle(false);
+    }
+  }, [handleTitleCommit, meal.title]);
+
+  const handleTitleClick = useCallback(() => {
+    if (onUpdateMeal) {
+      setIsEditingTitle(true);
+    }
+  }, [onUpdateMeal]);
+
   return (
     <Card className={cn("w-full overflow-hidden", className)}>
       <CardContent className="p-3">
-        <h4 className="font-medium text-sm mb-1 line-clamp-2">{meal.title}</h4>
+        {isEditingTitle ? (
+          <Input
+            value={localTitle}
+            onChange={handleTitleInputChange}
+            onBlur={handleTitleCommit}
+            onKeyDown={handleTitleKeyDown}
+            className="border-gray-300 p-1 h-8 font-medium text-sm mb-1"
+            placeholder="Meal name"
+            autoFocus
+          />
+        ) : (
+          <h4 
+            className={`font-medium text-sm mb-1 line-clamp-2 ${onUpdateMeal ? 'cursor-pointer hover:bg-gray-50 rounded px-1 py-0.5' : ''}`}
+            onClick={handleTitleClick}
+          >
+            {meal.title}
+          </h4>
+        )}
         {meal.recipeUrl && (
           <a
             href={meal.recipeUrl}

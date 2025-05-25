@@ -20,6 +20,7 @@ interface DroppableDayProps {
   onMove: (meal: Meal, fromDay: string, toDay: string) => void;
   onAddMeal: (day: string) => void;
   onRemove: (meal: Meal) => void;
+  onUpdateMeal?: (updatedMeal: Meal) => void;
 }
 
 export const DroppableDay = ({
@@ -30,7 +31,8 @@ export const DroppableDay = ({
   onRate,
   onMove,
   onAddMeal,
-  onRemove
+  onRemove,
+  onUpdateMeal
 }: DroppableDayProps) => {
   const [{ isOver }, drop] = useDrop(() => ({
     accept: ItemTypes.MEAL,
@@ -63,6 +65,7 @@ export const DroppableDay = ({
               onRate={onRate}
               onMove={onMove}
               onRemove={() => onRemove(meal)}
+              onUpdateMeal={onUpdateMeal}
             />
           ))
         ) : (
