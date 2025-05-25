@@ -18,6 +18,7 @@ export function useSimpleShoppingList(meals: Meal[], pantryItems: string[] = [])
 
   const [manualItems, setManualItems] = useState<GroceryItem[]>([]);
   const [itemOverrides, setItemOverrides] = useState<Map<string, Partial<GroceryItem>>>(new Map());
+  const [removedItemIds, setRemovedItemIds] = useState<Set<string>>(new Set());
   const isInitializedRef = useRef(false);
 
   const {
@@ -36,9 +37,9 @@ export function useSimpleShoppingList(meals: Meal[], pantryItems: string[] = [])
   const combinedItems = useMemo(() => {
     const manualItemNames = new Set(manualItems.map(item => item.name.toLowerCase()));
     
-    // Apply overrides to meal items and filter out conflicts with manual items
+    // Apply overrides to meal items and filter out conflicts with manual items and removed items
     const enhancedMealItems = mealItems
-      .filter(item => !manualItemNames.has(item.name.toLowerCase()))
+      .filter(item => !manualItemNames.has(item.name.toLowerCase()) && !removedItemIds.has(item.id))
       .map(item => {
         const savedStore = storeAssignments.current.get(item.name.toLowerCase());
         const overrides = itemOverrides.get(item.id) || {};
@@ -50,8 +51,11 @@ export function useSimpleShoppingList(meals: Meal[], pantryItems: string[] = [])
         };
       });
     
-    return [...enhancedMealItems, ...manualItems];
-  }, [mealItems, manualItems, itemOverrides, storeAssignments]);
+    // Filter out removed manual items
+    const activeManualItems = manualItems.filter(item => !removedItemIds.has(item.id));
+    
+    return [...enhancedMealItems, ...activeManualItems];
+  }, [mealItems, manualItems, itemOverrides, storeAssignments, removedItemIds]);
 
   // Simplified update function with immediate UI feedback
   const updateItem = useCallback((updatedItem: GroceryItem) => {
@@ -146,6 +150,35 @@ export function useSimpleShoppingList(meals: Meal[], pantryItems: string[] = [])
     setTimeout(saveToLocalStorage, 100);
   }, [combinedItems, mealItems, saveToLocalStorage]);
 
+  // Custom archive function that immediately removes from UI
+  const archiveItem = useCallback((id: string) => {
+    console.log("useSimpleShoppingList: Archiving item with id:", id);
+    const item = combinedItems.find(i => i.id === id);
+    if (!item) {
+      console.log("useSimpleShoppingList: Item not found for archiving:", id);
+      return;
+    }
+
+    // Add to removed items set for immediate UI update
+    setRemovedItemIds(prev => {
+      const newSet = new Set(prev);
+      newSet.add(id);
+      console.log("useSimpleShoppingList: Added to removed items:", id);
+      return newSet;
+    });
+
+    // Add to archived items
+    setArchivedItems(prev => [...prev, { ...item, checked: true }]);
+    
+    // Remove from manual items if it's a manual item
+    if (id.startsWith('manual-')) {
+      setManualItems(prev => prev.filter(i => i.id !== id));
+    }
+    
+    console.log("useSimpleShoppingList: Item archived:", item.name);
+    setTimeout(saveToLocalStorage, 100);
+  }, [combinedItems, setArchivedItems, setManualItems, saveToLocalStorage]);
+
   const actions = useShoppingListActions({
     allItems: combinedItems,
     setAllItems: handleSetAllItems,
@@ -205,6 +238,7 @@ export function useSimpleShoppingList(meals: Meal[], pantryItems: string[] = [])
     archivedItems,
     availableStores,
     updateItem,
+    archiveItem, // Override the archiveItem from actions
     ...actions
   };
 }
