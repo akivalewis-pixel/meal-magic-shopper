@@ -88,16 +88,19 @@ export const ShoppingListSection = ({
     }
   };
 
-  const groupedItems = useShoppingListGrouping(
-    groceryItems,
-    archivedItems,
-    searchArchivedItems,
-    searchTerm,
-    showChecked,
-    selectedStore,
-    groupByStore,
-    sortBy
-  );
+  // Filter items for the simplified interface
+  const filteredItems = groceryItems.filter(item => {
+    // Filter out checked items first
+    if (item.checked && !showChecked) return false;
+    
+    const matchesSearch = searchTerm === "" || 
+      item.name.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesStore = selectedStore === "all" || 
+      (selectedStore === "Unassigned" ? (!item.store || item.store === "Unassigned") : item.store === selectedStore);
+    
+    return matchesSearch && matchesStore;
+  });
 
   return (
     <section id="shopping-list" className="py-8 bg-gray-50">
@@ -140,28 +143,14 @@ export const ShoppingListSection = ({
         </div>
 
         <ShoppingListContent
-          groupedItems={groupedItems}
-          onToggle={handleToggle}
-          onQuantityChange={handleQuantityChange}
-          onStoreChange={handleStoreChange}
-          onNameChange={handleNameChange}
-          onCategoryNameChange={handleCategoryNameChange}
-          onUpdateItem={onUpdateItem}
-          onUpdateMultiple={handleUpdateMultiple}
-          availableStores={availableStores}
-          groupByStore={groupByStore}
-          searchArchivedItems={searchArchivedItems}
-          customCategoryNames={customCategoryNames}
-          isEditingStores={isEditingStores}
-          setIsEditingStores={setIsEditingStores}
-          onSaveStores={handleSaveStores}
-          isAddingItem={isAddingItem}
-          setIsAddingItem={setIsAddingItem}
-          onAddItem={onAddItem}
-          archivedItems={archivedItems}
-          setSearchArchivedItems={setSearchArchivedItems}
+          filteredItems={filteredItems}
           searchTerm={searchTerm}
+          selectedStore={selectedStore}
           viewMode={viewMode}
+          groupByStore={groupByStore}
+          availableStores={availableStores}
+          onUpdateItem={onUpdateItem}
+          onRemoveItem={handleToggle}
         />
       </div>
     </section>
