@@ -226,15 +226,26 @@ export function useSimpleShoppingList(meals: Meal[], pantryItems: string[] = [])
     }
   }, [loadFromStorage, setAvailableStores, setArchivedItems]);
 
-  // Update allItems when combinedItems change and we're initialized
+  // Update allItems only when initialized to avoid circular dependencies
   useEffect(() => {
     if (isInitializedRef.current) {
-      setAllItems(combinedItems);
+      // Only update if items have actually changed to prevent loops
+      const currentItemIds = new Set(allItems.map(item => item.id));
+      const newItemIds = new Set(combinedItems.map(item => item.id));
+      
+      const hasChanged = currentItemIds.size !== newItemIds.size || 
+        !Array.from(currentItemIds).every(id => newItemIds.has(id));
+      
+      if (hasChanged) {
+        console.log("useSimpleShoppingList: Updating allItems due to changes");
+        setAllItems(combinedItems);
+      }
     }
-  }, [combinedItems, setAllItems]);
+  }, [combinedItems, setAllItems, allItems]);
 
+  // Return combinedItems directly as groceryItems for immediate UI updates
   return {
-    groceryItems: combinedItems,
+    groceryItems: combinedItems, // Return combinedItems directly for immediate updates
     archivedItems,
     availableStores,
     updateItem,
