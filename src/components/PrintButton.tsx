@@ -170,8 +170,11 @@ export const PrintButton = ({ meals, groceryItems }: PrintButtonProps) => {
       <h1>Pantry Pilot: Shopping List</h1>
     `);
 
-    // Sort and group items by store and category for printing
-    const sortedItems = [...groceryItems].sort((a, b) => {
+    // Filter out checked/archived items before printing
+    const activeItems = groceryItems.filter(item => !item.checked);
+
+    // Sort and group active items by store and category for printing
+    const sortedItems = [...activeItems].sort((a, b) => {
       // First sort by store
       const storeA = a.store || "Unassigned";
       const storeB = b.store || "Unassigned";
