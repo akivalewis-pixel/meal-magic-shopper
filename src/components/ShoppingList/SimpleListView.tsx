@@ -27,16 +27,25 @@ const MemoizedItemRow = React.memo(({
   availableStores: string[];
 }) => {
   const handleQuantityChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    onUpdateItem({ ...item, quantity: e.target.value });
+    const updatedItem = { ...item, quantity: e.target.value, __updateTimestamp: Date.now() };
+    onUpdateItem(updatedItem);
   }, [item, onUpdateItem]);
 
   const handleNameChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    onUpdateItem({ ...item, name: e.target.value });
+    const updatedItem = { ...item, name: e.target.value, __updateTimestamp: Date.now() };
+    onUpdateItem(updatedItem);
   }, [item, onUpdateItem]);
 
-  const handleCategoryChange = useCallback((category: string) => {
-    onUpdateItem({ ...item, category: category as any });
-  }, [item, onUpdateItem]);
+  const handleCategoryChange = useCallback((updatedItem: GroceryItem, category: string) => {
+    const newItem = { ...updatedItem, category: category as any, __updateTimestamp: Date.now() };
+    console.log("SimpleListView: Category changed for", newItem.name, "to", category);
+    onUpdateItem(newItem);
+  }, [onUpdateItem]);
+
+  const handleStoreChange = useCallback((updatedItem: GroceryItem) => {
+    console.log("SimpleListView: Store changed for", updatedItem.name, "to", updatedItem.store);
+    onUpdateItem(updatedItem);
+  }, [onUpdateItem]);
 
   const handleToggle = useCallback(() => {
     onToggleItem(item.id);
@@ -72,12 +81,12 @@ const MemoizedItemRow = React.memo(({
       <SimpleStoreDropdown
         item={item}
         availableStores={availableStores}
-        onStoreChange={onUpdateItem}
+        onStoreChange={handleStoreChange}
       />
       
       <CategoryEditInput
         item={item}
-        onCategoryChange={(item, category) => handleCategoryChange(category)}
+        onCategoryChange={handleCategoryChange}
       />
     </li>
   );
@@ -150,7 +159,7 @@ export const SimpleListView = React.memo(({
           <ul className="space-y-1">
             {storeItems.map(item => (
               <MemoizedItemRow
-                key={item.id}
+                key={`${item.id}-${item.__updateTimestamp || 0}`}
                 item={item}
                 onUpdateItem={onUpdateItem}
                 onToggleItem={onToggleItem}
