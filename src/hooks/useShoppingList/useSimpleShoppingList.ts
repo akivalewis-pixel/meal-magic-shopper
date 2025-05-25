@@ -31,7 +31,7 @@ export function useSimpleShoppingList(meals: Meal[], pantryItems: string[] = [])
     storeAssignments
   );
 
-  // Memoized combination of meal items with manual items
+  // Simplified combination of meal items with manual items
   const combinedItems = useMemo(() => {
     const manualItemNames = new Set(manualItems.map(item => item.name.toLowerCase()));
     
@@ -43,25 +43,35 @@ export function useSimpleShoppingList(meals: Meal[], pantryItems: string[] = [])
     return [...nonConflictingMealItems, ...manualItems];
   }, [mealItems, manualItems]);
 
-  // Debounced save function to prevent excessive localStorage writes
+  // Simplified save function
   const debouncedSave = useCallback(() => {
-    const timeoutId = setTimeout(saveToLocalStorage, 300);
+    const timeoutId = setTimeout(() => {
+      if (isInitializedRef.current) {
+        saveToLocalStorage();
+      }
+    }, 300);
     return () => clearTimeout(timeoutId);
   }, [saveToLocalStorage]);
 
+  // Simplified setAllItems callback
+  const handleSetAllItems = useCallback((items: GroceryItem[] | ((prev: GroceryItem[]) => GroceryItem[])) => {
+    let updatedItems: GroceryItem[];
+    
+    if (typeof items === 'function') {
+      updatedItems = items(combinedItems);
+    } else {
+      updatedItems = items;
+    }
+    
+    // Only update manual items
+    const newManualItems = updatedItems.filter(item => item.id.startsWith('manual-'));
+    setManualItems(newManualItems);
+    debouncedSave();
+  }, [combinedItems, debouncedSave]);
+
   const actions = useShoppingListActions({
     allItems: combinedItems,
-    setAllItems: useCallback((items) => {
-      if (typeof items === 'function') {
-        const updatedItems = items(combinedItems);
-        const newManualItems = updatedItems.filter(item => item.id.startsWith('manual-'));
-        setManualItems(newManualItems);
-      } else {
-        const newManualItems = items.filter(item => item.id.startsWith('manual-'));
-        setManualItems(newManualItems);
-      }
-      debouncedSave();
-    }, [combinedItems, debouncedSave]),
+    setAllItems: handleSetAllItems,
     archivedItems,
     setArchivedItems,
     storeAssignments,
@@ -87,7 +97,7 @@ export function useSimpleShoppingList(meals: Meal[], pantryItems: string[] = [])
       
       isInitializedRef.current = true;
     }
-  }, []); // Empty dependency array - load only on mount
+  }, [loadFromStorage, setAvailableStores, setArchivedItems]);
 
   // Update allItems only when combinedItems change and we're initialized
   useEffect(() => {

@@ -14,6 +14,7 @@ export function useShoppingListGeneration(
 
   return useMemo(() => {
     if (meals.length === 0) {
+      cachedItemsRef.current = [];
       return [];
     }
     
@@ -29,31 +30,36 @@ export function useShoppingListGeneration(
       return cachedItemsRef.current;
     }
     
-    const activeMeals = meals.filter(meal => meal.day && meal.day !== "");
-    const mealItems = generateShoppingList(activeMeals, pantryItems, []);
-    
-    // Generate stable IDs and apply store assignments
-    const normalizedMealItems = mealItems.map(item => {
-      // Create deterministic ID based on meal and item name (no timestamps)
-      const mealId = item.meal?.toLowerCase().replace(/\s+/g, '-') || 'default';
-      const itemName = item.name.toLowerCase().replace(/\s+/g, '-');
-      const stableId = `meal-${mealId}-${itemName}`;
+    try {
+      const activeMeals = meals.filter(meal => meal.day && meal.day !== "");
+      const mealItems = generateShoppingList(activeMeals, pantryItems, []);
       
-      const storedStore = storeAssignments.current.get(item.name.toLowerCase());
-      const assignedStore = storedStore || "Unassigned";
+      // Generate stable IDs and apply store assignments
+      const normalizedMealItems = mealItems.map(item => {
+        // Create deterministic ID based on meal and item name (no timestamps)
+        const mealId = item.meal?.toLowerCase().replace(/\s+/g, '-') || 'default';
+        const itemName = item.name.toLowerCase().replace(/\s+/g, '-');
+        const stableId = `meal-${mealId}-${itemName}`;
+        
+        const storedStore = storeAssignments.current.get(item.name.toLowerCase());
+        const assignedStore = storedStore || "Unassigned";
+        
+        return {
+          ...item,
+          store: assignedStore,
+          id: stableId,
+          source: 'meal' as const
+        };
+      });
       
-      return {
-        ...item,
-        store: assignedStore,
-        id: stableId,
-        source: 'meal' as const
-      };
-    });
-    
-    // Cache the results
-    prevMealsRef.current = mealsKey;
-    cachedItemsRef.current = normalizedMealItems;
-    
-    return normalizedMealItems;
-  }, [meals, pantryItems]); // Removed storeAssignments to prevent loop
+      // Cache the results
+      prevMealsRef.current = mealsKey;
+      cachedItemsRef.current = normalizedMealItems;
+      
+      return normalizedMealItems;
+    } catch (error) {
+      console.error('Error generating shopping list:', error);
+      return cachedItemsRef.current;
+    }
+  }, [meals, pantryItems]); // Keep dependencies minimal
 }
