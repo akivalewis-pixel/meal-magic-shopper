@@ -25,47 +25,28 @@ export function useShoppingListItems({
         const savedStore = storeAssignments.current.get(item.name.toLowerCase());
         const overrides = itemOverrides.get(item.id) || {};
         
-        const enhancedItem = {
+        return {
           ...item,
           ...overrides,
           store: overrides.store || savedStore || item.store || "Unassigned",
-          checked: overrides.checked || false
+          checked: Boolean(overrides.checked) // Ensure boolean value
         };
-        
-        // Debug logging for each item
-        if (enhancedItem.checked) {
-          console.log("useShoppingListItems: Found checked meal item:", enhancedItem.name, "checked:", enhancedItem.checked);
-        }
-        
-        return enhancedItem;
       });
     
-    // Debug manual items
-    manualItems.forEach(item => {
-      if (item.checked) {
-        console.log("useShoppingListItems: Found checked manual item:", item.name, "checked:", item.checked);
-      }
-    });
-    
-    // Combine all items first
+    // Combine all items
     const allCombined = [...enhancedMealItems, ...manualItems];
     
-    // Debug all combined items
-    const checkedItems = allCombined.filter(item => item.checked);
-    console.log("useShoppingListItems: Total combined items:", allCombined.length);
-    console.log("useShoppingListItems: Found checked items:", checkedItems.length);
-    console.log("useShoppingListItems: Checked items details:", checkedItems.map(item => ({ name: item.name, checked: item.checked, id: item.id })));
-    
-    // Filter out ALL checked items - this should remove them completely
+    // Filter out checked items more strictly
     const activeItems = allCombined.filter(item => {
       const isChecked = Boolean(item.checked);
       if (isChecked) {
-        console.log("useShoppingListItems: Filtering out checked item:", item.name, "checked status:", item.checked);
+        console.log("useShoppingListItems: Filtering out checked item:", item.name);
       }
       return !isChecked;
     });
     
-    console.log("useShoppingListItems: Active items (unchecked):", activeItems.length);
+    console.log("useShoppingListItems: Total items:", allCombined.length);
+    console.log("useShoppingListItems: Active (unchecked) items:", activeItems.length);
     console.log("useShoppingListItems: Checked items filtered out:", allCombined.length - activeItems.length);
     
     return activeItems;
