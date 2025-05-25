@@ -36,10 +36,10 @@ const MemoizedItemRow = React.memo(({
     onUpdateItem(updatedItem);
   }, [item, onUpdateItem]);
 
-  const handleCategoryChange = useCallback((updatedItem: GroceryItem, category: string) => {
-    const newItem = { ...updatedItem, category: category as any, __updateTimestamp: Date.now() };
-    console.log("SimpleListView: Category changed for", newItem.name, "to", category);
-    onUpdateItem(newItem);
+  const handleCategoryChange = useCallback((item: GroceryItem, category: string) => {
+    console.log("SimpleListView: Category changed for", item.name, "to", category);
+    const updatedItem = { ...item, category: category as any, __updateTimestamp: Date.now() };
+    onUpdateItem(updatedItem);
   }, [onUpdateItem]);
 
   const handleStoreChange = useCallback((updatedItem: GroceryItem) => {
