@@ -50,31 +50,25 @@ export function useShoppingListPersistence(
     }
   }, []);
 
-  // Debounced save to localStorage
+  // Immediate save to localStorage - no debouncing for better reliability
   const saveToLocalStorage = useCallback(() => {
     if (!isInitializedRef.current) return;
 
-    // Clear existing timeout
-    if (saveTimeoutRef.current) {
-      clearTimeout(saveTimeoutRef.current);
-    }
-
-    // Set new timeout for debounced save
-    saveTimeoutRef.current = setTimeout(() => {
-      try {
-        localStorage.setItem('shoppingList_stores', JSON.stringify(availableStores));
-        localStorage.setItem('shoppingList_archived', JSON.stringify(archivedItems));
-        localStorage.setItem('shoppingList_allItems', JSON.stringify(allItems));
-        
-        const currentAssignments = JSON.stringify(Array.from(storeAssignments.current.entries()));
-        if (currentAssignments !== lastSavedAssignments.current) {
-          localStorage.setItem('shoppingList_storeAssignments', currentAssignments);
-          lastSavedAssignments.current = currentAssignments;
-        }
-      } catch (error) {
-        console.warn('Failed to save to localStorage:', error);
+    try {
+      console.log("useShoppingListPersistence: Saving to localStorage");
+      localStorage.setItem('shoppingList_stores', JSON.stringify(availableStores));
+      localStorage.setItem('shoppingList_archived', JSON.stringify(archivedItems));
+      localStorage.setItem('shoppingList_allItems', JSON.stringify(allItems));
+      
+      const currentAssignments = JSON.stringify(Array.from(storeAssignments.current.entries()));
+      if (currentAssignments !== lastSavedAssignments.current) {
+        localStorage.setItem('shoppingList_storeAssignments', currentAssignments);
+        lastSavedAssignments.current = currentAssignments;
       }
-    }, 300); // 300ms debounce
+      console.log("useShoppingListPersistence: Save complete");
+    } catch (error) {
+      console.warn('Failed to save to localStorage:', error);
+    }
   }, [availableStores, archivedItems, allItems]);
 
   // Cleanup timeout on unmount

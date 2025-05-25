@@ -14,8 +14,8 @@ interface SimpleListViewProps {
   groupByStore: boolean;
 }
 
-// Memoized item component to prevent unnecessary re-renders
-const MemoizedItemRow = React.memo(({ 
+// Simplified item component without excessive memoization
+const ItemRow = ({ 
   item, 
   onUpdateItem, 
   onToggleItem, 
@@ -27,13 +27,11 @@ const MemoizedItemRow = React.memo(({
   availableStores: string[];
 }) => {
   const handleQuantityChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    console.log("SimpleListView: Quantity changing for", item.name, "from", item.quantity, "to", e.target.value);
+    console.log("SimpleListView: Quantity changing for", item.name, "to", e.target.value);
     const updatedItem = { 
       ...item, 
-      quantity: e.target.value, 
-      __updateTimestamp: Date.now() 
+      quantity: e.target.value
     };
-    console.log("SimpleListView: Calling onUpdateItem with quantity update");
     onUpdateItem(updatedItem);
   }, [item, onUpdateItem]);
 
@@ -41,10 +39,8 @@ const MemoizedItemRow = React.memo(({
     console.log("SimpleListView: Name changing for", item.name, "to", e.target.value);
     const updatedItem = { 
       ...item, 
-      name: e.target.value, 
-      __updateTimestamp: Date.now() 
+      name: e.target.value
     };
-    console.log("SimpleListView: Calling onUpdateItem with name update");
     onUpdateItem(updatedItem);
   }, [item, onUpdateItem]);
 
@@ -52,10 +48,8 @@ const MemoizedItemRow = React.memo(({
     console.log("SimpleListView: Category changed for", updatedItem.name, "to", category);
     const newItem = { 
       ...updatedItem, 
-      category: category as any, 
-      __updateTimestamp: Date.now() 
+      category: category as any
     };
-    console.log("SimpleListView: Calling onUpdateItem with category update");
     onUpdateItem(newItem);
   }, [onUpdateItem]);
 
@@ -108,9 +102,7 @@ const MemoizedItemRow = React.memo(({
       />
     </li>
   );
-});
-
-MemoizedItemRow.displayName = 'MemoizedItemRow';
+};
 
 export const SimpleListView = React.memo(({
   items,
@@ -176,7 +168,7 @@ export const SimpleListView = React.memo(({
           )}
           <ul className="space-y-1">
             {storeItems.map(item => (
-              <MemoizedItemRow
+              <ItemRow
                 key={`${item.id}-${item.__updateTimestamp || 0}`}
                 item={item}
                 onUpdateItem={onUpdateItem}

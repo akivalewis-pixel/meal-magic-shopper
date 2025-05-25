@@ -17,6 +17,7 @@ export function useSimpleShoppingList(meals: Meal[], pantryItems: string[] = [])
   } = useShoppingListState();
 
   const [manualItems, setManualItems] = useState<GroceryItem[]>([]);
+  const [itemOverrides, setItemOverrides] = useState<Map<string, Partial<GroceryItem>>>(new Map());
   const isInitializedRef = useRef(false);
 
   const {
@@ -31,32 +32,37 @@ export function useSimpleShoppingList(meals: Meal[], pantryItems: string[] = [])
     storeAssignments
   );
 
-  // Apply store assignments to meal items and combine with manual items
+  // Apply overrides and store assignments to meal items and combine with manual items
   const combinedItems = useMemo(() => {
     const manualItemNames = new Set(manualItems.map(item => item.name.toLowerCase()));
     
-    // Filter out meal items that conflict with manual items, and apply store assignments
+    // Apply overrides to meal items and filter out conflicts with manual items
     const enhancedMealItems = mealItems
       .filter(item => !manualItemNames.has(item.name.toLowerCase()))
       .map(item => {
         const savedStore = storeAssignments.current.get(item.name.toLowerCase());
+        const overrides = itemOverrides.get(item.id) || {};
+        
         return {
           ...item,
-          store: savedStore || item.store || "Unassigned"
+          ...overrides,
+          store: overrides.store || savedStore || item.store || "Unassigned"
         };
       });
     
     return [...enhancedMealItems, ...manualItems];
-  }, [mealItems, manualItems, storeAssignments]);
+  }, [mealItems, manualItems, itemOverrides, storeAssignments]);
 
-  // Enhanced update function that handles meal-to-manual conversion
+  // Simplified update function with immediate UI feedback
   const updateItem = useCallback((updatedItem: GroceryItem) => {
-    console.log("useSimpleShoppingList: RECEIVED UPDATE for item", updatedItem.name, "with changes:", {
-      store: updatedItem.store,
-      category: updatedItem.category,
-      quantity: updatedItem.quantity,
-      name: updatedItem.name,
-      id: updatedItem.id
+    console.log("useSimpleShoppingList: RECEIVED UPDATE for item", updatedItem.name, {
+      id: updatedItem.id,
+      changes: {
+        store: updatedItem.store,
+        category: updatedItem.category,
+        quantity: updatedItem.quantity,
+        name: updatedItem.name
+      }
     });
     
     // Update store assignment immediately if store changed
@@ -66,58 +72,44 @@ export function useSimpleShoppingList(meals: Meal[], pantryItems: string[] = [])
       storeAssignments.current.delete(updatedItem.name.toLowerCase());
     }
 
-    // Check if this is a meal item being edited
     const isMealItem = updatedItem.id.includes('-') && !updatedItem.id.startsWith('manual-');
     
     if (isMealItem) {
-      console.log("useSimpleShoppingList: Converting meal item to manual item:", updatedItem.name);
+      console.log("useSimpleShoppingList: Applying override to meal item:", updatedItem.name);
       
-      // Create a new manual item to override the meal item
-      const manualItem = {
-        ...updatedItem,
-        id: `manual-${updatedItem.name.toLowerCase().replace(/\s+/g, '-')}-${Date.now()}`,
-        __updateTimestamp: Date.now()
-      };
-      
-      setManualItems(prev => {
-        // Remove any existing manual item with the same name
-        const filtered = prev.filter(item => 
-          item.name.toLowerCase() !== updatedItem.name.toLowerCase()
-        );
-        const newItems = [...filtered, manualItem];
-        console.log("useSimpleShoppingList: UPDATED MANUAL ITEMS COUNT:", newItems.length);
-        return newItems;
+      // For meal items, store as override
+      setItemOverrides(prev => {
+        const newOverrides = new Map(prev);
+        newOverrides.set(updatedItem.id, {
+          name: updatedItem.name,
+          quantity: updatedItem.quantity,
+          category: updatedItem.category,
+          store: updatedItem.store,
+          __updateTimestamp: Date.now()
+        });
+        console.log("useSimpleShoppingList: Updated overrides for", updatedItem.name);
+        return newOverrides;
       });
     } else {
       // Update existing manual item
-      console.log("useSimpleShoppingList: Updating existing manual item:", updatedItem.name);
+      console.log("useSimpleShoppingList: Updating manual item:", updatedItem.name);
       setManualItems(prev => {
         const newItems = prev.map(item => 
           item.id === updatedItem.id 
             ? { ...updatedItem, __updateTimestamp: Date.now() }
             : item
         );
-        console.log("useSimpleShoppingList: UPDATED EXISTING MANUAL ITEM:", updatedItem.name);
+        console.log("useSimpleShoppingList: Manual items updated");
         return newItems;
       });
     }
 
-    // Save immediately
+    // Trigger save
     console.log("useSimpleShoppingList: TRIGGERING SAVE");
-    saveToLocalStorage();
-  }, [storeAssignments, setManualItems, saveToLocalStorage]);
+    setTimeout(saveToLocalStorage, 100);
+  }, [storeAssignments, setItemOverrides, setManualItems, saveToLocalStorage]);
 
-  // Simplified save function
-  const debouncedSave = useCallback(() => {
-    const timeoutId = setTimeout(() => {
-      if (isInitializedRef.current) {
-        saveToLocalStorage();
-      }
-    }, 300);
-    return () => clearTimeout(timeoutId);
-  }, [saveToLocalStorage]);
-
-  // Enhanced setAllItems callback that handles manual items properly
+  // Enhanced setAllItems callback that handles the combined approach
   const handleSetAllItems = useCallback((items: GroceryItem[] | ((prev: GroceryItem[]) => GroceryItem[])) => {
     let updatedItems: GroceryItem[];
     
@@ -127,11 +119,32 @@ export function useSimpleShoppingList(meals: Meal[], pantryItems: string[] = [])
       updatedItems = items;
     }
     
-    // Update only manual items
+    // Separate manual items and overrides
     const newManualItems = updatedItems.filter(item => item.id.startsWith('manual-'));
     setManualItems(newManualItems);
-    debouncedSave();
-  }, [combinedItems, debouncedSave]);
+    
+    // Save overrides for meal items
+    const newOverrides = new Map<string, Partial<GroceryItem>>();
+    updatedItems.forEach(item => {
+      if (item.id.includes('-') && !item.id.startsWith('manual-')) {
+        const originalMealItem = mealItems.find(mi => mi.id === item.id);
+        if (originalMealItem) {
+          const overrideData: Partial<GroceryItem> = {};
+          if (item.name !== originalMealItem.name) overrideData.name = item.name;
+          if (item.quantity !== originalMealItem.quantity) overrideData.quantity = item.quantity;
+          if (item.category !== originalMealItem.category) overrideData.category = item.category;
+          if (item.store !== originalMealItem.store) overrideData.store = item.store;
+          
+          if (Object.keys(overrideData).length > 0) {
+            newOverrides.set(item.id, { ...overrideData, __updateTimestamp: Date.now() });
+          }
+        }
+      }
+    });
+    
+    setItemOverrides(newOverrides);
+    setTimeout(saveToLocalStorage, 100);
+  }, [combinedItems, mealItems, saveToLocalStorage]);
 
   const actions = useShoppingListActions({
     allItems: combinedItems,
@@ -139,11 +152,11 @@ export function useSimpleShoppingList(meals: Meal[], pantryItems: string[] = [])
     archivedItems,
     setArchivedItems,
     storeAssignments,
-    saveToLocalStorage: debouncedSave,
+    saveToLocalStorage: () => setTimeout(saveToLocalStorage, 100),
     setAvailableStores
   });
 
-  // Load from localStorage on mount and apply store assignments
+  // Load from localStorage on mount
   useEffect(() => {
     if (!isInitializedRef.current) {
       const savedData = loadFromStorage();
@@ -157,9 +170,25 @@ export function useSimpleShoppingList(meals: Meal[], pantryItems: string[] = [])
       if (savedData.items) {
         const savedManualItems = savedData.items.filter(item => item.id.startsWith('manual-'));
         setManualItems(savedManualItems);
+        
+        // Load overrides from saved items
+        const savedOverrides = new Map<string, Partial<GroceryItem>>();
+        savedData.items.forEach((item: GroceryItem) => {
+          if (item.id.includes('-') && !item.id.startsWith('manual-')) {
+            // This is a meal item with overrides
+            savedOverrides.set(item.id, {
+              name: item.name,
+              quantity: item.quantity,
+              category: item.category,
+              store: item.store,
+              __updateTimestamp: item.__updateTimestamp
+            });
+          }
+        });
+        setItemOverrides(savedOverrides);
       }
       
-      console.log("useSimpleShoppingList: Loaded store assignments:", Object.fromEntries(storeAssignments.current));
+      console.log("useSimpleShoppingList: Loaded from storage");
       isInitializedRef.current = true;
     }
   }, [loadFromStorage, setAvailableStores, setArchivedItems]);
