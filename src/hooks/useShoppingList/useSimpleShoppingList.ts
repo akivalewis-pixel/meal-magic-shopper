@@ -51,11 +51,12 @@ export function useSimpleShoppingList(meals: Meal[], pantryItems: string[] = [])
 
   // Enhanced update function that handles meal-to-manual conversion
   const updateItem = useCallback((updatedItem: GroceryItem) => {
-    console.log("useSimpleShoppingList: Updating item", updatedItem.name, "with changes:", {
+    console.log("useSimpleShoppingList: RECEIVED UPDATE for item", updatedItem.name, "with changes:", {
       store: updatedItem.store,
       category: updatedItem.category,
       quantity: updatedItem.quantity,
-      name: updatedItem.name
+      name: updatedItem.name,
+      id: updatedItem.id
     });
     
     // Update store assignment immediately if store changed
@@ -84,27 +85,26 @@ export function useSimpleShoppingList(meals: Meal[], pantryItems: string[] = [])
           item.name.toLowerCase() !== updatedItem.name.toLowerCase()
         );
         const newItems = [...filtered, manualItem];
-        console.log("useSimpleShoppingList: Updated manual items:", newItems.length);
-        
-        // Save immediately after state update
-        setTimeout(() => saveToLocalStorage(), 0);
+        console.log("useSimpleShoppingList: UPDATED MANUAL ITEMS COUNT:", newItems.length);
         return newItems;
       });
     } else {
       // Update existing manual item
+      console.log("useSimpleShoppingList: Updating existing manual item:", updatedItem.name);
       setManualItems(prev => {
         const newItems = prev.map(item => 
           item.id === updatedItem.id 
             ? { ...updatedItem, __updateTimestamp: Date.now() }
             : item
         );
-        console.log("useSimpleShoppingList: Updated existing manual item:", updatedItem.name);
-        
-        // Save immediately after state update
-        setTimeout(() => saveToLocalStorage(), 0);
+        console.log("useSimpleShoppingList: UPDATED EXISTING MANUAL ITEM:", updatedItem.name);
         return newItems;
       });
     }
+
+    // Save immediately
+    console.log("useSimpleShoppingList: TRIGGERING SAVE");
+    saveToLocalStorage();
   }, [storeAssignments, setManualItems, saveToLocalStorage]);
 
   // Simplified save function

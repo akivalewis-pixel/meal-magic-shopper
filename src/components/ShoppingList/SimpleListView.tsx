@@ -33,8 +33,9 @@ const MemoizedItemRow = React.memo(({
       quantity: e.target.value, 
       __updateTimestamp: Date.now() 
     };
+    console.log("SimpleListView: Calling onUpdateItem with quantity update");
     onUpdateItem(updatedItem);
-  }, [item.id, item.name, item.quantity, onUpdateItem]);
+  }, [item, onUpdateItem]);
 
   const handleNameChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     console.log("SimpleListView: Name changing for", item.name, "to", e.target.value);
@@ -43,8 +44,9 @@ const MemoizedItemRow = React.memo(({
       name: e.target.value, 
       __updateTimestamp: Date.now() 
     };
+    console.log("SimpleListView: Calling onUpdateItem with name update");
     onUpdateItem(updatedItem);
-  }, [item.id, item.name, onUpdateItem]);
+  }, [item, onUpdateItem]);
 
   const handleCategoryChange = useCallback((updatedItem: GroceryItem, category: string) => {
     console.log("SimpleListView: Category changed for", updatedItem.name, "to", category);
@@ -53,6 +55,7 @@ const MemoizedItemRow = React.memo(({
       category: category as any, 
       __updateTimestamp: Date.now() 
     };
+    console.log("SimpleListView: Calling onUpdateItem with category update");
     onUpdateItem(newItem);
   }, [onUpdateItem]);
 
@@ -77,6 +80,7 @@ const MemoizedItemRow = React.memo(({
           value={item.name}
           onChange={handleNameChange}
           className="border-none p-0 h-auto font-medium"
+          placeholder="Item name"
         />
         {item.meal && (
           <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded ml-2">
