@@ -54,10 +54,10 @@ export const NewShoppingList = ({ meals, pantryItems = [] }: NewShoppingListProp
     setIsEditingStores(false);
   };
 
-  // Handle item removal when checkbox is checked
+  // Handle item removal when checkbox is checked - use the proper toggle function
   const handleRemoveItem = (id: string) => {
-    console.log("NewShoppingList: Removing item with id:", id);
-    archiveItem(id);
+    console.log("NewShoppingList: Toggling item with id:", id);
+    toggleItem(id);
   };
 
   console.log("NewShoppingList - Selected store:", selectedStore);

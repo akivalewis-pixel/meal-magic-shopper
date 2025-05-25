@@ -25,21 +25,46 @@ export function useShoppingListItems({
         const savedStore = storeAssignments.current.get(item.name.toLowerCase());
         const overrides = itemOverrides.get(item.id) || {};
         
-        return {
+        const enhancedItem = {
           ...item,
           ...overrides,
           store: overrides.store || savedStore || item.store || "Unassigned",
           checked: overrides.checked || false
         };
+        
+        // Debug logging for each item
+        if (enhancedItem.checked) {
+          console.log("useShoppingListItems: Found checked meal item:", enhancedItem.name, "checked:", enhancedItem.checked);
+        }
+        
+        return enhancedItem;
       });
+    
+    // Debug manual items
+    manualItems.forEach(item => {
+      if (item.checked) {
+        console.log("useShoppingListItems: Found checked manual item:", item.name, "checked:", item.checked);
+      }
+    });
     
     // Combine all items first
     const allCombined = [...enhancedMealItems, ...manualItems];
     
-    // Filter out ALL checked items - this is the key fix
-    const activeItems = allCombined.filter(item => !item.checked);
-    
+    // Debug all combined items
+    const checkedItems = allCombined.filter(item => item.checked);
     console.log("useShoppingListItems: Total combined items:", allCombined.length);
+    console.log("useShoppingListItems: Found checked items:", checkedItems.length);
+    console.log("useShoppingListItems: Checked items details:", checkedItems.map(item => ({ name: item.name, checked: item.checked, id: item.id })));
+    
+    // Filter out ALL checked items - this should remove them completely
+    const activeItems = allCombined.filter(item => {
+      const isChecked = Boolean(item.checked);
+      if (isChecked) {
+        console.log("useShoppingListItems: Filtering out checked item:", item.name, "checked status:", item.checked);
+      }
+      return !isChecked;
+    });
+    
     console.log("useShoppingListItems: Active items (unchecked):", activeItems.length);
     console.log("useShoppingListItems: Checked items filtered out:", allCombined.length - activeItems.length);
     

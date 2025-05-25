@@ -1,4 +1,3 @@
-
 import { useEffect, useState, useRef } from "react";
 import { Meal, GroceryItem } from "@/types";
 import { useShoppingListState } from "./useShoppingListState";
@@ -55,6 +54,43 @@ export function useSimpleShoppingList(meals: Meal[], pantryItems: string[] = [])
     setManualItems,
     saveToLocalStorage
   });
+
+  // Enhanced toggle function to properly mark items as checked before archiving
+  const toggleItem = (id: string) => {
+    console.log("useSimpleShoppingList: toggleItem called for id:", id);
+    
+    // Find the item first
+    const item = combinedItems.find(item => item.id === id);
+    if (!item) {
+      console.log("useSimpleShoppingList: Item not found for id:", id);
+      return;
+    }
+    
+    console.log("useSimpleShoppingList: Found item to toggle:", item.name, "current checked status:", item.checked);
+    
+    // Mark the item as checked FIRST
+    const isMealItem = id.includes('-') && !id.startsWith('manual-');
+    
+    if (isMealItem) {
+      console.log("useSimpleShoppingList: Setting meal item as checked via override");
+      updateOverride(id, { checked: true });
+    } else {
+      console.log("useSimpleShoppingList: Setting manual item as checked");
+      setManualItems(prev => 
+        prev.map(manualItem => 
+          manualItem.id === id 
+            ? { ...manualItem, checked: true, __updateTimestamp: Date.now() }
+            : manualItem
+        )
+      );
+    }
+    
+    // Then archive the item
+    setTimeout(() => {
+      console.log("useSimpleShoppingList: Archiving item after marking as checked");
+      archiveItem(id);
+    }, 100);
+  };
 
   // Simplified update function
   const updateItem = (updatedItem: GroceryItem) => {
@@ -174,6 +210,7 @@ export function useSimpleShoppingList(meals: Meal[], pantryItems: string[] = [])
     archivedItems,
     availableStores,
     updateItem,
+    toggleItem,
     archiveItem,
     ...actions
   };
