@@ -43,8 +43,10 @@ const fetchIngredientsFromUrl = async (url: string): Promise<string[]> => {
 interface MealPlanSectionProps {
   meals: Meal[];
   onEditMeal: (meal: Meal) => void;
+  onUpdateMeal: (updatedMeal: Meal) => void;
   onRateMeal: (meal: Meal, rating: number, notes: string) => void;
   onAddMealToDay: (meal: Meal, day: string) => void;
+  onResetMealPlan: () => void;
 }
 
 // Drag item type
@@ -138,8 +140,10 @@ const DroppableDay = ({ day, meals, onDrop, onEdit, onRate, onMove, onAddMeal, o
 export const MealPlanSection = ({ 
   meals, 
   onEditMeal, 
+  onUpdateMeal,
   onRateMeal,
-  onAddMealToDay 
+  onAddMealToDay,
+  onResetMealPlan
 }: MealPlanSectionProps) => {
   const { toast } = useToast();
   const [dietFilter, setDietFilter] = useState<DietaryPreference>("none");
@@ -442,4 +446,3 @@ export const MealPlanSection = ({
     </DndProvider>
   );
 };
-
