@@ -85,6 +85,9 @@ export function useSimpleShoppingList(meals: Meal[], pantryItems: string[] = [])
         );
         const newItems = [...filtered, manualItem];
         console.log("useSimpleShoppingList: Updated manual items:", newItems.length);
+        
+        // Save immediately after state update
+        setTimeout(() => saveToLocalStorage(), 0);
         return newItems;
       });
     } else {
@@ -96,14 +99,12 @@ export function useSimpleShoppingList(meals: Meal[], pantryItems: string[] = [])
             : item
         );
         console.log("useSimpleShoppingList: Updated existing manual item:", updatedItem.name);
+        
+        // Save immediately after state update
+        setTimeout(() => saveToLocalStorage(), 0);
         return newItems;
       });
     }
-
-    // Save changes after state update completes
-    requestAnimationFrame(() => {
-      saveToLocalStorage();
-    });
   }, [storeAssignments, setManualItems, saveToLocalStorage]);
 
   // Simplified save function
