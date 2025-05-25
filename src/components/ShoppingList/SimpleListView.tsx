@@ -152,8 +152,8 @@ export const SimpleListView = React.memo(({
   onToggleItem,
   groupByStore
 }: SimpleListViewProps) => {
-  // Filter out checked items explicitly here as well to ensure they don't show
-  const activeItems = items.filter(item => !item.checked);
+  // Items should already be filtered by the hook - no additional filtering needed
+  const activeItems = items;
 
   // Optimized grouping with stable keys and memoization
   const groupedItems = useMemo(() => {

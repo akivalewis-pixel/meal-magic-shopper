@@ -18,7 +18,7 @@ export function useShoppingListItems({
   const combinedItems = useMemo(() => {
     const manualItemNames = new Set(manualItems.map(item => item.name.toLowerCase()));
     
-    // Process meal items with overrides, filter out checked items
+    // Process meal items with overrides
     const enhancedMealItems = mealItems
       .filter(item => !manualItemNames.has(item.name.toLowerCase()))
       .map(item => {
@@ -31,24 +31,19 @@ export function useShoppingListItems({
           store: overrides.store || savedStore || item.store || "Unassigned",
           checked: overrides.checked || false
         };
-      })
-      .filter(item => !item.checked); // Filter out checked meal items
+      });
     
-    // Filter out checked manual items
-    const activeManualItems = manualItems.filter(item => !item.checked);
+    // Combine all items first
+    const allCombined = [...enhancedMealItems, ...manualItems];
     
-    const combined = [...enhancedMealItems, ...activeManualItems];
+    // Filter out ALL checked items - this is the key fix
+    const activeItems = allCombined.filter(item => !item.checked);
     
-    console.log("useShoppingListItems: Combined items count:", combined.length);
-    console.log("useShoppingListItems: Active items (unchecked):", combined.filter(item => !item.checked).length);
-    console.log("useShoppingListItems: Checked items filtered out:", 
-      mealItems.filter(item => {
-        const overrides = itemOverrides.get(item.id) || {};
-        return overrides.checked;
-      }).length + manualItems.filter(item => item.checked).length
-    );
+    console.log("useShoppingListItems: Total combined items:", allCombined.length);
+    console.log("useShoppingListItems: Active items (unchecked):", activeItems.length);
+    console.log("useShoppingListItems: Checked items filtered out:", allCombined.length - activeItems.length);
     
-    return combined;
+    return activeItems;
   }, [mealItems, manualItems, itemOverrides, storeAssignments]);
 
   return { combinedItems };
