@@ -32,12 +32,22 @@ export function useShoppingListItems({
           checked: overrides.checked || false
         };
       })
-      .filter(item => !item.checked);
+      .filter(item => !item.checked); // Filter out checked meal items
     
-    // Add active manual items (not checked)
+    // Filter out checked manual items
     const activeManualItems = manualItems.filter(item => !item.checked);
     
-    return [...enhancedMealItems, ...activeManualItems];
+    const combined = [...enhancedMealItems, ...activeManualItems];
+    
+    console.log("useShoppingListItems: Combined items count:", combined.length);
+    console.log("useShoppingListItems: Checked items filtered out:", 
+      mealItems.filter(item => {
+        const overrides = itemOverrides.get(item.id) || {};
+        return overrides.checked;
+      }).length + manualItems.filter(item => item.checked).length
+    );
+    
+    return combined;
   }, [mealItems, manualItems, itemOverrides, storeAssignments]);
 
   return { combinedItems };

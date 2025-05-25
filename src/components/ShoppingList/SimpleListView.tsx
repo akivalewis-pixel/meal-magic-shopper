@@ -152,11 +152,8 @@ export const SimpleListView = React.memo(({
   onToggleItem,
   groupByStore
 }: SimpleListViewProps) => {
-  // Filter out checked items immediately for UI display
-  const activeItems = useMemo(() => {
-    console.log("SimpleListView: Filtering items. Total:", items.length, "Checked items:", items.filter(i => i.checked).length);
-    return items.filter(item => !item.checked);
-  }, [items]);
+  // Items should already be filtered by the hook, so no need to filter again
+  const activeItems = items; // Removed redundant filtering
 
   // Optimized grouping with stable keys and memoization
   const groupedItems = useMemo(() => {
