@@ -87,14 +87,14 @@ const ItemRow = ({
   }, [onUpdateItem]);
 
   const handleToggle = useCallback(() => {
-    console.log("SimpleListView: Removing item from list:", item.name);
+    console.log("SimpleListView: Archiving item:", item.name, "with ID:", item.id);
     onToggleItem(item.id);
-  }, [item.id, onToggleItem]);
+  }, [item.id, item.name, onToggleItem]);
 
   return (
     <li className="flex items-center gap-3 py-2 border-b border-gray-100">
       <Checkbox
-        checked={false}
+        checked={item.checked || false}
         onCheckedChange={handleToggle}
       />
       
@@ -111,7 +111,9 @@ const ItemRow = ({
           />
         ) : (
           <div onClick={handleNameClick} className="cursor-pointer">
-            <span className="font-medium">{item.name}</span>
+            <span className={`font-medium ${item.checked ? 'line-through text-gray-400' : ''}`}>
+              {item.name}
+            </span>
             {item.meal && (
               <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded ml-2">
                 {item.meal}
@@ -126,6 +128,7 @@ const ItemRow = ({
         onChange={handleQuantityChange}
         className="w-20 h-8 text-center"
         placeholder="Qty"
+        disabled={item.checked}
       />
       
       <SimpleStoreDropdown
@@ -149,14 +152,20 @@ export const SimpleListView = React.memo(({
   onToggleItem,
   groupByStore
 }: SimpleListViewProps) => {
+  // Filter out checked items immediately for UI display
+  const activeItems = useMemo(() => {
+    console.log("SimpleListView: Filtering items. Total:", items.length, "Checked items:", items.filter(i => i.checked).length);
+    return items.filter(item => !item.checked);
+  }, [items]);
+
   // Optimized grouping with stable keys and memoization
   const groupedItems = useMemo(() => {
-    console.log("SimpleListView: Grouping items", { groupByStore, itemCount: items.length });
+    console.log("SimpleListView: Grouping items", { groupByStore, itemCount: activeItems.length });
     
     const currentGrouping: Record<string, GroceryItem[]> = {};
     
     if (groupByStore) {
-      items.forEach(item => {
+      activeItems.forEach(item => {
         const store = item.store || "Unassigned";
         if (!currentGrouping[store]) {
           currentGrouping[store] = [];
@@ -176,7 +185,7 @@ export const SimpleListView = React.memo(({
       
       console.log("SimpleListView: Grouped by store", Object.keys(currentGrouping));
     } else {
-      currentGrouping["All Items"] = [...items].sort((a, b) => {
+      currentGrouping["All Items"] = [...activeItems].sort((a, b) => {
         if (a.category !== b.category) {
           return a.category.localeCompare(b.category);
         }
@@ -185,12 +194,12 @@ export const SimpleListView = React.memo(({
     }
     
     return currentGrouping;
-  }, [items, groupByStore]);
+  }, [activeItems, groupByStore]);
 
-  if (items.length === 0) {
+  if (activeItems.length === 0) {
     return (
       <div className="text-center py-10 text-gray-500">
-        <p>No items match your current filters</p>
+        <p>No active items in your shopping list</p>
       </div>
     );
   }

@@ -18,7 +18,6 @@ export function useSimpleShoppingList(meals: Meal[], pantryItems: string[] = [])
 
   const [manualItems, setManualItems] = useState<GroceryItem[]>([]);
   const [itemOverrides, setItemOverrides] = useState<Map<string, Partial<GroceryItem>>>(new Map());
-  const [removedItemIds, setRemovedItemIds] = useState<Set<string>>(new Set());
   const isInitializedRef = useRef(false);
 
   const {
@@ -33,13 +32,13 @@ export function useSimpleShoppingList(meals: Meal[], pantryItems: string[] = [])
     storeAssignments
   );
 
-  // Simplified combined items calculation
+  // Simplified combined items calculation - filter out checked items immediately
   const combinedItems = useMemo(() => {
     const manualItemNames = new Set(manualItems.map(item => item.name.toLowerCase()));
     
-    // Process meal items with overrides
+    // Process meal items with overrides, filter out checked items
     const enhancedMealItems = mealItems
-      .filter(item => !manualItemNames.has(item.name.toLowerCase()) && !removedItemIds.has(item.id))
+      .filter(item => !manualItemNames.has(item.name.toLowerCase()))
       .map(item => {
         const savedStore = storeAssignments.current.get(item.name.toLowerCase());
         const overrides = itemOverrides.get(item.id) || {};
@@ -47,15 +46,17 @@ export function useSimpleShoppingList(meals: Meal[], pantryItems: string[] = [])
         return {
           ...item,
           ...overrides,
-          store: overrides.store || savedStore || item.store || "Unassigned"
+          store: overrides.store || savedStore || item.store || "Unassigned",
+          checked: overrides.checked || false
         };
-      });
+      })
+      .filter(item => !item.checked); // Remove checked items from active list
     
-    // Add active manual items
-    const activeManualItems = manualItems.filter(item => !removedItemIds.has(item.id));
+    // Add active manual items (not checked)
+    const activeManualItems = manualItems.filter(item => !item.checked);
     
     return [...enhancedMealItems, ...activeManualItems];
-  }, [mealItems, manualItems, itemOverrides, storeAssignments, removedItemIds]);
+  }, [mealItems, manualItems, itemOverrides, storeAssignments]);
 
   // Simplified update function
   const updateItem = useCallback((updatedItem: GroceryItem) => {
@@ -79,6 +80,7 @@ export function useSimpleShoppingList(meals: Meal[], pantryItems: string[] = [])
           quantity: updatedItem.quantity,
           category: updatedItem.category,
           store: updatedItem.store,
+          checked: updatedItem.checked,
           __updateTimestamp: Date.now()
         });
         return newOverrides;
@@ -98,21 +100,47 @@ export function useSimpleShoppingList(meals: Meal[], pantryItems: string[] = [])
     setTimeout(saveToLocalStorage, 100);
   }, [storeAssignments, saveToLocalStorage]);
 
-  // Simplified archive function with immediate UI update
+  // Archive function that immediately moves items to archive
   const archiveItem = useCallback((id: string) => {
     console.log("useSimpleShoppingList: Archiving item with id:", id);
     const item = combinedItems.find(i => i.id === id);
-    if (!item) return;
+    if (!item) {
+      console.log("useSimpleShoppingList: Item not found for archiving:", id);
+      return;
+    }
 
-    // Immediately remove from UI
-    setRemovedItemIds(prev => new Set(prev).add(id));
+    console.log("useSimpleShoppingList: Found item to archive:", item.name);
 
-    // Add to archived items
-    setArchivedItems(prev => [...prev, { ...item, checked: true }]);
+    // Create archived item
+    const archivedItem = { ...item, checked: true, __updateTimestamp: Date.now() };
     
-    // Remove from manual items if applicable
-    if (id.startsWith('manual-')) {
-      setManualItems(prev => prev.filter(i => i.id !== id));
+    // Add to archived items immediately
+    setArchivedItems(prev => [...prev, archivedItem]);
+    
+    // Update the item to mark it as checked
+    const isMealItem = id.includes('-') && !id.startsWith('manual-');
+    
+    if (isMealItem) {
+      // Mark meal item as checked in overrides
+      setItemOverrides(prev => {
+        const newOverrides = new Map(prev);
+        const existingOverride = newOverrides.get(id) || {};
+        newOverrides.set(id, {
+          ...existingOverride,
+          checked: true,
+          __updateTimestamp: Date.now()
+        });
+        return newOverrides;
+      });
+    } else {
+      // Mark manual item as checked
+      setManualItems(prev => 
+        prev.map(item => 
+          item.id === id 
+            ? { ...item, checked: true, __updateTimestamp: Date.now() }
+            : item
+        )
+      );
     }
     
     setTimeout(saveToLocalStorage, 100);
@@ -144,6 +172,7 @@ export function useSimpleShoppingList(meals: Meal[], pantryItems: string[] = [])
             if (item.quantity !== originalMealItem.quantity) overrideData.quantity = item.quantity;
             if (item.category !== originalMealItem.category) overrideData.category = item.category;
             if (item.store !== originalMealItem.store) overrideData.store = item.store;
+            if (item.checked !== (originalMealItem.checked || false)) overrideData.checked = item.checked;
             
             if (Object.keys(overrideData).length > 0) {
               newOverrides.set(item.id, { ...overrideData, __updateTimestamp: Date.now() });
@@ -186,6 +215,7 @@ export function useSimpleShoppingList(meals: Meal[], pantryItems: string[] = [])
               quantity: item.quantity,
               category: item.category,
               store: item.store,
+              checked: item.checked,
               __updateTimestamp: item.__updateTimestamp
             });
           }

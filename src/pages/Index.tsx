@@ -15,7 +15,6 @@ const Index = () => {
     meals,
     weeklyPlans,
     handleEditMeal,
-    handleUpdateMeal,
     handleRateMeal,
     handleAddMealToDay,
     handleSaveWeeklyPlan,
@@ -38,7 +37,6 @@ const Index = () => {
         <MealPlanSection 
           meals={meals} 
           onEditMeal={handleEditMeal}
-          onUpdateMeal={handleUpdateMeal}
           onRateMeal={handleRateMeal}
           onAddMealToDay={handleAddMealToDay}
           onResetMealPlan={handleResetMealPlan}
