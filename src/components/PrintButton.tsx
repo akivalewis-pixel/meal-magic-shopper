@@ -65,10 +65,15 @@ export const PrintButton = ({ meals, groceryItems }: PrintButtonProps) => {
             border: 1px solid #eee;
             border-radius: 2px;
           }
-          .grocery-columns {
-            column-count: 3;
-            column-gap: 10px;
+          .store-columns {
+            display: flex;
+            gap: 15px;
             font-size: 10px;
+          }
+          .store-column {
+            flex: 1;
+            min-width: 0;
+            break-inside: avoid;
           }
           .item {
             margin: 1px 0;
@@ -101,13 +106,13 @@ export const PrintButton = ({ meals, groceryItems }: PrintButtonProps) => {
             margin: 1px 0;
           }
           .store-section {
-            margin-bottom: 5px;
+            margin-bottom: 8px;
             break-inside: avoid;
           }
           .store-title {
             font-weight: bold;
             font-size: 11px;
-            margin-bottom: 2px;
+            margin-bottom: 3px;
             padding-bottom: 1px;
             border-bottom: 1px solid #333;
           }
@@ -116,6 +121,8 @@ export const PrintButton = ({ meals, groceryItems }: PrintButtonProps) => {
             margin-top: 4px;
             margin-bottom: 2px;
             font-style: italic;
+            font-size: 9px;
+            color: #555;
           }
         </style>
       </head>
@@ -158,13 +165,12 @@ export const PrintButton = ({ meals, groceryItems }: PrintButtonProps) => {
     
     printWindow.document.write('</div>');
 
-    // Add shopping list below meal plan (no page break)
+    // Add shopping list below meal plan
     printWindow.document.write(`
       <h1>Pantry Pilot: Shopping List</h1>
     `);
 
-    // Create a fresh sorted copy of grocery items that's sorted by store and category
-    // for the print version, ensuring we have the latest store assignments
+    // Sort and group items by store and category for printing
     const sortedItems = [...groceryItems].sort((a, b) => {
       // First sort by store
       const storeA = a.store || "Unassigned";
@@ -198,14 +204,19 @@ export const PrintButton = ({ meals, groceryItems }: PrintButtonProps) => {
       groupedByStore[store][category].push(item);
     });
 
-    // Create three columns for shopping list
-    printWindow.document.write('<div class="grocery-columns">');
+    // Create store columns layout
+    printWindow.document.write('<div class="store-columns">');
 
-    // Print each store and its categories
-    Object.entries(groupedByStore).forEach(([store, categories]) => {
+    // Get all stores for consistent column layout
+    const storeNames = Object.keys(groupedByStore);
+    
+    storeNames.forEach(store => {
+      const categories = groupedByStore[store];
+      
       printWindow.document.write(`
-        <div class="store-section">
-          <div class="store-title">${store}</div>
+        <div class="store-column">
+          <div class="store-section">
+            <div class="store-title">${store}</div>
       `);
       
       Object.entries(categories).forEach(([category, items]) => {
@@ -223,10 +234,13 @@ export const PrintButton = ({ meals, groceryItems }: PrintButtonProps) => {
         });
       });
       
-      printWindow.document.write(`</div>`);
+      printWindow.document.write(`
+          </div>
+        </div>
+      `);
     });
     
-    printWindow.document.write('</div>'); // Close grocery-columns
+    printWindow.document.write('</div>'); // Close store-columns
 
     // Close the HTML
     printWindow.document.write(`
