@@ -6,21 +6,11 @@ import { MealRatingDialog } from "../MealRatingDialog";
 import { MealRecommendations } from "../MealRecommendations";
 import { DroppableDay } from "./DroppableDay";
 import { AddRecipeDialog } from "./AddRecipeDialog";
-import { Meal, DietaryPreference } from "@/types";
-import { Label } from "@/components/ui/label";
+import { Meal } from "@/types";
 import { Button } from "@/components/ui/button";
 import { daysOfWeek } from "@/utils/constants";
-import { dietaryOptions } from "@/utils/constants";
-import { filterMealsByDiet } from "@/utils/mealUtils";
 import { extractIngredientsFromRecipeUrl } from "@/utils/recipeUtils";
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
-} from "@/components/ui/select";
-import { Plus, RefreshCw } from "lucide-react";
+import { RefreshCw } from "lucide-react";
 
 interface MealPlanSectionProps {
   meals: Meal[];
@@ -37,18 +27,13 @@ export const MealPlanSection = ({
   onAddMealToDay,
   onResetMealPlan 
 }: MealPlanSectionProps) => {
-  const [dietFilter, setDietFilter] = useState<DietaryPreference>("none");
   const [mealToRate, setMealToRate] = useState<Meal | null>(null);
   const [showAddRecipe, setShowAddRecipe] = useState(false);
   const [selectedDay, setSelectedDay] = useState("");
-  
-  const filteredMeals = dietFilter === "none" 
-    ? meals 
-    : filterMealsByDiet(meals, dietFilter);
 
   // Get meals for a specific day
   const getMealsForDay = (day: string) => {
-    return filteredMeals.filter(meal => meal.day === day);
+    return meals.filter(meal => meal.day === day);
   };
 
   const handleOpenRatingDialog = (meal: Meal) => {
@@ -103,9 +88,7 @@ export const MealPlanSection = ({
       title: data.title,
       recipeUrl: data.recipeUrl,
       ingredients: data.ingredients,
-      dietaryPreferences: Array.isArray(data.dietaryPreferences) 
-        ? data.dietaryPreferences 
-        : [data.dietaryPreferences] as DietaryPreference[],
+      dietaryPreferences: data.dietaryPreferences || [],
       lastUsed: new Date()
     };
     
@@ -119,38 +102,6 @@ export const MealPlanSection = ({
         <div className="container mx-auto">
           <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between">
             <h2 className="text-2xl font-bold text-leaf-dark">Weekly Meal Plan</h2>
-            <div className="mt-4 sm:mt-0">
-              <div className="flex items-center gap-2">
-                <Label htmlFor="diet-filter" className="whitespace-nowrap">
-                  Dietary Filter:
-                </Label>
-                <Select
-                  value={dietFilter}
-                  onValueChange={(value) => setDietFilter(value as DietaryPreference)}
-                >
-                  <SelectTrigger id="diet-filter" className="w-[180px]">
-                    <SelectValue placeholder="Select diet" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {dietaryOptions.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </div>
-
-          <div className="mb-6 flex flex-wrap justify-between gap-2">
-            <Button onClick={() => {
-              setSelectedDay(daysOfWeek.find(day => !getMealsForDay(day).length) || 'Sunday');
-              setShowAddRecipe(true);
-            }}>
-              <Plus className="mr-1 h-4 w-4" /> Add Recipe
-            </Button>
-            
             {onResetMealPlan && (
               <Button variant="outline" onClick={onResetMealPlan}>
                 <RefreshCw className="mr-1 h-4 w-4" /> Reset Meal Plan
