@@ -118,7 +118,7 @@ export const AddRecipeDialog = ({
     onAddRecipe({
       ...data,
       day: selectedDay,
-      ingredients: data.ingredients.split(',').map((item: string) => item.trim())
+      ingredients: data.ingredients ? data.ingredients.split(',').map((item: string) => item.trim()).filter((item: string) => item.length > 0) : []
     });
   };
 
@@ -128,7 +128,7 @@ export const AddRecipeDialog = ({
         <DialogHeader>
           <DialogTitle>Add Recipe for {selectedDay}</DialogTitle>
           <DialogDescription>
-            Enter a recipe URL to automatically extract ingredients, or add them manually.
+            Enter a recipe URL to automatically extract ingredients, or add them manually. Ingredients are optional.
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -139,7 +139,7 @@ export const AddRecipeDialog = ({
               name="recipeUrl"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Recipe URL</FormLabel>
+                  <FormLabel>Recipe URL (optional)</FormLabel>
                   <FormControl>
                     <div className="flex gap-2">
                       <Input 
@@ -184,12 +184,11 @@ export const AddRecipeDialog = ({
               name="ingredients"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Ingredients (comma separated)</FormLabel>
+                  <FormLabel>Ingredients (optional, comma separated)</FormLabel>
                   <FormControl>
                     <Input 
                       placeholder="1 lb onions, 2 cloves garlic, 3 tomatoes..." 
-                      {...field} 
-                      required
+                      {...field}
                     />
                   </FormControl>
                 </FormItem>
