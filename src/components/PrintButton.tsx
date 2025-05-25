@@ -170,7 +170,7 @@ export const PrintButton = ({ meals, groceryItems }: PrintButtonProps) => {
       <h1>Pantry Pilot: Shopping List</h1>
     `);
 
-    // Filter out checked/archived items before printing
+    // Filter out checked items before printing - this is the key fix
     const activeItems = groceryItems.filter(item => !item.checked);
 
     // Sort and group active items by store and category for printing

@@ -40,6 +40,7 @@ export function useShoppingListItems({
     const combined = [...enhancedMealItems, ...activeManualItems];
     
     console.log("useShoppingListItems: Combined items count:", combined.length);
+    console.log("useShoppingListItems: Active items (unchecked):", combined.filter(item => !item.checked).length);
     console.log("useShoppingListItems: Checked items filtered out:", 
       mealItems.filter(item => {
         const overrides = itemOverrides.get(item.id) || {};
