@@ -20,6 +20,7 @@ export function useSimpleShoppingList(meals: Meal[], pantryItems: string[] = [])
 
   const [manualItems, setManualItems] = useState<GroceryItem[]>([]);
   const isInitializedRef = useRef(false);
+  const processingItemsRef = useRef<Set<string>>(new Set());
 
   const {
     itemOverrides,
@@ -55,18 +56,31 @@ export function useSimpleShoppingList(meals: Meal[], pantryItems: string[] = [])
     saveToLocalStorage
   });
 
-  // Enhanced toggle function to properly mark items as checked before archiving
+  // Enhanced toggle function to properly handle multiple quick selections
   const toggleItem = (id: string) => {
     console.log("useSimpleShoppingList: toggleItem called for id:", id);
     
-    // Find the item first
-    const item = combinedItems.find(item => item.id === id);
-    if (!item) {
-      console.log("useSimpleShoppingList: Item not found for id:", id);
+    // Prevent processing the same item multiple times
+    if (processingItemsRef.current.has(id)) {
+      console.log("useSimpleShoppingList: Item already being processed:", id);
       return;
     }
     
-    console.log("useSimpleShoppingList: Found item to toggle:", item.name, "current checked status:", item.checked);
+    processingItemsRef.current.add(id);
+    
+    // Find the item in the original sources (mealItems or manualItems) to avoid race conditions
+    let item = mealItems.find(item => item.id === id);
+    if (!item) {
+      item = manualItems.find(item => item.id === id);
+    }
+    
+    if (!item) {
+      console.log("useSimpleShoppingList: Item not found for id:", id);
+      processingItemsRef.current.delete(id);
+      return;
+    }
+    
+    console.log("useSimpleShoppingList: Found item to toggle:", item.name);
     
     // Mark the item as checked FIRST
     const isMealItem = id.includes('-') && !id.startsWith('manual-');
@@ -85,11 +99,20 @@ export function useSimpleShoppingList(meals: Meal[], pantryItems: string[] = [])
       );
     }
     
-    // Then archive the item
+    // Archive the item immediately and clean up
     setTimeout(() => {
       console.log("useSimpleShoppingList: Archiving item after marking as checked");
-      archiveItem(id);
-    }, 100);
+      
+      // Create archived item directly
+      const archivedItem = { ...item, checked: true, __updateTimestamp: Date.now() };
+      setArchivedItems(prev => [...prev, archivedItem]);
+      
+      // Clean up processing flag
+      processingItemsRef.current.delete(id);
+      
+      // Save to storage
+      setTimeout(saveToLocalStorage, 50);
+    }, 50);
   };
 
   // Simplified update function
