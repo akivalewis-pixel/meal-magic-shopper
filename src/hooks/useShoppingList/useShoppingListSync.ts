@@ -13,6 +13,7 @@ interface UseShoppingListSyncProps {
   loadFromStorage: () => any;
   loadOverrides: (items: GroceryItem[]) => void;
   saveToLocalStorage: () => void;
+  isProcessing?: () => boolean;
 }
 
 export function useShoppingListSync({
@@ -25,19 +26,22 @@ export function useShoppingListSync({
   setArchivedItems,
   loadFromStorage,
   loadOverrides,
-  saveToLocalStorage
+  saveToLocalStorage,
+  isProcessing
 }: UseShoppingListSyncProps) {
   const isInitializedRef = useRef(false);
 
-  // Load from localStorage on mount
+  // Load from localStorage on mount only
   useEffect(() => {
     if (!isInitializedRef.current) {
+      console.log("useShoppingListSync: Initial load from storage");
       const savedData = loadFromStorage();
       
       if (savedData.stores) {
         setAvailableStores(savedData.stores);
       }
       if (savedData.archived) {
+        console.log("useShoppingListSync: Loading archived items:", savedData.archived.length);
         setArchivedItems(savedData.archived);
       }
       if (savedData.items) {
@@ -48,21 +52,30 @@ export function useShoppingListSync({
         loadOverrides(savedData.items);
       }
       
-      console.log("useShoppingListSync: Loaded from storage");
+      console.log("useShoppingListSync: Initial load completed");
       isInitializedRef.current = true;
     }
   }, [loadFromStorage, setAvailableStores, setArchivedItems, loadOverrides]);
 
-  // Sync with global state only when needed
+  // Sync with global state only when not processing and initialized
   useEffect(() => {
-    if (isInitializedRef.current) {
+    if (isInitializedRef.current && (!isProcessing || !isProcessing())) {
+      console.log("useShoppingListSync: Syncing combined items");
       setAllItems(combinedItems);
+    } else if (isProcessing && isProcessing()) {
+      console.log("useShoppingListSync: Skipping sync - processing in progress");
     }
-  }, [combinedItems, setAllItems]);
+  }, [combinedItems, setAllItems, isProcessing]);
 
   // Create setAllItems handler for actions
   const createSetAllItemsHandler = (setManualItems: React.Dispatch<React.SetStateAction<GroceryItem[]>>, setItemOverrides: React.Dispatch<React.SetStateAction<Map<string, Partial<GroceryItem>>>>) => {
     return (items: GroceryItem[] | ((prev: GroceryItem[]) => GroceryItem[])) => {
+      // Skip updates if processing
+      if (isProcessing && isProcessing()) {
+        console.log("useShoppingListSync: Skipping setAllItems - processing in progress");
+        return;
+      }
+
       // Handle both function and direct updates
       let updatedItems: GroceryItem[];
       if (typeof items === 'function') {
@@ -70,6 +83,8 @@ export function useShoppingListSync({
       } else {
         updatedItems = items;
       }
+      
+      console.log("useShoppingListSync: Processing setAllItems with", updatedItems.length, "items");
       
       // Separate manual items and overrides
       const newManualItems = updatedItems.filter(item => item.id.startsWith('manual-'));
@@ -96,7 +111,9 @@ export function useShoppingListSync({
       });
       
       setItemOverrides(newOverrides);
-      setTimeout(saveToLocalStorage, 100);
+      
+      // Save immediately and synchronously
+      saveToLocalStorage();
     };
   };
 

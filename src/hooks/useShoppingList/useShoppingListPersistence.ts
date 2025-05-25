@@ -9,8 +9,8 @@ export function useShoppingListPersistence(
 ) {
   const storeAssignments = useRef<Map<string, string>>(new Map());
   const lastSavedAssignments = useRef<string>('');
-  const saveTimeoutRef = useRef<NodeJS.Timeout>();
   const isInitializedRef = useRef(false);
+  const isProcessingRef = useRef(false);
 
   // Load from localStorage on mount
   const loadFromStorage = useCallback(() => {
@@ -50,12 +50,21 @@ export function useShoppingListPersistence(
     }
   }, []);
 
-  // Immediate save to localStorage - no debouncing for better reliability
+  // Completely synchronous save - no delays or timeouts
   const saveToLocalStorage = useCallback(() => {
-    if (!isInitializedRef.current) return;
+    if (!isInitializedRef.current) {
+      console.log("useShoppingListPersistence: Not initialized, skipping save");
+      return;
+    }
+
+    // Set processing flag to prevent concurrent operations
+    isProcessingRef.current = true;
 
     try {
-      console.log("useShoppingListPersistence: Saving to localStorage");
+      console.log("useShoppingListPersistence: Starting synchronous save");
+      console.log("useShoppingListPersistence: Archived items count:", archivedItems.length);
+      console.log("useShoppingListPersistence: All items count:", allItems.length);
+      
       localStorage.setItem('shoppingList_stores', JSON.stringify(availableStores));
       localStorage.setItem('shoppingList_archived', JSON.stringify(archivedItems));
       localStorage.setItem('shoppingList_allItems', JSON.stringify(allItems));
@@ -65,24 +74,20 @@ export function useShoppingListPersistence(
         localStorage.setItem('shoppingList_storeAssignments', currentAssignments);
         lastSavedAssignments.current = currentAssignments;
       }
-      console.log("useShoppingListPersistence: Save complete");
+      
+      console.log("useShoppingListPersistence: Synchronous save completed successfully");
     } catch (error) {
       console.warn('Failed to save to localStorage:', error);
+    } finally {
+      // Always clear processing flag
+      isProcessingRef.current = false;
     }
   }, [availableStores, archivedItems, allItems]);
-
-  // Cleanup timeout on unmount
-  useEffect(() => {
-    return () => {
-      if (saveTimeoutRef.current) {
-        clearTimeout(saveTimeoutRef.current);
-      }
-    };
-  }, []);
 
   return {
     storeAssignments,
     loadFromStorage,
-    saveToLocalStorage
+    saveToLocalStorage,
+    isProcessing: () => isProcessingRef.current
   };
 }

@@ -1,4 +1,3 @@
-
 import { useCallback } from "react";
 import { GroceryItem } from "@/types";
 import { useToast } from "@/hooks/use-toast";
@@ -45,8 +44,8 @@ export function useShoppingListActions({
       });
     });
 
-    // Debounced save
-    setTimeout(saveToLocalStorage, 100);
+    // Save immediately and synchronously
+    saveToLocalStorage();
   }, [setAllItems, storeAssignments, saveToLocalStorage]);
 
   const toggleItem = useCallback((id: string) => {
@@ -80,11 +79,14 @@ export function useShoppingListActions({
     
     setAllItems(prev => [...prev, itemWithId]);
     
+    // Save immediately
+    saveToLocalStorage();
+    
     toast({
       title: "Item Added",
       description: `${newItem.name} added to shopping list`,
     });
-  }, [setAllItems, toast]);
+  }, [setAllItems, saveToLocalStorage, toast]);
 
   const updateStores = useCallback((newStores: string[]) => {
     setAvailableStores(newStores);
@@ -99,11 +101,14 @@ export function useShoppingListActions({
       })
     );
     
+    // Save immediately
+    saveToLocalStorage();
+    
     toast({
       title: "Stores Updated",
       description: "Store list has been updated",
     });
-  }, [setAvailableStores, setAllItems, toast]);
+  }, [setAvailableStores, setAllItems, saveToLocalStorage, toast]);
 
   const resetList = useCallback(() => {
     const itemsToArchive = allItems.map(item => ({
@@ -115,11 +120,14 @@ export function useShoppingListActions({
     setArchivedItems(prev => [...prev, ...itemsToArchive]);
     setAllItems([]);
     
+    // Save immediately
+    saveToLocalStorage();
+    
     toast({
       title: "List Reset",
       description: `${itemsToArchive.length} items archived`,
     });
-  }, [allItems, setArchivedItems, setAllItems, toast]);
+  }, [allItems, setArchivedItems, setAllItems, saveToLocalStorage, toast]);
 
   return {
     updateItem,

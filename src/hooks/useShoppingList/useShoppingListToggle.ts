@@ -32,54 +32,60 @@ export function useShoppingListToggle({
     
     processingItemsRef.current.add(id);
     
-    // Find the item in the original sources
-    let item = mealItems.find(item => item.id === id);
-    if (!item) {
-      item = manualItems.find(item => item.id === id);
-    }
-    
-    if (!item) {
-      console.log("useShoppingListToggle: Item not found for id:", id);
-      processingItemsRef.current.delete(id);
-      return;
-    }
-    
-    console.log("useShoppingListToggle: Found item to toggle:", item.name);
-    
-    // Create archived item immediately with checked status
-    const archivedItem = { ...item, checked: true, __updateTimestamp: Date.now() };
-    
-    // Update all states synchronously to prevent race conditions
-    const isMealItem = id.includes('-') && !id.startsWith('manual-');
-    
-    if (isMealItem) {
-      console.log("useShoppingListToggle: Marking meal item as checked via override");
-      updateOverride(id, { checked: true });
-    } else {
-      console.log("useShoppingListToggle: Marking manual item as checked");
-      setManualItems(prev => 
-        prev.map(manualItem => 
-          manualItem.id === id 
-            ? { ...manualItem, checked: true, __updateTimestamp: Date.now() }
-            : manualItem
-        )
-      );
-    }
-    
-    // Add to archived items immediately
-    setArchivedItems(prev => {
-      // Check if item is already archived to prevent duplicates
-      if (prev.find(archivedItem => archivedItem.id === id)) {
-        return prev;
+    try {
+      // Find the item in the original sources
+      let item = mealItems.find(item => item.id === id);
+      if (!item) {
+        item = manualItems.find(item => item.id === id);
       }
-      return [...prev, archivedItem];
-    });
-    
-    // Clean up processing flag immediately
-    processingItemsRef.current.delete(id);
-    
-    // Save to storage with minimal delay
-    setTimeout(saveToLocalStorage, 50);
+      
+      if (!item) {
+        console.log("useShoppingListToggle: Item not found for id:", id);
+        return;
+      }
+      
+      console.log("useShoppingListToggle: Found item to toggle:", item.name);
+      
+      // Create archived item immediately with checked status
+      const archivedItem = { ...item, checked: true, __updateTimestamp: Date.now() };
+      
+      // Update all states synchronously in a batch
+      const isMealItem = id.includes('-') && !id.startsWith('manual-');
+      
+      // Batch all state updates together
+      if (isMealItem) {
+        console.log("useShoppingListToggle: Marking meal item as checked via override");
+        updateOverride(id, { checked: true });
+      } else {
+        console.log("useShoppingListToggle: Marking manual item as checked");
+        setManualItems(prev => 
+          prev.map(manualItem => 
+            manualItem.id === id 
+              ? { ...manualItem, checked: true, __updateTimestamp: Date.now() }
+              : manualItem
+          )
+        );
+      }
+      
+      // Add to archived items - check for duplicates
+      setArchivedItems(prev => {
+        const exists = prev.some(archivedItem => archivedItem.id === id);
+        if (exists) {
+          console.log("useShoppingListToggle: Item already archived:", id);
+          return prev;
+        }
+        console.log("useShoppingListToggle: Adding to archive:", item.name);
+        return [...prev, archivedItem];
+      });
+      
+      // Save immediately and synchronously
+      console.log("useShoppingListToggle: Saving to localStorage immediately");
+      saveToLocalStorage();
+      
+    } finally {
+      // Always clean up processing flag
+      processingItemsRef.current.delete(id);
+    }
   };
 
   return { toggleItem };

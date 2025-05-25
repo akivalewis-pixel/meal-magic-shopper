@@ -34,7 +34,8 @@ export function useShoppingListCore(meals: Meal[], pantryItems: string[] = []) {
   const {
     storeAssignments,
     loadFromStorage,
-    saveToLocalStorage
+    saveToLocalStorage,
+    isProcessing
   } = useShoppingListPersistence(availableStores, archivedItems, allItems);
 
   const mealItems = useShoppingListGeneration(
@@ -84,7 +85,8 @@ export function useShoppingListCore(meals: Meal[], pantryItems: string[] = []) {
     setArchivedItems,
     loadFromStorage,
     loadOverrides,
-    saveToLocalStorage
+    saveToLocalStorage,
+    isProcessing
   });
 
   const actions = useShoppingListActions({
@@ -93,7 +95,7 @@ export function useShoppingListCore(meals: Meal[], pantryItems: string[] = []) {
     archivedItems,
     setArchivedItems,
     storeAssignments,
-    saveToLocalStorage: () => setTimeout(saveToLocalStorage, 100),
+    saveToLocalStorage, // Remove the timeout wrapper
     setAvailableStores
   });
 
