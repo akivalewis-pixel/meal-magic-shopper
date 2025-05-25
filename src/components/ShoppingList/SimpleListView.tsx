@@ -27,19 +27,21 @@ const MemoizedItemRow = React.memo(({
   availableStores: string[];
 }) => {
   const handleQuantityChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    console.log("SimpleListView: Quantity changing for", item.name, "from", item.quantity, "to", e.target.value);
     const updatedItem = { ...item, quantity: e.target.value, __updateTimestamp: Date.now() };
     onUpdateItem(updatedItem);
   }, [item, onUpdateItem]);
 
   const handleNameChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    console.log("SimpleListView: Name changing for", item.name, "to", e.target.value);
     const updatedItem = { ...item, name: e.target.value, __updateTimestamp: Date.now() };
     onUpdateItem(updatedItem);
   }, [item, onUpdateItem]);
 
-  const handleCategoryChange = useCallback((item: GroceryItem, category: string) => {
-    console.log("SimpleListView: Category changed for", item.name, "to", category);
-    const updatedItem = { ...item, category: category as any, __updateTimestamp: Date.now() };
-    onUpdateItem(updatedItem);
+  const handleCategoryChange = useCallback((updatedItem: GroceryItem, category: string) => {
+    console.log("SimpleListView: Category changed for", updatedItem.name, "to", category);
+    const newItem = { ...updatedItem, category: category as any, __updateTimestamp: Date.now() };
+    onUpdateItem(newItem);
   }, [onUpdateItem]);
 
   const handleStoreChange = useCallback((updatedItem: GroceryItem) => {

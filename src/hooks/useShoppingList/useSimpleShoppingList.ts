@@ -51,9 +51,14 @@ export function useSimpleShoppingList(meals: Meal[], pantryItems: string[] = [])
 
   // Enhanced update function that handles meal-to-manual conversion
   const updateItem = useCallback((updatedItem: GroceryItem) => {
-    console.log("useSimpleShoppingList: Updating item", updatedItem.name, "with store", updatedItem.store);
+    console.log("useSimpleShoppingList: Updating item", updatedItem.name, "with changes:", {
+      store: updatedItem.store,
+      category: updatedItem.category,
+      quantity: updatedItem.quantity,
+      name: updatedItem.name
+    });
     
-    // Update store assignment immediately
+    // Update store assignment immediately if store changed
     if (updatedItem.store && updatedItem.store !== "Unassigned") {
       storeAssignments.current.set(updatedItem.name.toLowerCase(), updatedItem.store);
     } else if (updatedItem.store === "Unassigned") {
@@ -78,21 +83,27 @@ export function useSimpleShoppingList(meals: Meal[], pantryItems: string[] = [])
         const filtered = prev.filter(item => 
           item.name.toLowerCase() !== updatedItem.name.toLowerCase()
         );
-        return [...filtered, manualItem];
+        const newItems = [...filtered, manualItem];
+        console.log("useSimpleShoppingList: Updated manual items:", newItems.length);
+        return newItems;
       });
     } else {
       // Update existing manual item
-      setManualItems(prev => 
-        prev.map(item => 
+      setManualItems(prev => {
+        const newItems = prev.map(item => 
           item.id === updatedItem.id 
             ? { ...updatedItem, __updateTimestamp: Date.now() }
             : item
-        )
-      );
+        );
+        console.log("useSimpleShoppingList: Updated existing manual item:", updatedItem.name);
+        return newItems;
+      });
     }
 
-    // Save changes
-    setTimeout(saveToLocalStorage, 100);
+    // Save changes after state update completes
+    requestAnimationFrame(() => {
+      saveToLocalStorage();
+    });
   }, [storeAssignments, setManualItems, saveToLocalStorage]);
 
   // Simplified save function
