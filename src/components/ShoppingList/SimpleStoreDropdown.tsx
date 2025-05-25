@@ -5,7 +5,7 @@ import { GroceryItem } from "@/types";
 interface SimpleStoreDropdownProps {
   item: GroceryItem;
   availableStores: string[];
-  onStoreChange: (item: GroceryItem, store: string) => void;
+  onStoreChange: (item: GroceryItem) => void;
 }
 
 export const SimpleStoreDropdown = React.memo(({
@@ -18,6 +18,8 @@ export const SimpleStoreDropdown = React.memo(({
   const handleChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
     const newStore = e.target.value;
     
+    console.log(`SimpleStoreDropdown: Changing ${item.name} from '${item.store}' to '${newStore}'`);
+    
     setIsUpdating(true);
     
     const updatedItem = { 
@@ -26,10 +28,10 @@ export const SimpleStoreDropdown = React.memo(({
       __updateTimestamp: Date.now()
     };
     
-    onStoreChange(updatedItem, newStore);
+    onStoreChange(updatedItem);
     
     // Clear updating state quickly
-    setTimeout(() => setIsUpdating(false), 200);
+    setTimeout(() => setIsUpdating(false), 300);
   }, [item, onStoreChange]);
 
   const currentStore = item.store || "Unassigned";
@@ -39,10 +41,10 @@ export const SimpleStoreDropdown = React.memo(({
       <select
         value={currentStore}
         onChange={handleChange}
-        className={`w-32 h-8 text-xs bg-white border rounded px-2 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors ${
+        className={`w-32 h-8 text-xs bg-white border rounded px-2 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200 ${
           isUpdating 
-            ? 'border-blue-500 bg-blue-50' 
-            : 'border-gray-300'
+            ? 'border-green-500 bg-green-50 shadow-sm' 
+            : 'border-gray-300 hover:border-gray-400'
         }`}
         disabled={isUpdating}
       >
@@ -56,7 +58,7 @@ export const SimpleStoreDropdown = React.memo(({
           ))}
       </select>
       {isUpdating && (
-        <div className="absolute -top-1 -right-1 w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+        <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full animate-pulse shadow-sm"></div>
       )}
     </div>
   );

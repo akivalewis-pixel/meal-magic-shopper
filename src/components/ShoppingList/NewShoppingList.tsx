@@ -5,6 +5,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from "@/components/ui/select";
 import { Plus, Settings, RefreshCw, LayoutGrid, List, Store, Edit } from "lucide-react";
 import { SimpleListView } from "./SimpleListView";
 import { SimpleBoardView } from "./SimpleBoardView";
@@ -21,6 +28,7 @@ export const NewShoppingList = ({ meals, pantryItems = [] }: NewShoppingListProp
   const [viewMode, setViewMode] = useState<"list" | "board">("list");
   const [groupByStore, setGroupByStore] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedStore, setSelectedStore] = useState<string>("all");
   const [isEditingStores, setIsEditingStores] = useState(false);
   const [isAddingItem, setIsAddingItem] = useState(false);
   
@@ -36,11 +44,15 @@ export const NewShoppingList = ({ meals, pantryItems = [] }: NewShoppingListProp
     resetList
   } = useSimpleShoppingList(meals, pantryItems);
 
-  // Filter items based on search only (no longer filtering by checked status)
+  // Filter items based on search and store selection
   const filteredItems = groceryItems.filter(item => {
     const matchesSearch = searchTerm === "" || 
       item.name.toLowerCase().includes(searchTerm.toLowerCase());
-    return matchesSearch;
+    
+    const matchesStore = selectedStore === "all" || 
+      (selectedStore === "Unassigned" ? (!item.store || item.store === "Unassigned") : item.store === selectedStore);
+    
+    return matchesSearch && matchesStore;
   });
 
   const handleAddNewItem = (newItem: GroceryItem) => {
@@ -53,7 +65,9 @@ export const NewShoppingList = ({ meals, pantryItems = [] }: NewShoppingListProp
     setIsEditingStores(false);
   };
 
-  console.log("Filtered items:", filteredItems.map(i => ({ name: i.name, store: i.store })));
+  console.log("NewShoppingList - Selected store:", selectedStore);
+  console.log("NewShoppingList - Filtered items:", filteredItems.length);
+  console.log("NewShoppingList - Available stores:", availableStores);
 
   return (
     <section className="py-8 bg-gray-50">
@@ -114,6 +128,23 @@ export const NewShoppingList = ({ meals, pantryItems = [] }: NewShoppingListProp
             className="max-w-xs"
           />
           
+          <Select value={selectedStore} onValueChange={setSelectedStore}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Filter by store" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Stores</SelectItem>
+              <SelectItem value="Unassigned">Unassigned</SelectItem>
+              {availableStores
+                .filter(store => store !== "Unassigned")
+                .map(store => (
+                  <SelectItem key={store} value={store}>
+                    {store}
+                  </SelectItem>
+                ))}
+            </SelectContent>
+          </Select>
+          
           {viewMode === "list" && (
             <div className="flex items-center space-x-2">
               <Switch
@@ -129,7 +160,15 @@ export const NewShoppingList = ({ meals, pantryItems = [] }: NewShoppingListProp
         <div className="bg-white rounded-lg shadow p-4">
           {filteredItems.length === 0 ? (
             <div className="text-center py-10 text-gray-500">
-              <p>No items in your shopping list</p>
+              <p>
+                {searchTerm || selectedStore !== "all" 
+                  ? "No items match your filters"
+                  : "No items in your shopping list"
+                }
+              </p>
+              {(searchTerm || selectedStore !== "all") && (
+                <p className="text-sm mt-2">Try adjusting your search or store filter</p>
+              )}
             </div>
           ) : viewMode === "board" ? (
             <SimpleBoardView

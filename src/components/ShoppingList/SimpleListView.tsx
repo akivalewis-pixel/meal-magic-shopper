@@ -38,10 +38,6 @@ const MemoizedItemRow = React.memo(({
     onUpdateItem({ ...item, category: category as any });
   }, [item, onUpdateItem]);
 
-  const handleStoreChange = useCallback((updatedItem: GroceryItem) => {
-    onUpdateItem(updatedItem);
-  }, [onUpdateItem]);
-
   const handleToggle = useCallback(() => {
     onToggleItem(item.id);
   }, [item.id, onToggleItem]);
@@ -76,7 +72,7 @@ const MemoizedItemRow = React.memo(({
       <SimpleStoreDropdown
         item={item}
         availableStores={availableStores}
-        onStoreChange={handleStoreChange}
+        onStoreChange={onUpdateItem}
       />
       
       <CategoryEditInput
@@ -98,6 +94,8 @@ export const SimpleListView = React.memo(({
 }: SimpleListViewProps) => {
   // Optimized grouping with stable keys and memoization
   const groupedItems = useMemo(() => {
+    console.log("SimpleListView: Grouping items", { groupByStore, itemCount: items.length });
+    
     const currentGrouping: Record<string, GroceryItem[]> = {};
     
     if (groupByStore) {
@@ -109,7 +107,7 @@ export const SimpleListView = React.memo(({
         currentGrouping[store].push(item);
       });
       
-      // Sort items within each store
+      // Sort items within each store by category and name
       Object.keys(currentGrouping).forEach(store => {
         currentGrouping[store].sort((a, b) => {
           if (a.category !== b.category) {
@@ -118,6 +116,8 @@ export const SimpleListView = React.memo(({
           return a.name.localeCompare(b.name);
         });
       });
+      
+      console.log("SimpleListView: Grouped by store", Object.keys(currentGrouping));
     } else {
       currentGrouping["All Items"] = [...items].sort((a, b) => {
         if (a.category !== b.category) {
@@ -133,7 +133,7 @@ export const SimpleListView = React.memo(({
   if (items.length === 0) {
     return (
       <div className="text-center py-10 text-gray-500">
-        <p>No items in your shopping list</p>
+        <p>No items match your current filters</p>
       </div>
     );
   }
@@ -143,7 +143,7 @@ export const SimpleListView = React.memo(({
       {Object.entries(groupedItems).map(([storeName, storeItems]) => (
         <div key={storeName}>
           {groupByStore && (
-            <h3 className="text-lg font-semibold mb-4 pb-2 border-b">
+            <h3 className="text-lg font-semibold mb-4 pb-2 border-b border-gray-200">
               {storeName} ({storeItems.length} items)
             </h3>
           )}
