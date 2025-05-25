@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { GroceryItem } from "@/types";
 import { Button } from "@/components/ui/button";
@@ -62,6 +63,12 @@ export const NewShoppingList = ({ meals, pantryItems = [] }: NewShoppingListProp
   const handleSaveStores = (stores: string[]) => {
     updateStores(stores);
     setIsEditingStores(false);
+  };
+
+  // Handle item removal when checkbox is checked
+  const handleRemoveItem = (id: string) => {
+    console.log("NewShoppingList: Removing item with id:", id);
+    archiveItem(id);
   };
 
   console.log("NewShoppingList - Selected store:", selectedStore);
@@ -180,7 +187,7 @@ export const NewShoppingList = ({ meals, pantryItems = [] }: NewShoppingListProp
               items={filteredItems}
               availableStores={availableStores}
               onUpdateItem={updateItem}
-              onToggleItem={toggleItem}
+              onToggleItem={handleRemoveItem}
               groupByStore={groupByStore}
             />
           )}

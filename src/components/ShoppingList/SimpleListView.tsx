@@ -1,3 +1,4 @@
+
 import React, { useMemo, useCallback, useState } from "react";
 import { GroceryItem } from "@/types";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -86,17 +87,18 @@ const ItemRow = ({
   }, [onUpdateItem]);
 
   const handleToggle = useCallback(() => {
+    console.log("SimpleListView: Removing item from list:", item.name);
     onToggleItem(item.id);
   }, [item.id, onToggleItem]);
 
   return (
     <li className="flex items-center gap-3 py-2 border-b border-gray-100">
       <Checkbox
-        checked={item.checked}
+        checked={false}
         onCheckedChange={handleToggle}
       />
       
-      <div className={`flex-1 ${item.checked ? "line-through opacity-50" : ""}`}>
+      <div className="flex-1">
         {isEditingName ? (
           <Input
             value={localName}
