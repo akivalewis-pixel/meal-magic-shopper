@@ -1,5 +1,4 @@
-
-import React, { useMemo, useCallback } from "react";
+import React, { useMemo, useCallback, useState } from "react";
 import { GroceryItem } from "@/types";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -14,7 +13,7 @@ interface SimpleListViewProps {
   groupByStore: boolean;
 }
 
-// Simplified item component without excessive memoization
+// Simplified item component with proper name editing
 const ItemRow = ({ 
   item, 
   onUpdateItem, 
@@ -26,6 +25,14 @@ const ItemRow = ({
   onToggleItem: (id: string) => void;
   availableStores: string[];
 }) => {
+  const [localName, setLocalName] = useState(item.name);
+  const [isEditingName, setIsEditingName] = useState(false);
+
+  // Update local name when item name changes externally
+  React.useEffect(() => {
+    setLocalName(item.name);
+  }, [item.name]);
+
   const handleQuantityChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     console.log("SimpleListView: Quantity changing for", item.name, "to", e.target.value);
     const updatedItem = { 
@@ -35,14 +42,34 @@ const ItemRow = ({
     onUpdateItem(updatedItem);
   }, [item, onUpdateItem]);
 
-  const handleNameChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    console.log("SimpleListView: Name changing for", item.name, "to", e.target.value);
-    const updatedItem = { 
-      ...item, 
-      name: e.target.value
-    };
-    onUpdateItem(updatedItem);
-  }, [item, onUpdateItem]);
+  const handleNameInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setLocalName(e.target.value);
+  }, []);
+
+  const handleNameCommit = useCallback(() => {
+    if (localName !== item.name) {
+      console.log("SimpleListView: Name changing for", item.name, "to", localName);
+      const updatedItem = { 
+        ...item, 
+        name: localName
+      };
+      onUpdateItem(updatedItem);
+    }
+    setIsEditingName(false);
+  }, [item, localName, onUpdateItem]);
+
+  const handleNameKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      handleNameCommit();
+    } else if (e.key === 'Escape') {
+      setLocalName(item.name);
+      setIsEditingName(false);
+    }
+  }, [handleNameCommit, item.name]);
+
+  const handleNameClick = useCallback(() => {
+    setIsEditingName(true);
+  }, []);
 
   const handleCategoryChange = useCallback((updatedItem: GroceryItem, category: string) => {
     console.log("SimpleListView: Category changed for", updatedItem.name, "to", category);
@@ -70,16 +97,25 @@ const ItemRow = ({
       />
       
       <div className={`flex-1 ${item.checked ? "line-through opacity-50" : ""}`}>
-        <Input
-          value={item.name}
-          onChange={handleNameChange}
-          className="border-none p-0 h-auto font-medium"
-          placeholder="Item name"
-        />
-        {item.meal && (
-          <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded ml-2">
-            {item.meal}
-          </span>
+        {isEditingName ? (
+          <Input
+            value={localName}
+            onChange={handleNameInputChange}
+            onBlur={handleNameCommit}
+            onKeyDown={handleNameKeyDown}
+            className="border-gray-300 p-1 h-8 font-medium"
+            placeholder="Item name"
+            autoFocus
+          />
+        ) : (
+          <div onClick={handleNameClick} className="cursor-pointer">
+            <span className="font-medium">{item.name}</span>
+            {item.meal && (
+              <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded ml-2">
+                {item.meal}
+              </span>
+            )}
+          </div>
         )}
       </div>
       
