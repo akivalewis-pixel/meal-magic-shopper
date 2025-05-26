@@ -22,7 +22,11 @@ export function useSimplifiedShoppingList(meals: Meal[], pantryItems: string[] =
         const savedStores = localStorage.getItem('shoppingList_stores');
         const savedAssignments = localStorage.getItem('shoppingList_storeAssignments');
 
-        if (savedItems) setGroceryItems(JSON.parse(savedItems));
+        if (savedItems) {
+          const items = JSON.parse(savedItems);
+          // Filter out any checked items that might have been saved incorrectly
+          setGroceryItems(items.filter((item: GroceryItem) => !item.checked));
+        }
         if (savedArchived) setArchivedItems(JSON.parse(savedArchived));
         if (savedStores) setAvailableStores(JSON.parse(savedStores));
         if (savedAssignments) {
@@ -42,7 +46,9 @@ export function useSimplifiedShoppingList(meals: Meal[], pantryItems: string[] =
     if (!isInitialized.current) return;
     
     try {
-      localStorage.setItem('shoppingList_items', JSON.stringify(groceryItems));
+      // Ensure we only save unchecked items to the main list
+      const activeItems = groceryItems.filter(item => !item.checked);
+      localStorage.setItem('shoppingList_items', JSON.stringify(activeItems));
       localStorage.setItem('shoppingList_archived', JSON.stringify(archivedItems));
       localStorage.setItem('shoppingList_stores', JSON.stringify(availableStores));
       localStorage.setItem('shoppingList_storeAssignments', 
@@ -78,9 +84,12 @@ export function useSimplifiedShoppingList(meals: Meal[], pantryItems: string[] =
       const newItems = enhancedItems.filter(item => !existingIds.has(item.id));
       
       if (newItems.length > 0) {
-        return [...prev, ...newItems];
+        // Ensure we're only adding unchecked items
+        const activeNewItems = newItems.filter(item => !item.checked);
+        return [...prev.filter(item => !item.checked), ...activeNewItems];
       }
-      return prev;
+      // Always filter out checked items from the main list
+      return prev.filter(item => !item.checked);
     });
   }, [meals, pantryItems, isInitialized.current]);
 
@@ -93,14 +102,23 @@ export function useSimplifiedShoppingList(meals: Meal[], pantryItems: string[] =
       storeAssignments.current.set(updatedItem.name.toLowerCase(), updatedItem.store);
     }
 
-    setGroceryItems(prev => 
-      prev.map(item => 
-        item.id === updatedItem.id 
-          ? { ...updatedItem, __updateTimestamp: Date.now() }
-          : item
-      )
-    );
-  }, []);
+    // If the item is being checked, move it to archived instead of updating
+    if (updatedItem.checked) {
+      const item = groceryItems.find(i => i.id === updatedItem.id);
+      if (item) {
+        setArchivedItems(prev => [...prev, { ...updatedItem, checked: true }]);
+        setGroceryItems(prev => prev.filter(i => i.id !== updatedItem.id));
+      }
+    } else {
+      setGroceryItems(prev => 
+        prev.map(item => 
+          item.id === updatedItem.id 
+            ? { ...updatedItem, __updateTimestamp: Date.now() }
+            : item
+        )
+      );
+    }
+  }, [groceryItems]);
 
   const toggleItem = useCallback((id: string) => {
     const item = groceryItems.find(i => i.id === id);
@@ -140,8 +158,11 @@ export function useSimplifiedShoppingList(meals: Meal[], pantryItems: string[] =
     setAvailableStores(stores);
   }, []);
 
+  // Ensure groceryItems never contains checked items
+  const activeGroceryItems = groceryItems.filter(item => !item.checked);
+
   return {
-    groceryItems,
+    groceryItems: activeGroceryItems,
     archivedItems,
     availableStores,
     updateItem,
