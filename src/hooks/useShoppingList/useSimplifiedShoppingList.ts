@@ -102,33 +102,54 @@ export function useSimplifiedShoppingList(meals: Meal[], pantryItems: string[] =
       storeAssignments.current.set(updatedItem.name.toLowerCase(), updatedItem.store);
     }
 
-    // If the item is being checked, move it to archived
+    // If item is being checked, use toggleItem instead
     if (updatedItem.checked) {
-      console.log("SimplifiedShoppingList: Moving item to archived:", updatedItem.name);
-      setArchivedItems(prev => [...prev, { ...updatedItem, checked: true }]);
-      setGroceryItems(prev => prev.filter(i => i.id !== updatedItem.id));
-    } else {
-      // Regular update for unchecked items
-      setGroceryItems(prev => 
-        prev.map(item => 
-          item.id === updatedItem.id 
-            ? { ...updatedItem, __updateTimestamp: Date.now() }
-            : item
-        ).filter(item => !item.checked) // Always filter out checked items
-      );
+      console.log("SimplifiedShoppingList: Item is checked, using toggleItem instead");
+      toggleItem(updatedItem.id);
+      return;
     }
+
+    // Regular update for unchecked items only
+    setGroceryItems(prev => 
+      prev.map(item => 
+        item.id === updatedItem.id 
+          ? { ...updatedItem, __updateTimestamp: Date.now() }
+          : item
+      ).filter(item => !item.checked) // Always filter out checked items
+    );
   }, []);
 
   const toggleItem = useCallback((id: string) => {
-    const item = groceryItems.find(i => i.id === id);
-    if (!item) return;
-
-    console.log("SimplifiedShoppingList: Toggling item", item.name, "ID:", id);
+    console.log("SimplifiedShoppingList: Toggling item with ID:", id);
     
-    // Move to archived and remove from main list
-    setArchivedItems(prev => [...prev, { ...item, checked: true }]);
-    setGroceryItems(prev => prev.filter(i => i.id !== id));
-  }, [groceryItems]);
+    setGroceryItems(prev => {
+      const item = prev.find(i => i.id === id);
+      if (!item) {
+        console.log("SimplifiedShoppingList: Item not found:", id);
+        return prev;
+      }
+
+      console.log("SimplifiedShoppingList: Moving item to archived:", item.name);
+      
+      // Move to archived immediately
+      const archivedItem = { ...item, checked: true, __updateTimestamp: Date.now() };
+      setArchivedItems(prevArchived => {
+        // Check if already archived to prevent duplicates
+        const alreadyArchived = prevArchived.some(archived => archived.id === id);
+        if (alreadyArchived) {
+          console.log("SimplifiedShoppingList: Item already archived:", id);
+          return prevArchived;
+        }
+        console.log("SimplifiedShoppingList: Adding to archive:", item.name);
+        return [...prevArchived, archivedItem];
+      });
+
+      // Remove from main list
+      const updatedList = prev.filter(i => i.id !== id);
+      console.log("SimplifiedShoppingList: Removed from main list, remaining items:", updatedList.length);
+      return updatedList;
+    });
+  }, []);
 
   const addItem = useCallback((newItem: Omit<GroceryItem, 'id' | 'checked'>) => {
     const item: GroceryItem = {
