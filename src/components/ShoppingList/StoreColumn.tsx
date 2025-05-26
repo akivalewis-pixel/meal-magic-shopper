@@ -14,6 +14,8 @@ interface StoreColumnProps {
   onDragOver: (e: React.DragEvent) => void;
   onDrop: (e: React.DragEvent, targetStore: string, targetCategory?: GroceryCategory) => void;
   customCategoryNames: Record<string, string>;
+  customCategories: string[];
+  onAddCustomCategory: (categoryName: string) => void;
 }
 
 export const StoreColumn = ({
@@ -25,7 +27,9 @@ export const StoreColumn = ({
   onDragStart,
   onDragOver,
   onDrop,
-  customCategoryNames
+  customCategoryNames,
+  customCategories,
+  onAddCustomCategory
 }: StoreColumnProps) => {
   const getDisplayCategoryName = (categoryName: string): string => {
     return customCategoryNames[categoryName] || categoryName;
@@ -81,6 +85,8 @@ export const StoreColumn = ({
                           onSelect={onSelectItem}
                           onDoubleClick={onDoubleClickItem}
                           onDragStart={onDragStart}
+                          customCategories={customCategories}
+                          onAddCustomCategory={onAddCustomCategory}
                         />
                       ))}
                     </div>
