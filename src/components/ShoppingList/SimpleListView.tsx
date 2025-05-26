@@ -94,14 +94,15 @@ const ItemRow = ({
   }, [onUpdateItem]);
 
   const handleToggle = useCallback(() => {
-    console.log("SimpleListView: Archiving item:", item.name, "with ID:", item.id);
+    console.log("SimpleListView: Toggling/Checking item:", item.name, "with ID:", item.id);
+    // Use onToggleItem directly - this will remove the item from the UI
     onToggleItem(item.id);
   }, [item.id, item.name, onToggleItem]);
 
   return (
     <li className="flex items-center gap-3 py-2 border-b border-gray-100">
       <Checkbox
-        checked={item.checked || false}
+        checked={false} // Items in this view should never be checked
         onCheckedChange={handleToggle}
       />
       
@@ -118,9 +119,7 @@ const ItemRow = ({
           />
         ) : (
           <div onClick={handleNameClick} className="cursor-pointer">
-            <span className={`font-medium ${item.checked ? 'line-through text-gray-400' : ''}`}>
-              {item.name}
-            </span>
+            <span className="font-medium">{item.name}</span>
             {item.meal && (
               <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded ml-2">
                 {item.meal}
@@ -135,7 +134,6 @@ const ItemRow = ({
         onChange={handleQuantityChange}
         className="w-20 h-8 text-center"
         placeholder="Qty"
-        disabled={item.checked}
       />
       
       <SimpleStoreDropdown
@@ -236,8 +234,9 @@ export const SimpleListView = React.memo(({
 }: SimpleListViewProps) => {
   const { customCategories, addCustomCategory } = useCustomCategories();
   
-  // Items should already be filtered by the hook - no additional filtering needed
-  const activeItems = items;
+  // Items should only include unchecked items
+  const activeItems = items.filter(item => !item.checked);
+  console.log("SimpleListView: Displaying", activeItems.length, "active items out of", items.length, "total items");
 
   // Function to get the display category name (custom or default) - simplified
   const getDisplayCategoryName = useCallback((categoryName: string): string => {

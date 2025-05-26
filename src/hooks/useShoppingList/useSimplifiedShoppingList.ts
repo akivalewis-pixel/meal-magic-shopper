@@ -24,7 +24,7 @@ export function useSimplifiedShoppingList(meals: Meal[], pantryItems: string[] =
 
         if (savedItems) {
           const items = JSON.parse(savedItems);
-          // Filter out any checked items that might have been saved incorrectly
+          // Only load unchecked items
           setGroceryItems(items.filter((item: GroceryItem) => !item.checked));
         }
         if (savedArchived) setArchivedItems(JSON.parse(savedArchived));
@@ -46,7 +46,7 @@ export function useSimplifiedShoppingList(meals: Meal[], pantryItems: string[] =
     if (!isInitialized.current) return;
     
     try {
-      // Ensure we only save unchecked items to the main list
+      // Only save unchecked items
       const activeItems = groceryItems.filter(item => !item.checked);
       localStorage.setItem('shoppingList_items', JSON.stringify(activeItems));
       localStorage.setItem('shoppingList_archived', JSON.stringify(archivedItems));
@@ -81,52 +81,51 @@ export function useSimplifiedShoppingList(meals: Meal[], pantryItems: string[] =
     // Only update if there are actual changes
     setGroceryItems(prev => {
       const existingIds = new Set(prev.map(item => item.id));
-      const newItems = enhancedItems.filter(item => !existingIds.has(item.id));
+      const newItems = enhancedItems.filter(item => !existingIds.has(item.id) && !item.checked);
       
       if (newItems.length > 0) {
-        // Ensure we're only adding unchecked items
-        const activeNewItems = newItems.filter(item => !item.checked);
-        return [...prev.filter(item => !item.checked), ...activeNewItems];
+        // Always filter out checked items
+        const activeItems = prev.filter(item => !item.checked);
+        return [...activeItems, ...newItems];
       }
-      // Always filter out checked items from the main list
+      // Always filter out checked items
       return prev.filter(item => !item.checked);
     });
   }, [meals, pantryItems, isInitialized.current]);
 
   // Actions
   const updateItem = useCallback((updatedItem: GroceryItem) => {
-    console.log("SimplifiedShoppingList: Updating item", updatedItem.name);
+    console.log("SimplifiedShoppingList: Updating item", updatedItem.name, "checked:", updatedItem.checked);
     
     // Update store assignment
     if (updatedItem.store && updatedItem.store !== "Unassigned") {
       storeAssignments.current.set(updatedItem.name.toLowerCase(), updatedItem.store);
     }
 
-    // If the item is being checked, move it to archived instead of updating
+    // If the item is being checked, move it to archived
     if (updatedItem.checked) {
-      const item = groceryItems.find(i => i.id === updatedItem.id);
-      if (item) {
-        setArchivedItems(prev => [...prev, { ...updatedItem, checked: true }]);
-        setGroceryItems(prev => prev.filter(i => i.id !== updatedItem.id));
-      }
+      console.log("SimplifiedShoppingList: Moving item to archived:", updatedItem.name);
+      setArchivedItems(prev => [...prev, { ...updatedItem, checked: true }]);
+      setGroceryItems(prev => prev.filter(i => i.id !== updatedItem.id));
     } else {
+      // Regular update for unchecked items
       setGroceryItems(prev => 
         prev.map(item => 
           item.id === updatedItem.id 
             ? { ...updatedItem, __updateTimestamp: Date.now() }
             : item
-        )
+        ).filter(item => !item.checked) // Always filter out checked items
       );
     }
-  }, [groceryItems]);
+  }, []);
 
   const toggleItem = useCallback((id: string) => {
     const item = groceryItems.find(i => i.id === id);
     if (!item) return;
 
-    console.log("SimplifiedShoppingList: Toggling item", item.name);
+    console.log("SimplifiedShoppingList: Toggling item", item.name, "ID:", id);
     
-    // Move to archived
+    // Move to archived and remove from main list
     setArchivedItems(prev => [...prev, { ...item, checked: true }]);
     setGroceryItems(prev => prev.filter(i => i.id !== id));
   }, [groceryItems]);
@@ -139,7 +138,7 @@ export function useSimplifiedShoppingList(meals: Meal[], pantryItems: string[] =
       store: newItem.store || "Unassigned"
     };
 
-    setGroceryItems(prev => [...prev, item]);
+    setGroceryItems(prev => [...prev.filter(item => !item.checked), item]);
   }, []);
 
   const archiveItem = useCallback((id: string) => {
@@ -150,7 +149,8 @@ export function useSimplifiedShoppingList(meals: Meal[], pantryItems: string[] =
   }, [archivedItems]);
 
   const resetList = useCallback(() => {
-    setArchivedItems(prev => [...prev, ...groceryItems.map(item => ({ ...item, checked: true }))]);
+    const itemsToArchive = groceryItems.map(item => ({ ...item, checked: true }));
+    setArchivedItems(prev => [...prev, ...itemsToArchive]);
     setGroceryItems([]);
   }, [groceryItems]);
 
@@ -158,8 +158,10 @@ export function useSimplifiedShoppingList(meals: Meal[], pantryItems: string[] =
     setAvailableStores(stores);
   }, []);
 
-  // Ensure groceryItems never contains checked items
+  // Always return only unchecked items
   const activeGroceryItems = groceryItems.filter(item => !item.checked);
+
+  console.log("SimplifiedShoppingList: Returning", activeGroceryItems.length, "active items");
 
   return {
     groceryItems: activeGroceryItems,
