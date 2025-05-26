@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Meal, GroceryItem } from "@/types";
-import { generateGroceryList } from "@/utils/groceryUtils";
+import { generateShoppingList } from "@/utils/groceryUtils";
 
 export type ItemStatus = 'active' | 'checked' | 'archived';
 
@@ -72,7 +72,7 @@ export function useUnifiedShoppingList(meals: Meal[], pantryItems: string[] = []
   useEffect(() => {
     if (!isInitializedRef.current) return;
 
-    const mealGroceryItems = generateGroceryList(meals, pantryItems);
+    const mealGroceryItems = generateShoppingList(meals, pantryItems);
     
     setItems(currentItems => {
       // Keep existing manual items and checked/archived items
