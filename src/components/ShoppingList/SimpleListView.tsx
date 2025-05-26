@@ -164,6 +164,11 @@ const CategoryHeader = ({
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState(categoryName);
 
+  // Update editValue when categoryName changes (due to custom names)
+  React.useEffect(() => {
+    setEditValue(categoryName);
+  }, [categoryName]);
+
   const handleClick = () => {
     if (onCategoryNameChange) {
       setIsEditing(true);
@@ -232,6 +237,7 @@ export const SimpleListView = React.memo(({
   // Optimized grouping with stable keys and memoization
   const groupedItems = useMemo(() => {
     console.log("SimpleListView: Grouping items", { groupByStore, itemCount: activeItems.length });
+    console.log("SimpleListView: Custom category names:", customCategoryNames);
     
     const currentGrouping: Record<string, Record<string, GroceryItem[]>> = {};
     
@@ -277,7 +283,7 @@ export const SimpleListView = React.memo(({
     }
     
     return currentGrouping;
-  }, [activeItems, groupByStore]);
+  }, [activeItems, groupByStore, customCategoryNames]);
 
   if (activeItems.length === 0) {
     return (

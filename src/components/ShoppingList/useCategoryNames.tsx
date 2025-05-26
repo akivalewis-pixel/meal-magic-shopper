@@ -9,24 +9,32 @@ export function useCategoryNames() {
   useEffect(() => {
     // Load custom category names from localStorage
     const savedCategoryNames = localStorage.getItem('mealPlannerCustomCategoryNames');
+    console.log("useCategoryNames: Loading from localStorage:", savedCategoryNames);
     if (savedCategoryNames) {
-      setCustomCategoryNames(JSON.parse(savedCategoryNames));
+      const parsed = JSON.parse(savedCategoryNames);
+      console.log("useCategoryNames: Parsed category names:", parsed);
+      setCustomCategoryNames(parsed);
     }
   }, []);
 
   // Save custom category names when they change
   useEffect(() => {
+    console.log("useCategoryNames: Saving to localStorage:", customCategoryNames);
     localStorage.setItem('mealPlannerCustomCategoryNames', JSON.stringify(customCategoryNames));
   }, [customCategoryNames]);
 
   // Function to handle category name changes
   const handleCategoryNameChange = (oldName: string, newName: string) => {
-    console.log("Updating category name from", oldName, "to", newName);
+    console.log("useCategoryNames: Updating category name from", oldName, "to", newName);
     
-    setCustomCategoryNames(prev => ({
-      ...prev,
-      [oldName]: newName
-    }));
+    setCustomCategoryNames(prev => {
+      const updated = {
+        ...prev,
+        [oldName]: newName
+      };
+      console.log("useCategoryNames: New category names state:", updated);
+      return updated;
+    });
     
     toast({
       title: "Category Updated",
