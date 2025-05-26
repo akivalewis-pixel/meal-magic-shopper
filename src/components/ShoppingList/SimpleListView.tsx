@@ -179,7 +179,9 @@ const CategoryHeader = ({
   const handleSubmit = () => {
     if (onCategoryNameChange && editValue.trim() && editValue !== categoryName) {
       console.log("Category name change - Original:", originalCategoryName, "Display:", categoryName, "New:", editValue.trim());
-      onCategoryNameChange(originalCategoryName, editValue.trim());
+      // Use a normalized version of the original category name as the key
+      const normalizedOriginal = originalCategoryName.charAt(0).toUpperCase() + originalCategoryName.slice(1).toLowerCase();
+      onCategoryNameChange(normalizedOriginal, editValue.trim());
     }
     setIsEditing(false);
   };
@@ -229,9 +231,29 @@ export const SimpleListView = React.memo(({
   // Items should already be filtered by the hook - no additional filtering needed
   const activeItems = items;
 
-  // Function to get the display category name (custom or default)
+  // Function to get the display category name (custom or default) with case-insensitive lookup
   const getDisplayCategoryName = useCallback((categoryName: string): string => {
-    return customCategoryNames[categoryName] || categoryName;
+    // First try exact match
+    if (customCategoryNames[categoryName]) {
+      return customCategoryNames[categoryName];
+    }
+    
+    // Try normalized version (capitalize first letter)
+    const normalizedCategory = categoryName.charAt(0).toUpperCase() + categoryName.slice(1).toLowerCase();
+    if (customCategoryNames[normalizedCategory]) {
+      return customCategoryNames[normalizedCategory];
+    }
+    
+    // Try case-insensitive lookup
+    const customKey = Object.keys(customCategoryNames).find(
+      key => key.toLowerCase() === categoryName.toLowerCase()
+    );
+    if (customKey) {
+      return customCategoryNames[customKey];
+    }
+    
+    // Return normalized version as default
+    return normalizedCategory;
   }, [customCategoryNames]);
 
   // Optimized grouping with stable keys and memoization
