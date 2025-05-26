@@ -20,6 +20,30 @@ export const PrintButton = ({ meals, groceryItems }: PrintButtonProps) => {
       return;
     }
     
+    // Debug logging - let's see exactly what we're receiving
+    console.log("PrintButton: DEBUG - Total groceryItems received:", groceryItems.length);
+    console.log("PrintButton: DEBUG - All received items:", groceryItems.map(item => ({ 
+      id: item.id,
+      name: item.name, 
+      checked: item.checked,
+      status: (item as any).status,
+      source: (item as any).source
+    })));
+    
+    // Apply aggressive filtering - only items that are explicitly NOT checked
+    const activeItems = groceryItems.filter(item => {
+      const isActive = !item.checked && item.checked !== true;
+      console.log(`PrintButton: DEBUG - Item "${item.name}" - checked: ${item.checked}, typeof: ${typeof item.checked}, isActive: ${isActive}`);
+      return isActive;
+    });
+    
+    console.log("PrintButton: DEBUG - Active items for printing:", activeItems.length);
+    console.log("PrintButton: DEBUG - Active item details:", activeItems.map(item => ({ 
+      id: item.id,
+      name: item.name, 
+      checked: item.checked 
+    })));
+
     // Set up the HTML content for the print window
     printWindow.document.write(`
       <!DOCTYPE html>
@@ -169,24 +193,6 @@ export const PrintButton = ({ meals, groceryItems }: PrintButtonProps) => {
     printWindow.document.write(`
       <h1>Pantry Pilot: Shopping List</h1>
     `);
-
-    // Apply aggressive filtering - only print items that are explicitly NOT checked
-    console.log("PrintButton: Total groceryItems received:", groceryItems.length);
-    console.log("PrintButton: All items:", groceryItems.map(item => ({ 
-      name: item.name, 
-      checked: item.checked,
-      id: item.id
-    })));
-    
-    // Triple-check filtering: only items that are definitely not checked
-    const activeItems = groceryItems.filter(item => {
-      const isActive = !item.checked && item.checked !== true;
-      console.log(`PrintButton: Item "${item.name}" - checked: ${item.checked}, isActive: ${isActive}`);
-      return isActive;
-    });
-    
-    console.log("PrintButton: Active items for printing:", activeItems.length);
-    console.log("PrintButton: Active item names:", activeItems.map(item => item.name));
 
     if (activeItems.length === 0) {
       printWindow.document.write('<p>No active items to print!</p>');
