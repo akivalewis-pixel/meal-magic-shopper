@@ -170,8 +170,17 @@ export const PrintButton = ({ meals, groceryItems }: PrintButtonProps) => {
       <h1>Pantry Pilot: Shopping List</h1>
     `);
 
-    // Filter out checked items before printing - this is the key fix
+    // Filter out all completed items (both checked and archived) - this is the key fix
+    console.log("PrintButton: Total groceryItems received:", groceryItems.length);
+    console.log("PrintButton: Items status breakdown:", groceryItems.map(item => ({ 
+      name: item.name, 
+      checked: item.checked 
+    })));
+    
+    // Only include items that are NOT checked (active items only)
     const activeItems = groceryItems.filter(item => !item.checked);
+    
+    console.log("PrintButton: Active items for printing:", activeItems.length);
 
     // Sort and group active items by store and category for printing
     const sortedItems = [...activeItems].sort((a, b) => {
