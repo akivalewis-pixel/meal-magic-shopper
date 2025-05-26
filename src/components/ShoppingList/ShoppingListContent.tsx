@@ -28,13 +28,18 @@ export const ShoppingListContent = ({
   onRemoveItem
 }: ShoppingListContentProps) => {
   const { customCategoryNames, handleCategoryNameChange } = useCategoryNames();
-  const { groupedItems } = useShoppingListGrouping({
-    items: filteredItems,
-    groupByStore,
-    searchTerm,
-    selectedStore,
-    customCategoryNames
-  });
+  
+  // Call the hook with the correct arguments based on its actual signature
+  const groupedItems = useShoppingListGrouping(
+    filteredItems,     // groceryItems
+    [],               // archivedItems (empty for now)
+    false,            // searchArchivedItems
+    searchTerm,       // searchTerm
+    false,            // showChecked
+    selectedStore,    // selectedStore
+    groupByStore,     // groupByStore
+    "category"        // sortBy
+  );
 
   const handleUpdateMultipleItems = (items: GroceryItem[], updates: Partial<GroceryItem>) => {
     items.forEach(item => {
