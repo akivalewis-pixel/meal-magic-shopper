@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { GroceryItem, GroceryCategory } from "@/types";
 import { StoreColumn } from "./StoreColumn";
@@ -58,11 +57,15 @@ export const ShoppingListBoard = ({
 
   const handleCategoryChange = (item: GroceryItem, category: string) => {
     console.log("Board - Category change for item:", item.name, "from", item.category, "to", category);
-    const updatedItem = {
+    
+    // Create the updated item with the new category and timestamp
+    const updatedItem: GroceryItem = {
       ...item,
       category: category as GroceryCategory,
       __updateTimestamp: Date.now()
     };
+    
+    console.log("Board - Calling onUpdateItem with updated item:", updatedItem);
     onUpdateItem(updatedItem);
   };
 
