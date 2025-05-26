@@ -1,6 +1,11 @@
-import { useCallback } from "react";
+
 import { GroceryItem } from "@/types";
-import { useToast } from "@/hooks/use-toast";
+import { useItemUpdateActions } from "./useItemUpdateActions";
+import { useItemToggleActions } from "./useItemToggleActions";
+import { useItemArchiveActions } from "./useItemArchiveActions";
+import { useItemAddActions } from "./useItemAddActions";
+import { useStoreUpdateActions } from "./useStoreUpdateActions";
+import { useListResetActions } from "./useListResetActions";
 
 interface UseShoppingListActionsProps {
   allItems: GroceryItem[];
@@ -21,113 +26,39 @@ export function useShoppingListActions({
   saveToLocalStorage,
   setAvailableStores
 }: UseShoppingListActionsProps) {
-  const { toast } = useToast();
+  const { updateItem } = useItemUpdateActions({
+    setAllItems,
+    storeAssignments,
+    saveToLocalStorage
+  });
 
-  const updateItem = useCallback((updatedItem: GroceryItem) => {
-    // Update store assignment persistence immediately
-    if (updatedItem.store && updatedItem.store !== "Unassigned") {
-      storeAssignments.current.set(updatedItem.name.toLowerCase(), updatedItem.store);
-    } else if (updatedItem.store === "Unassigned") {
-      storeAssignments.current.delete(updatedItem.name.toLowerCase());
-    }
-    
-    // Update the actual state
-    setAllItems(prevItems => {
-      return prevItems.map(item => {
-        if (item.id === updatedItem.id) {
-          return {
-            ...updatedItem,
-            __updateTimestamp: Date.now()
-          };
-        }
-        return item;
-      });
-    });
+  const { toggleItem } = useItemToggleActions({
+    setAllItems
+  });
 
-    // Save immediately and synchronously
-    saveToLocalStorage();
-  }, [setAllItems, storeAssignments, saveToLocalStorage]);
+  const { archiveItem } = useItemArchiveActions({
+    allItems,
+    setAllItems,
+    setArchivedItems
+  });
 
-  const toggleItem = useCallback((id: string) => {
-    setAllItems(prev => 
-      prev.map(item => 
-        item.id === id ? { ...item, checked: !item.checked } : item
-      )
-    );
-  }, [setAllItems]);
+  const { addItem } = useItemAddActions({
+    setAllItems,
+    saveToLocalStorage
+  });
 
-  const archiveItem = useCallback((id: string) => {
-    const item = allItems.find(i => i.id === id);
-    if (!item) return;
+  const { updateStores } = useStoreUpdateActions({
+    setAvailableStores,
+    setAllItems,
+    saveToLocalStorage
+  });
 
-    setArchivedItems(prev => [...prev, { ...item, checked: true }]);
-    setAllItems(prev => prev.filter(i => i.id !== id));
-    
-    toast({
-      title: "Item Archived",
-      description: `${item.name} moved to archive`,
-    });
-  }, [allItems, setArchivedItems, setAllItems, toast]);
-
-  const addItem = useCallback((newItem: GroceryItem) => {
-    const itemWithId = {
-      ...newItem,
-      id: `manual-${newItem.name.toLowerCase().replace(/\s+/g, '-')}-${Date.now()}`,
-      store: newItem.store || "Unassigned",
-      source: 'manual' as const
-    };
-    
-    setAllItems(prev => [...prev, itemWithId]);
-    
-    // Save immediately
-    saveToLocalStorage();
-    
-    toast({
-      title: "Item Added",
-      description: `${newItem.name} added to shopping list`,
-    });
-  }, [setAllItems, saveToLocalStorage, toast]);
-
-  const updateStores = useCallback((newStores: string[]) => {
-    setAvailableStores(newStores);
-    
-    // Update items that have invalid stores
-    setAllItems(prev => 
-      prev.map(item => {
-        if (item.store && !newStores.includes(item.store)) {
-          return { ...item, store: "Unassigned" };
-        }
-        return item;
-      })
-    );
-    
-    // Save immediately
-    saveToLocalStorage();
-    
-    toast({
-      title: "Stores Updated",
-      description: "Store list has been updated",
-    });
-  }, [setAvailableStores, setAllItems, saveToLocalStorage, toast]);
-
-  const resetList = useCallback(() => {
-    const itemsToArchive = allItems.map(item => ({
-      ...item,
-      checked: true,
-      id: `archived-${Date.now()}-${item.id}`
-    }));
-    
-    setArchivedItems(prev => [...prev, ...itemsToArchive]);
-    setAllItems([]);
-    
-    // Save immediately
-    saveToLocalStorage();
-    
-    toast({
-      title: "List Reset",
-      description: `${itemsToArchive.length} items archived`,
-    });
-  }, [allItems, setArchivedItems, setAllItems, saveToLocalStorage, toast]);
+  const { resetList } = useListResetActions({
+    allItems,
+    setAllItems,
+    setArchivedItems,
+    saveToLocalStorage
+  });
 
   return {
     updateItem,
