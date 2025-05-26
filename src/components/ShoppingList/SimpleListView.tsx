@@ -1,9 +1,11 @@
+
 import React, { useMemo, useCallback, useState } from "react";
 import { GroceryItem } from "@/types";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { SimpleStoreDropdown } from "./SimpleStoreDropdown";
-import { CategoryEditInput } from "./CategoryEditInput";
+import { CategoryDropdown } from "./CategoryDropdown";
+import { useCustomCategories } from "./useCustomCategories";
 
 interface SimpleListViewProps {
   items: GroceryItem[];
@@ -20,12 +22,16 @@ const ItemRow = ({
   item, 
   onUpdateItem, 
   onToggleItem, 
-  availableStores 
+  availableStores,
+  customCategories,
+  onAddCustomCategory
 }: { 
   item: GroceryItem;
   onUpdateItem: (item: GroceryItem) => void;
   onToggleItem: (id: string) => void;
   availableStores: string[];
+  customCategories: string[];
+  onAddCustomCategory: (categoryName: string) => void;
 }) => {
   const [localName, setLocalName] = useState(item.name);
   const [isEditingName, setIsEditingName] = useState(false);
@@ -138,9 +144,11 @@ const ItemRow = ({
         onStoreChange={handleStoreChange}
       />
       
-      <CategoryEditInput
+      <CategoryDropdown
         item={item}
         onCategoryChange={handleCategoryChange}
+        customCategories={customCategories}
+        onAddCustomCategory={onAddCustomCategory}
       />
     </li>
   );
@@ -226,6 +234,8 @@ export const SimpleListView = React.memo(({
   customCategoryNames = {},
   onCategoryNameChange
 }: SimpleListViewProps) => {
+  const { customCategories, addCustomCategory } = useCustomCategories();
+  
   // Items should already be filtered by the hook - no additional filtering needed
   const activeItems = items;
 
@@ -331,6 +341,8 @@ export const SimpleListView = React.memo(({
                     onUpdateItem={onUpdateItem}
                     onToggleItem={onToggleItem}
                     availableStores={availableStores}
+                    customCategories={customCategories}
+                    onAddCustomCategory={addCustomCategory}
                   />
                 ))}
               </ul>

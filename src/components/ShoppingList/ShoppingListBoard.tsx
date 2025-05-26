@@ -4,6 +4,7 @@ import { GroceryItem, GroceryCategory } from "@/types";
 import { StoreColumn } from "./StoreColumn";
 import { IngredientEditDialog } from "./IngredientEditDialog";
 import { MultiSelectActions } from "./MultiSelectActions";
+import { useCustomCategories } from "./useCustomCategories";
 
 interface ShoppingListBoardProps {
   groupedItems: Record<string, Record<string, GroceryItem[]>>;
@@ -20,6 +21,7 @@ export const ShoppingListBoard = ({
   availableStores,
   customCategoryNames
 }: ShoppingListBoardProps) => {
+  const { customCategories, addCustomCategory } = useCustomCategories();
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [editingItem, setEditingItem] = useState<GroceryItem | null>(null);
   const [draggedItem, setDraggedItem] = useState<GroceryItem | null>(null);
@@ -134,6 +136,8 @@ export const ShoppingListBoard = ({
               }}
               onDrop={handleDrop}
               customCategoryNames={customCategoryNames}
+              customCategories={customCategories}
+              onAddCustomCategory={addCustomCategory}
             />
           );
         })}
