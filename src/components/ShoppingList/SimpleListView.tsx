@@ -1,4 +1,3 @@
-
 import React, { useMemo, useCallback, useState } from "react";
 import { GroceryItem } from "@/types";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -179,9 +178,8 @@ const CategoryHeader = ({
   const handleSubmit = () => {
     if (onCategoryNameChange && editValue.trim() && editValue !== categoryName) {
       console.log("Category name change - Original:", originalCategoryName, "Display:", categoryName, "New:", editValue.trim());
-      // Use a normalized version of the original category name as the key
-      const normalizedOriginal = originalCategoryName.charAt(0).toUpperCase() + originalCategoryName.slice(1).toLowerCase();
-      onCategoryNameChange(normalizedOriginal, editValue.trim());
+      // Use the exact original category name as the key (no normalization)
+      onCategoryNameChange(originalCategoryName, editValue.trim());
     }
     setIsEditing(false);
   };
@@ -231,29 +229,20 @@ export const SimpleListView = React.memo(({
   // Items should already be filtered by the hook - no additional filtering needed
   const activeItems = items;
 
-  // Function to get the display category name (custom or default) with case-insensitive lookup
+  // Function to get the display category name (custom or default) - simplified
   const getDisplayCategoryName = useCallback((categoryName: string): string => {
-    // First try exact match
+    console.log("SimpleListView: Getting display name for category:", categoryName, "Custom names:", customCategoryNames);
+    
+    // Try exact match first
     if (customCategoryNames[categoryName]) {
+      console.log("SimpleListView: Found exact match:", customCategoryNames[categoryName]);
       return customCategoryNames[categoryName];
     }
     
-    // Try normalized version (capitalize first letter)
-    const normalizedCategory = categoryName.charAt(0).toUpperCase() + categoryName.slice(1).toLowerCase();
-    if (customCategoryNames[normalizedCategory]) {
-      return customCategoryNames[normalizedCategory];
-    }
-    
-    // Try case-insensitive lookup
-    const customKey = Object.keys(customCategoryNames).find(
-      key => key.toLowerCase() === categoryName.toLowerCase()
-    );
-    if (customKey) {
-      return customCategoryNames[customKey];
-    }
-    
-    // Return normalized version as default
-    return normalizedCategory;
+    // Return capitalized version as default
+    const displayName = categoryName.charAt(0).toUpperCase() + categoryName.slice(1);
+    console.log("SimpleListView: Using default display name:", displayName);
+    return displayName;
   }, [customCategoryNames]);
 
   // Optimized grouping with stable keys and memoization
