@@ -36,6 +36,7 @@ export const CategoryDropdown = ({
 
   const handleCategorySelect = (category: string) => {
     console.log("CategoryDropdown: Selecting category", category, "for item", item.name);
+    console.log("CategoryDropdown: Current item category:", item.category);
     onCategoryChange(item, category);
     setIsOpen(false);
   };
@@ -69,6 +70,11 @@ export const CategoryDropdown = ({
     return category.charAt(0).toUpperCase() + category.slice(1);
   };
 
+  const handleTriggerClick = (e: React.MouseEvent) => {
+    console.log("CategoryDropdown: Trigger clicked for item:", item.name);
+    e.stopPropagation(); // Prevent parent button click
+  };
+
   return (
     <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
       <DropdownMenuTrigger asChild>
@@ -76,12 +82,13 @@ export const CategoryDropdown = ({
           variant="outline" 
           size="sm" 
           className="h-8 text-xs min-w-20 justify-between"
+          onClick={handleTriggerClick}
         >
           <span className="truncate">{displayCategoryName(item.category)}</span>
           <ChevronDown className="h-3 w-3 ml-1 flex-shrink-0" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-48 bg-white">
+      <DropdownMenuContent align="end" className="w-48 bg-white z-50">
         {allCategories.map(({ name, isDefault }) => (
           <DropdownMenuItem
             key={name}

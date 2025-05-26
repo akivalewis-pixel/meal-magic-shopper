@@ -54,8 +54,12 @@ export const IngredientButton = ({
   };
 
   const handleCategoryChange = (item: GroceryItem, category: string) => {
+    console.log("IngredientButton - Category change for:", item.name, "from", item.category, "to", category);
     if (onCategoryChange) {
+      console.log("IngredientButton - Calling onCategoryChange");
       onCategoryChange(item, category);
+    } else {
+      console.warn("IngredientButton - onCategoryChange not provided");
     }
   };
 
