@@ -2,7 +2,9 @@
 import React from "react";
 import { GroceryItem } from "@/types";
 import { SimpleListView } from "./SimpleListView";
-import { SimpleBoardView } from "./SimpleBoardView";
+import { ShoppingListBoard } from "./ShoppingListBoard";
+import { useShoppingListGrouping } from "./useShoppingListGrouping";
+import { useCategoryNames } from "./useCategoryNames";
 
 interface ShoppingListContentProps {
   filteredItems: GroceryItem[];
@@ -25,35 +27,42 @@ export const ShoppingListContent = ({
   onUpdateItem,
   onRemoveItem
 }: ShoppingListContentProps) => {
-  if (filteredItems.length === 0) {
+  const { customCategoryNames, handleCategoryNameChange } = useCategoryNames();
+  const { groupedItems } = useShoppingListGrouping({
+    items: filteredItems,
+    groupByStore,
+    searchTerm,
+    selectedStore,
+    customCategoryNames
+  });
+
+  const handleUpdateMultipleItems = (items: GroceryItem[], updates: Partial<GroceryItem>) => {
+    items.forEach(item => {
+      onUpdateItem({ ...item, ...updates });
+    });
+  };
+
+  if (viewMode === "board") {
     return (
-      <div className="text-center py-10 text-gray-500">
-        <p>
-          {searchTerm || selectedStore !== "all" 
-            ? "No items match your filters"
-            : "No items in your shopping list"
-          }
-        </p>
-        {(searchTerm || selectedStore !== "all") && (
-          <p className="text-sm mt-2">Try adjusting your search or store filter</p>
-        )}
-      </div>
+      <ShoppingListBoard
+        groupedItems={groupedItems}
+        onUpdateItem={onUpdateItem}
+        onUpdateMultiple={handleUpdateMultipleItems}
+        availableStores={availableStores}
+        customCategoryNames={customCategoryNames}
+      />
     );
   }
 
-  return viewMode === "board" ? (
-    <SimpleBoardView
-      items={filteredItems}
-      availableStores={availableStores}
-      onUpdateItem={onUpdateItem}
-    />
-  ) : (
+  return (
     <SimpleListView
       items={filteredItems}
       availableStores={availableStores}
       onUpdateItem={onUpdateItem}
       onToggleItem={onRemoveItem}
       groupByStore={groupByStore}
+      customCategoryNames={customCategoryNames}
+      onCategoryNameChange={handleCategoryNameChange}
     />
   );
 };

@@ -12,6 +12,8 @@ interface SimpleListViewProps {
   onUpdateItem: (item: GroceryItem) => void;
   onToggleItem: (id: string) => void;
   groupByStore: boolean;
+  customCategoryNames?: Record<string, string>;
+  onCategoryNameChange?: (oldName: string, newName: string) => void;
 }
 
 // Simplified item component with proper name editing
@@ -145,49 +147,133 @@ const ItemRow = ({
   );
 };
 
+// Category header component for editing category names
+const CategoryHeader = ({ 
+  categoryName, 
+  originalCategoryName,
+  customCategoryNames,
+  onCategoryNameChange,
+  itemCount 
+}: {
+  categoryName: string;
+  originalCategoryName: string;
+  customCategoryNames?: Record<string, string>;
+  onCategoryNameChange?: (oldName: string, newName: string) => void;
+  itemCount: number;
+}) => {
+  const [isEditing, setIsEditing] = useState(false);
+  const [editValue, setEditValue] = useState(categoryName);
+
+  const handleClick = () => {
+    if (onCategoryNameChange) {
+      setIsEditing(true);
+      setEditValue(categoryName);
+    }
+  };
+
+  const handleSubmit = () => {
+    if (onCategoryNameChange && editValue.trim() && editValue !== categoryName) {
+      console.log("Category name change - Original:", originalCategoryName, "Display:", categoryName, "New:", editValue.trim());
+      onCategoryNameChange(originalCategoryName, editValue.trim());
+    }
+    setIsEditing(false);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      handleSubmit();
+    } else if (e.key === "Escape") {
+      setIsEditing(false);
+      setEditValue(categoryName);
+    }
+  };
+
+  if (isEditing) {
+    return (
+      <Input
+        value={editValue}
+        onChange={(e) => setEditValue(e.target.value)}
+        onBlur={handleSubmit}
+        onKeyDown={handleKeyDown}
+        className="font-medium mb-2 h-8"
+        placeholder="Category name"
+        autoFocus
+      />
+    );
+  }
+
+  return (
+    <h4 
+      className="font-medium mb-2 cursor-pointer hover:text-blue-600 transition-colors text-sm text-gray-600" 
+      onClick={handleClick}
+    >
+      {categoryName} ({itemCount} items)
+    </h4>
+  );
+};
+
 export const SimpleListView = React.memo(({
   items,
   availableStores,
   onUpdateItem,
   onToggleItem,
-  groupByStore
+  groupByStore,
+  customCategoryNames = {},
+  onCategoryNameChange
 }: SimpleListViewProps) => {
   // Items should already be filtered by the hook - no additional filtering needed
   const activeItems = items;
+
+  // Function to get the display category name (custom or default)
+  const getDisplayCategoryName = useCallback((categoryName: string): string => {
+    return customCategoryNames[categoryName] || categoryName;
+  }, [customCategoryNames]);
 
   // Optimized grouping with stable keys and memoization
   const groupedItems = useMemo(() => {
     console.log("SimpleListView: Grouping items", { groupByStore, itemCount: activeItems.length });
     
-    const currentGrouping: Record<string, GroceryItem[]> = {};
+    const currentGrouping: Record<string, Record<string, GroceryItem[]>> = {};
     
     if (groupByStore) {
       activeItems.forEach(item => {
         const store = item.store || "Unassigned";
+        const category = item.category;
+        
         if (!currentGrouping[store]) {
-          currentGrouping[store] = [];
+          currentGrouping[store] = {};
         }
-        currentGrouping[store].push(item);
+        if (!currentGrouping[store][category]) {
+          currentGrouping[store][category] = [];
+        }
+        currentGrouping[store][category].push(item);
       });
       
-      // Sort items within each store by category and name
+      // Sort items within each category by name
       Object.keys(currentGrouping).forEach(store => {
-        currentGrouping[store].sort((a, b) => {
-          if (a.category !== b.category) {
-            return a.category.localeCompare(b.category);
-          }
-          return a.name.localeCompare(b.name);
+        Object.keys(currentGrouping[store]).forEach(category => {
+          currentGrouping[store][category].sort((a, b) => a.name.localeCompare(b.name));
         });
       });
       
       console.log("SimpleListView: Grouped by store", Object.keys(currentGrouping));
     } else {
-      currentGrouping["All Items"] = [...activeItems].sort((a, b) => {
-        if (a.category !== b.category) {
-          return a.category.localeCompare(b.category);
+      // Group by category only
+      const categoryGrouping: Record<string, GroceryItem[]> = {};
+      activeItems.forEach(item => {
+        const category = item.category;
+        if (!categoryGrouping[category]) {
+          categoryGrouping[category] = [];
         }
-        return a.name.localeCompare(b.name);
+        categoryGrouping[category].push(item);
       });
+      
+      // Sort items within each category by name
+      Object.keys(categoryGrouping).forEach(category => {
+        categoryGrouping[category].sort((a, b) => a.name.localeCompare(b.name));
+      });
+      
+      currentGrouping["All Items"] = categoryGrouping;
     }
     
     return currentGrouping;
@@ -203,24 +289,36 @@ export const SimpleListView = React.memo(({
 
   return (
     <div className="space-y-6">
-      {Object.entries(groupedItems).map(([storeName, storeItems]) => (
+      {Object.entries(groupedItems).map(([storeName, storeCategories]) => (
         <div key={storeName}>
           {groupByStore && (
             <h3 className="text-lg font-semibold mb-4 pb-2 border-b border-gray-200">
-              {storeName} ({storeItems.length} items)
+              {storeName} ({Object.values(storeCategories).flat().length} items)
             </h3>
           )}
-          <ul className="space-y-1">
-            {storeItems.map(item => (
-              <ItemRow
-                key={`${item.id}-${item.__updateTimestamp || 0}`}
-                item={item}
-                onUpdateItem={onUpdateItem}
-                onToggleItem={onToggleItem}
-                availableStores={availableStores}
+          
+          {Object.entries(storeCategories).map(([categoryName, categoryItems]) => (
+            <div key={`${storeName}-${categoryName}`} className="mb-4">
+              <CategoryHeader
+                categoryName={getDisplayCategoryName(categoryName)}
+                originalCategoryName={categoryName}
+                customCategoryNames={customCategoryNames}
+                onCategoryNameChange={onCategoryNameChange}
+                itemCount={categoryItems.length}
               />
-            ))}
-          </ul>
+              <ul className="space-y-1">
+                {categoryItems.map(item => (
+                  <ItemRow
+                    key={`${item.id}-${item.__updateTimestamp || 0}`}
+                    item={item}
+                    onUpdateItem={onUpdateItem}
+                    onToggleItem={onToggleItem}
+                    availableStores={availableStores}
+                  />
+                ))}
+              </ul>
+            </div>
+          ))}
         </div>
       ))}
     </div>
