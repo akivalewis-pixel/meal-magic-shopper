@@ -31,9 +31,13 @@ export const ShoppingListGroup = ({
   const [editedName, setEditedName] = useState(categoryName);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  // Get the original category name from the first item in the group
+  const originalCategoryName = items.length > 0 ? items[0].category : categoryName;
+
   const handleCategoryClick = () => {
     if (onCategoryNameChange && !isArchiveView) {
       setIsEditing(true);
+      setEditedName(categoryName);
       setTimeout(() => {
         if (inputRef.current) {
           inputRef.current.focus();
@@ -49,8 +53,9 @@ export const ShoppingListGroup = ({
 
   const handleNameSubmit = () => {
     if (onCategoryNameChange && editedName !== categoryName && editedName.trim()) {
-      console.log("Category name change:", categoryName, "to", editedName.trim());
-      onCategoryNameChange(categoryName, editedName.trim());
+      console.log("Category name change - Original:", originalCategoryName, "Display:", categoryName, "New:", editedName.trim());
+      // Use the original category name as the key for the change
+      onCategoryNameChange(originalCategoryName, editedName.trim());
     }
     setIsEditing(false);
   };
