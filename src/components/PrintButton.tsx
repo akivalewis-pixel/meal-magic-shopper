@@ -170,89 +170,99 @@ export const PrintButton = ({ meals, groceryItems }: PrintButtonProps) => {
       <h1>Pantry Pilot: Shopping List</h1>
     `);
 
-    // Filter out all completed items (both checked and archived) - this is the key fix
+    // Apply aggressive filtering - only print items that are explicitly NOT checked
     console.log("PrintButton: Total groceryItems received:", groceryItems.length);
-    console.log("PrintButton: Items status breakdown:", groceryItems.map(item => ({ 
+    console.log("PrintButton: All items:", groceryItems.map(item => ({ 
       name: item.name, 
-      checked: item.checked 
+      checked: item.checked,
+      id: item.id
     })));
     
-    // Only include items that are NOT checked (active items only)
-    const activeItems = groceryItems.filter(item => !item.checked);
+    // Triple-check filtering: only items that are definitely not checked
+    const activeItems = groceryItems.filter(item => {
+      const isActive = !item.checked && item.checked !== true;
+      console.log(`PrintButton: Item "${item.name}" - checked: ${item.checked}, isActive: ${isActive}`);
+      return isActive;
+    });
     
     console.log("PrintButton: Active items for printing:", activeItems.length);
+    console.log("PrintButton: Active item names:", activeItems.map(item => item.name));
 
-    // Sort and group active items by store and category for printing
-    const sortedItems = [...activeItems].sort((a, b) => {
-      // First sort by store
-      const storeA = a.store || "Unassigned";
-      const storeB = b.store || "Unassigned";
-      
-      if (storeA !== storeB) {
-        if (storeA === "Unassigned") return 1;
-        if (storeB === "Unassigned") return -1;
-        return storeA.localeCompare(storeB);
-      }
-      
-      // If same store, sort by category
-      return a.category.localeCompare(b.category);
-    });
+    if (activeItems.length === 0) {
+      printWindow.document.write('<p>No active items to print!</p>');
+    } else {
+      // Sort and group active items by store and category for printing
+      const sortedItems = [...activeItems].sort((a, b) => {
+        // First sort by store
+        const storeA = a.store || "Unassigned";
+        const storeB = b.store || "Unassigned";
+        
+        if (storeA !== storeB) {
+          if (storeA === "Unassigned") return 1;
+          if (storeB === "Unassigned") return -1;
+          return storeA.localeCompare(storeB);
+        }
+        
+        // If same store, sort by category
+        return a.category.localeCompare(b.category);
+      });
 
-    // Group items by store and then by category
-    const groupedByStore: Record<string, Record<string, GroceryItem[]>> = {};
-    
-    sortedItems.forEach(item => {
-      const store = item.store || "Unassigned";
-      const category = item.category;
+      // Group items by store and then by category
+      const groupedByStore: Record<string, Record<string, GroceryItem[]>> = {};
       
-      if (!groupedByStore[store]) {
-        groupedByStore[store] = {};
-      }
-      
-      if (!groupedByStore[store][category]) {
-        groupedByStore[store][category] = [];
-      }
-      
-      groupedByStore[store][category].push(item);
-    });
+      sortedItems.forEach(item => {
+        const store = item.store || "Unassigned";
+        const category = item.category;
+        
+        if (!groupedByStore[store]) {
+          groupedByStore[store] = {};
+        }
+        
+        if (!groupedByStore[store][category]) {
+          groupedByStore[store][category] = [];
+        }
+        
+        groupedByStore[store][category].push(item);
+      });
 
-    // Create store columns layout
-    printWindow.document.write('<div class="store-columns">');
+      // Create store columns layout
+      printWindow.document.write('<div class="store-columns">');
 
-    // Get all stores for consistent column layout
-    const storeNames = Object.keys(groupedByStore);
-    
-    storeNames.forEach(store => {
-      const categories = groupedByStore[store];
+      // Get all stores for consistent column layout
+      const storeNames = Object.keys(groupedByStore);
       
-      printWindow.document.write(`
-        <div class="store-column">
-          <div class="store-section">
-            <div class="store-title">${store}</div>
-      `);
-      
-      Object.entries(categories).forEach(([category, items]) => {
+      storeNames.forEach(store => {
+        const categories = groupedByStore[store];
+        
         printWindow.document.write(`
-          <div class="category-title">${category}</div>
+          <div class="store-column">
+            <div class="store-section">
+              <div class="store-title">${store}</div>
         `);
         
-        items.forEach(item => {
+        Object.entries(categories).forEach(([category, items]) => {
           printWindow.document.write(`
-            <div class="item">
-              <span>${item.name}</span>
-              ${item.quantity ? `<span> - ${item.quantity}</span>` : ''}
-            </div>
+            <div class="category-title">${category}</div>
           `);
+          
+          items.forEach(item => {
+            printWindow.document.write(`
+              <div class="item">
+                <span>${item.name}</span>
+                ${item.quantity ? `<span> - ${item.quantity}</span>` : ''}
+              </div>
+            `);
+          });
         });
+        
+        printWindow.document.write(`
+            </div>
+          </div>
+        `);
       });
       
-      printWindow.document.write(`
-          </div>
-        </div>
-      `);
-    });
-    
-    printWindow.document.write('</div>'); // Close store-columns
+      printWindow.document.write('</div>'); // Close store-columns
+    }
 
     // Close the HTML
     printWindow.document.write(`
