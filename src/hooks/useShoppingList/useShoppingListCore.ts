@@ -1,7 +1,7 @@
 
 import { Meal } from "@/types";
-import { useUnifiedShoppingList } from "./useUnifiedShoppingList";
+import { useSimplifiedShoppingList } from "./useSimplifiedShoppingList";
 
 export function useShoppingListCore(meals: Meal[], pantryItems: string[] = []) {
-  return useUnifiedShoppingList(meals, pantryItems);
+  return useSimplifiedShoppingList(meals, pantryItems);
 }
