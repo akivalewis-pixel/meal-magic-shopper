@@ -16,6 +16,7 @@ interface StoreColumnProps {
   customCategoryNames: Record<string, string>;
   customCategories: string[];
   onAddCustomCategory: (categoryName: string) => void;
+  onCategoryChange?: (item: GroceryItem, category: string) => void;
 }
 
 export const StoreColumn = ({
@@ -29,7 +30,8 @@ export const StoreColumn = ({
   onDrop,
   customCategoryNames,
   customCategories,
-  onAddCustomCategory
+  onAddCustomCategory,
+  onCategoryChange
 }: StoreColumnProps) => {
   const getDisplayCategoryName = (categoryName: string): string => {
     return customCategoryNames[categoryName] || categoryName;
@@ -87,6 +89,7 @@ export const StoreColumn = ({
                           onDragStart={onDragStart}
                           customCategories={customCategories}
                           onAddCustomCategory={onAddCustomCategory}
+                          onCategoryChange={onCategoryChange}
                         />
                       ))}
                     </div>
