@@ -56,6 +56,16 @@ export const ShoppingListBoard = ({
     setEditingItem(null);
   };
 
+  const handleCategoryChange = (item: GroceryItem, category: string) => {
+    console.log("Board - Category change for item:", item.name, "from", item.category, "to", category);
+    const updatedItem = {
+      ...item,
+      category: category as GroceryCategory,
+      __updateTimestamp: Date.now()
+    };
+    onUpdateItem(updatedItem);
+  };
+
   const handleDragStart = (e: React.DragEvent, item: GroceryItem) => {
     console.log("Board - Drag start:", item.name, "from store:", item.store || "Unassigned");
     setDraggedItem(item);
@@ -138,6 +148,7 @@ export const ShoppingListBoard = ({
               customCategoryNames={customCategoryNames}
               customCategories={customCategories}
               onAddCustomCategory={addCustomCategory}
+              onCategoryChange={handleCategoryChange}
             />
           );
         })}
