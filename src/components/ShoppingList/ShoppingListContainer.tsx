@@ -1,10 +1,8 @@
 
 import React from "react";
-import { useSimpleShoppingList } from "@/hooks/useShoppingList/useSimpleShoppingList";
+import { useSimplifiedShoppingList } from "@/hooks/useShoppingList/useSimplifiedShoppingList";
 import { useUndo } from "@/hooks/useUndo";
 import { useShoppingListState } from "./ShoppingListState";
-import { useShoppingListHandlers } from "./ShoppingListHandlers";
-import { useShoppingListUndoHandlers } from "./ShoppingListUndoHandlers";
 import { ShoppingListLayout } from "./ShoppingListLayout";
 
 interface ShoppingListContainerProps {
@@ -25,27 +23,64 @@ export const ShoppingListContainer = ({ meals, pantryItems = [] }: ShoppingListC
     addItem,
     updateStores,
     resetList
-  } = useSimpleShoppingList(meals, pantryItems);
+  } = useSimplifiedShoppingList(meals, pantryItems);
 
   const { addAction, undo, redo, canUndo, canRedo } = useUndo();
 
-  const handlers = useShoppingListHandlers({
-    groceryItems,
-    updateItem,
-    toggleItem,
-    addItem,
-    updateStores,
-    availableStores,
-    addAction,
-    setIsAddingItem: actions.setIsAddingItem,
-    setIsEditingStores: actions.setIsEditingStores
-  });
+  // Handlers with undo support
+  const handleUpdateItem = (updatedItem: any) => {
+    const originalItem = groceryItems.find(i => i.id === updatedItem.id);
+    if (originalItem) {
+      addAction({
+        id: `update-${Date.now()}`,
+        type: 'update',
+        data: { original: { ...originalItem }, updated: { ...updatedItem } }
+      });
+    }
+    updateItem(updatedItem);
+  };
 
-  const undoHandlers = useShoppingListUndoHandlers({
-    updateItem,
-    undo,
-    redo
-  });
+  const handleRemoveItem = (id: string) => {
+    const item = groceryItems.find(i => i.id === id);
+    if (item) {
+      addAction({
+        id: `toggle-${Date.now()}`,
+        type: 'toggle',
+        data: { item: { ...item } }
+      });
+      toggleItem(id);
+    }
+  };
+
+  const handleAddItem = (newItem: any) => {
+    addAction({
+      id: `add-${Date.now()}`,
+      type: 'add',
+      data: { item: newItem }
+    });
+    addItem(newItem);
+    actions.setIsAddingItem(false);
+  };
+
+  const handleSaveStores = (stores: string[]) => {
+    addAction({
+      id: `stores-${Date.now()}`,
+      type: 'update',
+      data: { stores: availableStores, newStores: stores }
+    });
+    updateStores(stores);
+    actions.setIsEditingStores(false);
+  };
+
+  const handleUndo = () => {
+    // Implementation would depend on the specific action type
+    undo();
+  };
+
+  const handleRedo = () => {
+    // Implementation would depend on the specific action type
+    redo();
+  };
 
   // Filter items based on search and store selection
   const filteredItems = groceryItems.filter(item => {
@@ -67,12 +102,12 @@ export const ShoppingListContainer = ({ meals, pantryItems = [] }: ShoppingListC
       archivedItems={archivedItems}
       canUndo={canUndo}
       canRedo={canRedo}
-      onUndo={undoHandlers.handleUndo}
-      onRedo={undoHandlers.handleRedo}
-      onUpdateItem={handlers.handleUpdateItem}
-      onRemoveItem={handlers.handleRemoveItem}
-      onSaveStores={handlers.handleSaveStores}
-      onAddItem={handlers.handleAddNewItem}
+      onUndo={handleUndo}
+      onRedo={handleRedo}
+      onUpdateItem={handleUpdateItem}
+      onRemoveItem={handleRemoveItem}
+      onSaveStores={handleSaveStores}
+      onAddItem={handleAddItem}
       onReset={resetList}
     />
   );

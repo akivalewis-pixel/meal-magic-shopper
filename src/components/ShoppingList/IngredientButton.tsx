@@ -27,21 +27,17 @@ export const IngredientButton = ({
   onCategoryChange
 }: IngredientButtonProps) => {
   const handleClick = (e: React.MouseEvent) => {
-    console.log("Ingredient button clicked:", item.name);
     const isMultiSelect = e.ctrlKey || e.metaKey || e.shiftKey;
     onSelect(item.id, isMultiSelect);
   };
 
   const handleDoubleClick = () => {
-    console.log("Ingredient button double-clicked:", item.name);
     onDoubleClick(item);
   };
 
   const handleDragStart = (e: React.DragEvent) => {
-    console.log("Drag starting for item:", item.name);
     onDragStart(e, item);
     
-    // Add a visual indicator for the dragged element
     const target = e.currentTarget as HTMLElement;
     setTimeout(() => {
       if (target) target.classList.add("opacity-50");
@@ -54,12 +50,8 @@ export const IngredientButton = ({
   };
 
   const handleCategoryChange = (item: GroceryItem, category: string) => {
-    console.log("IngredientButton - Category change for:", item.name, "from", item.category, "to", category);
     if (onCategoryChange) {
-      console.log("IngredientButton - Calling onCategoryChange");
       onCategoryChange(item, category);
-    } else {
-      console.warn("IngredientButton - onCategoryChange not provided");
     }
   };
 

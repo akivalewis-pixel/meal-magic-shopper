@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { GroceryItem, GroceryCategory } from "@/types";
 import { StoreColumn } from "./StoreColumn";
@@ -32,7 +33,6 @@ export const ShoppingListBoard = ({
   const selectedItemObjects = allItems.filter(item => selectedItems.includes(item.id));
 
   const handleSelectItem = (id: string, isMultiSelect: boolean) => {
-    console.log("Board - Selecting item:", id, "Multi-select:", isMultiSelect);
     if (isMultiSelect) {
       setSelectedItems(prev => 
         prev.includes(id) 
@@ -45,32 +45,25 @@ export const ShoppingListBoard = ({
   };
 
   const handleDoubleClickItem = (item: GroceryItem) => {
-    console.log("Board - Double-clicking item:", item.name);
     setEditingItem(item);
   };
 
   const handleSaveItem = (updatedItem: GroceryItem) => {
-    console.log("Board - Saving item from dialog:", updatedItem.name, "with store:", updatedItem.store);
     onUpdateItem(updatedItem);
     setEditingItem(null);
   };
 
   const handleCategoryChange = (item: GroceryItem, category: string) => {
-    console.log("Board - Category change for item:", item.name, "from", item.category, "to", category);
-    
-    // Create the updated item with the new category and timestamp
     const updatedItem: GroceryItem = {
       ...item,
       category: category as GroceryCategory,
       __updateTimestamp: Date.now()
     };
     
-    console.log("Board - Calling onUpdateItem with updated item:", updatedItem);
     onUpdateItem(updatedItem);
   };
 
   const handleDragStart = (e: React.DragEvent, item: GroceryItem) => {
-    console.log("Board - Drag start:", item.name, "from store:", item.store || "Unassigned");
     setDraggedItem(item);
     e.dataTransfer.setData("text/plain", item.id);
     e.dataTransfer.setData("application/json", JSON.stringify(item));
@@ -79,7 +72,6 @@ export const ShoppingListBoard = ({
 
   const handleDrop = (e: React.DragEvent, targetStore: string, targetCategory?: GroceryCategory) => {
     e.preventDefault();
-    console.log("Board - Drop event for store:", targetStore, "category:", targetCategory);
     
     let itemToUpdate = draggedItem;
     
@@ -90,12 +82,7 @@ export const ShoppingListBoard = ({
       }
     }
     
-    if (!itemToUpdate) {
-      console.error("Board - No item found for drop operation");
-      return;
-    }
-    
-    console.log("Board - Updating item:", itemToUpdate.name, "to store:", targetStore);
+    if (!itemToUpdate) return;
     
     const updatedItem = { 
       ...itemToUpdate,
@@ -109,7 +96,6 @@ export const ShoppingListBoard = ({
   };
 
   const handleUpdateMultiple = (items: GroceryItem[], updates: Partial<GroceryItem>) => {
-    console.log("Board - Updating multiple items:", items.length, "updates:", updates);
     onUpdateMultiple(items, updates);
     setSelectedItems([]);
   };
@@ -132,29 +118,26 @@ export const ShoppingListBoard = ({
       />
       
       <div className="flex gap-4 overflow-x-auto pb-4">
-        {Object.entries(groupedItems).map(([storeName, categories]) => {
-          console.log("Board - Rendering store column:", storeName, "with categories:", Object.keys(categories));
-          return (
-            <StoreColumn
-              key={storeName}
-              storeName={storeName}
-              categories={categories}
-              selectedItems={selectedItems}
-              onSelectItem={handleSelectItem}
-              onDoubleClickItem={handleDoubleClickItem}
-              onDragStart={handleDragStart}
-              onDragOver={(e) => {
-                e.preventDefault();
-                e.dataTransfer.dropEffect = "move";
-              }}
-              onDrop={handleDrop}
-              customCategoryNames={customCategoryNames}
-              customCategories={customCategories}
-              onAddCustomCategory={addCustomCategory}
-              onCategoryChange={handleCategoryChange}
-            />
-          );
-        })}
+        {Object.entries(groupedItems).map(([storeName, categories]) => (
+          <StoreColumn
+            key={storeName}
+            storeName={storeName}
+            categories={categories}
+            selectedItems={selectedItems}
+            onSelectItem={handleSelectItem}
+            onDoubleClickItem={handleDoubleClickItem}
+            onDragStart={handleDragStart}
+            onDragOver={(e) => {
+              e.preventDefault();
+              e.dataTransfer.dropEffect = "move";
+            }}
+            onDrop={handleDrop}
+            customCategoryNames={customCategoryNames}
+            customCategories={customCategories}
+            onAddCustomCategory={addCustomCategory}
+            onCategoryChange={handleCategoryChange}
+          />
+        ))}
       </div>
 
       <IngredientEditDialog

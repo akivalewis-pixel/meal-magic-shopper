@@ -29,35 +29,28 @@ export const ShoppingListContent = ({
 }: ShoppingListContentProps) => {
   const { customCategoryNames, handleCategoryNameChange } = useCategoryNames();
   
-  // Call the hook with the correct arguments based on its actual signature
   const groupedItems = useShoppingListGrouping(
-    filteredItems,     // groceryItems
-    [],               // archivedItems (empty for now)
-    false,            // searchArchivedItems
-    searchTerm,       // searchTerm
-    false,            // showChecked
-    selectedStore,    // selectedStore
-    groupByStore,     // groupByStore
-    "category"        // sortBy
+    filteredItems,
+    [],
+    false,
+    searchTerm,
+    false,
+    selectedStore,
+    groupByStore,
+    "category"
   );
 
   const handleUpdateMultipleItems = (items: GroceryItem[], updates: Partial<GroceryItem>) => {
-    console.log("ShoppingListContent - Updating multiple items:", items.length, "with updates:", updates);
     items.forEach(item => {
       onUpdateItem({ ...item, ...updates });
     });
-  };
-
-  const handleUpdateItem = (item: GroceryItem) => {
-    console.log("ShoppingListContent - Updating item:", item.name, "category:", item.category, "store:", item.store);
-    onUpdateItem(item);
   };
 
   if (viewMode === "board") {
     return (
       <ShoppingListBoard
         groupedItems={groupedItems}
-        onUpdateItem={handleUpdateItem}
+        onUpdateItem={onUpdateItem}
         onUpdateMultiple={handleUpdateMultipleItems}
         availableStores={availableStores}
         customCategoryNames={customCategoryNames}
@@ -69,7 +62,7 @@ export const ShoppingListContent = ({
     <SimpleListView
       items={filteredItems}
       availableStores={availableStores}
-      onUpdateItem={handleUpdateItem}
+      onUpdateItem={onUpdateItem}
       onToggleItem={onRemoveItem}
       groupByStore={groupByStore}
       customCategoryNames={customCategoryNames}

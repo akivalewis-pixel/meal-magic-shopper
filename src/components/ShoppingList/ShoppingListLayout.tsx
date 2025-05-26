@@ -48,10 +48,6 @@ export const ShoppingListLayout = ({
   onAddItem,
   onReset
 }: ShoppingListLayoutProps) => {
-  console.log("ShoppingListLayout - Selected store:", state.selectedStore);
-  console.log("ShoppingListLayout - Filtered items:", filteredItems.length);
-  console.log("ShoppingListLayout - Available stores:", availableStores);
-
   return (
     <section className="py-8 bg-gray-50">
       <div className="container mx-auto">

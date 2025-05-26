@@ -44,7 +44,6 @@ export const StoreColumn = ({
 
   const handleDrop = (e: React.DragEvent, targetCategory?: GroceryCategory) => {
     e.preventDefault();
-    console.log(`StoreColumn - Drop on store: ${storeName}, category: ${targetCategory || 'none'}`);
     onDrop(e, storeName, targetCategory);
   };
 
@@ -60,48 +59,46 @@ export const StoreColumn = ({
         </h3>
         
         <div className="space-y-4">
-          {Object.entries(categories).map(([categoryName, items]) => {
-            return (
-              <div key={`${storeName}-${categoryName}`} className="mb-4">
-                <h4 className="text-sm font-medium text-muted-foreground mb-2">
-                  {getDisplayCategoryName(categoryName)}
-                </h4>
-                <div 
-                  className={cn(
-                    "min-h-[60px] p-2 rounded border-2 border-dashed border-muted transition-colors",
-                    "hover:border-primary/50"
-                  )}
-                  onDragOver={handleDragOver}
-                  onDrop={(e) => {
-                    e.stopPropagation();
-                    handleDrop(e, categoryName as GroceryCategory);
-                  }}
-                >
-                  {items.length > 0 ? (
-                    <div className="space-y-2">
-                      {items.map(item => (
-                        <IngredientButton
-                          key={`${item.id}-${item.__updateTimestamp || 0}`}
-                          item={item}
-                          isSelected={selectedItems.includes(item.id)}
-                          onSelect={onSelectItem}
-                          onDoubleClick={onDoubleClickItem}
-                          onDragStart={onDragStart}
-                          customCategories={customCategories}
-                          onAddCustomCategory={onAddCustomCategory}
-                          onCategoryChange={onCategoryChange}
-                        />
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="text-center text-muted-foreground text-sm py-4">
-                      Drop items here
-                    </div>
-                  )}
-                </div>
+          {Object.entries(categories).map(([categoryName, items]) => (
+            <div key={`${storeName}-${categoryName}`} className="mb-4">
+              <h4 className="text-sm font-medium text-muted-foreground mb-2">
+                {getDisplayCategoryName(categoryName)}
+              </h4>
+              <div 
+                className={cn(
+                  "min-h-[60px] p-2 rounded border-2 border-dashed border-muted transition-colors",
+                  "hover:border-primary/50"
+                )}
+                onDragOver={handleDragOver}
+                onDrop={(e) => {
+                  e.stopPropagation();
+                  handleDrop(e, categoryName as GroceryCategory);
+                }}
+              >
+                {items.length > 0 ? (
+                  <div className="space-y-2">
+                    {items.map(item => (
+                      <IngredientButton
+                        key={`${item.id}-${item.__updateTimestamp || 0}`}
+                        item={item}
+                        isSelected={selectedItems.includes(item.id)}
+                        onSelect={onSelectItem}
+                        onDoubleClick={onDoubleClickItem}
+                        onDragStart={onDragStart}
+                        customCategories={customCategories}
+                        onAddCustomCategory={onAddCustomCategory}
+                        onCategoryChange={onCategoryChange}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center text-muted-foreground text-sm py-4">
+                    Drop items here
+                  </div>
+                )}
               </div>
-            );
-          })}
+            </div>
+          ))}
         </div>
       </div>
     </div>
