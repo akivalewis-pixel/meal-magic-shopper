@@ -21,25 +21,29 @@ export const PrintButton = ({ meals, groceryItems, getCurrentItems }: PrintButto
       return;
     }
     
-    // Get the most current items - use callback if available, otherwise fallback to prop
-    const currentItems = getCurrentItems ? getCurrentItems() : groceryItems;
+    // ALWAYS use getCurrentItems if available, never fall back to groceryItems prop
+    const currentItems = getCurrentItems ? getCurrentItems() : groceryItems.filter(item => !item.checked);
     
-    // Get the most current active items (force fresh data)
+    console.log("PrintButton: Using getCurrentItems callback:", !!getCurrentItems);
+    console.log("PrintButton: Total current items:", currentItems.length);
+    console.log("PrintButton: Current items details:", currentItems.map(item => ({ 
+      id: item.id,
+      name: item.name, 
+      checked: item.checked,
+      store: item.store,
+      quantity: item.quantity,
+      category: item.category
+    })));
+    
+    // Filter to only active (unchecked) items for printing
     const activeItems = currentItems.filter(item => {
       const isActive = !item.checked;
-      console.log(`PrintButton: Item "${item.name}" - checked: ${item.checked}, store: ${item.store}, quantity: ${item.quantity}, category: ${item.category}, isActive: ${isActive}`);
+      console.log(`PrintButton: Item "${item.name}" - checked: ${item.checked}, isActive: ${isActive}`);
       return isActive;
     });
     
-    console.log("PrintButton: Active items for printing:", activeItems.length);
-    console.log("PrintButton: Active item details:", activeItems.map(item => ({ 
-      id: item.id,
-      name: item.name, 
-      quantity: item.quantity,
-      store: item.store,
-      category: item.category,
-      checked: item.checked 
-    })));
+    console.log("PrintButton: Final active items for printing:", activeItems.length);
+    console.log("PrintButton: Active item names:", activeItems.map(item => item.name));
 
     // Set up the HTML content for the print window
     printWindow.document.write(`
@@ -195,9 +199,8 @@ export const PrintButton = ({ meals, groceryItems, getCurrentItems }: PrintButto
       printWindow.document.write('<p>No active items to print!</p>');
     } else {
       // Sort and group active items by store and category for printing
-      // Use the most current data with all user modifications
       const sortedItems = [...activeItems].sort((a, b) => {
-        // First sort by store (use current store assignments)
+        // First sort by store
         const storeA = a.store || "Unassigned";
         const storeB = b.store || "Unassigned";
         
@@ -207,11 +210,11 @@ export const PrintButton = ({ meals, groceryItems, getCurrentItems }: PrintButto
           return storeA.localeCompare(storeB);
         }
         
-        // If same store, sort by category (use current category assignments)
+        // If same store, sort by category
         return a.category.localeCompare(b.category);
       });
 
-      // Group items by store and then by category (using current assignments)
+      // Group items by store and then by category
       const groupedByStore: Record<string, Record<string, GroceryItem[]>> = {};
       
       sortedItems.forEach(item => {
@@ -253,7 +256,6 @@ export const PrintButton = ({ meals, groceryItems, getCurrentItems }: PrintButto
           `);
           
           items.forEach(item => {
-            // Use the current name and quantity (with all user modifications)
             printWindow.document.write(`
               <div class="item">
                 <span>${item.name}</span>
