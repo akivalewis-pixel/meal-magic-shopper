@@ -22,7 +22,8 @@ export const ShoppingListContainer = ({ meals, pantryItems = [] }: ShoppingListC
     archiveItem,
     addItem,
     updateStores,
-    resetList
+    resetList,
+    getCurrentItems
   } = useSimplifiedShoppingList(meals, pantryItems);
 
   const { addAction, undo, redo, canUndo, canRedo } = useUndo();
@@ -109,6 +110,7 @@ export const ShoppingListContainer = ({ meals, pantryItems = [] }: ShoppingListC
       onSaveStores={handleSaveStores}
       onAddItem={handleAddItem}
       onReset={resetList}
+      getCurrentItems={getCurrentItems}
     />
   );
 };

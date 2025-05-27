@@ -222,8 +222,8 @@ export function useSimplifiedShoppingList(meals: Meal[], pantryItems: string[] =
     !item.checked && !removedItemIds.current.has(item.id)
   );
 
-  // Add a function to get the most current state at any time
-  const getCurrentItems = useCallback(() => {
+  // Create a simple function to get current items - no useCallback to avoid hook issues
+  const getCurrentItems = () => {
     const currentItems = groceryItems.filter(item => 
       !item.checked && !removedItemIds.current.has(item.id)
     );
@@ -237,7 +237,7 @@ export function useSimplifiedShoppingList(meals: Meal[], pantryItems: string[] =
       checked: item.checked 
     })));
     return currentItems;
-  }, [groceryItems]);
+  };
 
   console.log("SimplifiedShoppingList: Returning", activeGroceryItems.length, "active items");
 
@@ -251,6 +251,6 @@ export function useSimplifiedShoppingList(meals: Meal[], pantryItems: string[] =
     addItem,
     updateStores,
     resetList,
-    getCurrentItems // New function to get current state
+    getCurrentItems // Function to get current state
   };
 }
