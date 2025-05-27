@@ -30,6 +30,7 @@ interface ShoppingListLayoutProps {
   onSaveStores: (stores: string[]) => void;
   onAddItem: (item: GroceryItem) => void;
   onReset: () => void;
+  getCurrentItems: () => GroceryItem[];
 }
 
 export const ShoppingListLayout = ({
@@ -46,7 +47,8 @@ export const ShoppingListLayout = ({
   onRemoveItem,
   onSaveStores,
   onAddItem,
-  onReset
+  onReset,
+  getCurrentItems
 }: ShoppingListLayoutProps) => {
   return (
     <section className="py-8 bg-gray-50">
@@ -105,6 +107,7 @@ export const ShoppingListLayout = ({
           onSaveStores={onSaveStores}
           onAddItem={onAddItem}
           archivedItems={archivedItems}
+          getCurrentItems={getCurrentItems}
         />
       </div>
     </section>
