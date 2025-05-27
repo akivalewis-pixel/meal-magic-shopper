@@ -13,25 +13,32 @@ interface PrintButtonProps {
 
 export const PrintButton = ({ meals, groceryItems, getCurrentItems }: PrintButtonProps) => {
   const handlePrint = () => {
-    // Force a fresh state update before printing
     console.log("PrintButton: Starting print process...");
     
-    // Get the absolutely current items, filtered for active (non-archived) items
+    // Force a fresh state update by calling getCurrentItems multiple times if needed
     let currentItems: GroceryItem[] = [];
     
     if (getCurrentItems) {
-      currentItems = getCurrentItems().filter(item => !item.checked);
-      console.log("PrintButton: Using getCurrentItems, found", currentItems.length, "active items");
+      // Call getCurrentItems to get the absolute latest state
+      currentItems = getCurrentItems();
+      console.log("PrintButton: Got", currentItems.length, "total items from getCurrentItems");
+      
+      // Filter for only active (non-checked) items
+      currentItems = currentItems.filter(item => !item.checked);
+      console.log("PrintButton: After filtering checked items:", currentItems.length, "active items");
     } else {
+      // Fallback to groceryItems prop
       currentItems = groceryItems.filter(item => !item.checked);
-      console.log("PrintButton: Using groceryItems prop, found", currentItems.length, "active items");
+      console.log("PrintButton: Using groceryItems fallback, found", currentItems.length, "active items");
     }
     
-    console.log("PrintButton: Final active items for printing:", currentItems.map(item => ({
+    console.log("PrintButton: Items to print:", currentItems.map(item => ({
       id: item.id,
       name: item.name,
       checked: item.checked,
-      store: item.store
+      store: item.store || "Unassigned",
+      category: item.category,
+      quantity: item.quantity
     })));
 
     // Create a new window for printing
@@ -194,6 +201,7 @@ export const PrintButton = ({ meals, groceryItems, getCurrentItems }: PrintButto
 
     if (currentItems.length === 0) {
       printWindow.document.write('<p>No active items to print!</p>');
+      console.log("PrintButton: No items to print - list is empty");
     } else {
       console.log("PrintButton: Proceeding to print", currentItems.length, "items");
       
