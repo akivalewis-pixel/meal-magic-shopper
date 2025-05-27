@@ -13,6 +13,27 @@ interface PrintButtonProps {
 
 export const PrintButton = ({ meals, groceryItems, getCurrentItems }: PrintButtonProps) => {
   const handlePrint = () => {
+    // Force a fresh state update before printing
+    console.log("PrintButton: Starting print process...");
+    
+    // Get the absolutely current items, filtered for active (non-archived) items
+    let currentItems: GroceryItem[] = [];
+    
+    if (getCurrentItems) {
+      currentItems = getCurrentItems().filter(item => !item.checked);
+      console.log("PrintButton: Using getCurrentItems, found", currentItems.length, "active items");
+    } else {
+      currentItems = groceryItems.filter(item => !item.checked);
+      console.log("PrintButton: Using groceryItems prop, found", currentItems.length, "active items");
+    }
+    
+    console.log("PrintButton: Final active items for printing:", currentItems.map(item => ({
+      id: item.id,
+      name: item.name,
+      checked: item.checked,
+      store: item.store
+    })));
+
     // Create a new window for printing
     const printWindow = window.open('', '_blank');
     
@@ -20,29 +41,6 @@ export const PrintButton = ({ meals, groceryItems, getCurrentItems }: PrintButto
       alert('Please allow popups for this website to print');
       return;
     }
-    
-    // ALWAYS use getCurrentItems if available to get the most current state
-    const currentItems = getCurrentItems ? getCurrentItems() : groceryItems;
-    
-    console.log("PrintButton: Total current items from getCurrentItems:", currentItems.length);
-    console.log("PrintButton: Current items details:", currentItems.map(item => ({ 
-      id: item.id,
-      name: item.name, 
-      checked: item.checked,
-      store: item.store,
-      quantity: item.quantity,
-      category: item.category
-    })));
-    
-    // Filter to only active (unchecked) items for printing
-    const activeItems = currentItems.filter(item => {
-      const isActive = !item.checked;
-      console.log(`PrintButton: Item "${item.name}" - checked: ${item.checked}, isActive: ${isActive}`);
-      return isActive;
-    });
-    
-    console.log("PrintButton: Final active items for printing:", activeItems.length);
-    console.log("PrintButton: Active item names:", activeItems.map(item => item.name));
 
     // Set up the HTML content for the print window
     printWindow.document.write(`
@@ -194,11 +192,13 @@ export const PrintButton = ({ meals, groceryItems, getCurrentItems }: PrintButto
       <h1>Pantry Pilot: Shopping List</h1>
     `);
 
-    if (activeItems.length === 0) {
+    if (currentItems.length === 0) {
       printWindow.document.write('<p>No active items to print!</p>');
     } else {
-      // Sort and group active items by store and category for printing
-      const sortedItems = [...activeItems].sort((a, b) => {
+      console.log("PrintButton: Proceeding to print", currentItems.length, "items");
+      
+      // Sort and group current items by store and category for printing
+      const sortedItems = [...currentItems].sort((a, b) => {
         // First sort by store
         const storeA = a.store || "Unassigned";
         const storeB = b.store || "Unassigned";
