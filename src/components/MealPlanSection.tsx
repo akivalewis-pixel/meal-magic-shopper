@@ -5,39 +5,24 @@ import { HTML5Backend } from "react-dnd-html5-backend";
 import { MealCard } from "./MealCard";
 import { MealRatingDialog } from "./MealRatingDialog";
 import { MealRecommendations } from "./MealRecommendations";
+import { AddRecipeDialog } from "./MealPlan/AddRecipeDialog";
 import { Meal, DietaryPreference } from "@/types";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { X, Plus, Loader2 } from "lucide-react";
-import { Form, FormField, FormItem, FormLabel, FormControl } from "@/components/ui/form";
-import { useForm } from "react-hook-form";
+import { Plus } from "lucide-react";
 import { daysOfWeek, dietaryOptions } from "@/utils/constants";
 import { filterMealsByDiet } from "@/utils/mealUtils";
 import { useToast } from "@/hooks/use-toast";
+import { extractIngredientsFromRecipeUrl } from "@/utils/recipeUtils";
 
 // Function to extract ingredients from a recipe URL
-const fetchIngredientsFromUrl = async (url: string): Promise<string[]> => {
-  // In a real implementation, this would use a recipe API or scraping service
-  // For now, we'll simulate a fetch with some placeholder data
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      // Simulate some common ingredients based on the URL
-      if (url.includes("pasta") || url.includes("spaghetti")) {
-        resolve(["pasta", "tomatoes", "garlic", "onion", "olive oil", "basil"]);
-      } else if (url.includes("chicken")) {
-        resolve(["chicken breast", "salt", "pepper", "olive oil", "garlic powder", "herbs"]);
-      } else if (url.includes("salad")) {
-        resolve(["lettuce", "cucumber", "tomatoes", "bell pepper", "olive oil", "vinegar"]);
-      } else if (url.includes("soup")) {
-        resolve(["broth", "onion", "carrots", "celery", "salt", "pepper", "herbs"]);
-      } else {
-        resolve(["ingredients could not be automatically detected"]);
-      }
-    }, 1000);
-  });
+const fetchIngredientsFromUrl = async (url: string): Promise<{
+  title?: string;
+  ingredients: string[];
+  quantities?: Record<string, string>;
+}> => {
+  return await extractIngredientsFromRecipeUrl(url);
 };
 
 interface MealPlanSectionProps {
@@ -150,7 +135,7 @@ export const MealPlanSection = ({
   const [mealToRate, setMealToRate] = useState<Meal | null>(null);
   const [showAddRecipe, setShowAddRecipe] = useState(false);
   const [selectedDay, setSelectedDay] = useState("");
-  const [isFetchingIngredients, setIsFetchingIngredients] = useState(false);
+  const [editingMeal, setEditingMeal] = useState<Meal | null>(null);
   
   const filteredMeals = dietFilter === "none" 
     ? meals 
@@ -201,58 +186,59 @@ export const MealPlanSection = ({
 
   const handleAddNewRecipe = (day: string) => {
     setSelectedDay(day);
+    setEditingMeal(null);
     setShowAddRecipe(true);
   };
 
-  const form = useForm({
-    defaultValues: {
-      title: "",
-      recipeUrl: "",
-      ingredients: "",
-      dietaryPreferences: ["none"]
-    }
-  });
-
-  // Function to handle recipe URL change and auto-fetch ingredients
-  const handleRecipeUrlChange = async (url: string) => {
-    if (!url || url.trim() === "") return;
-    
-    try {
-      setIsFetchingIngredients(true);
-      const ingredients = await fetchIngredientsFromUrl(url);
-      form.setValue('ingredients', ingredients.join(', '));
-      
-      toast({
-        title: "Ingredients detected",
-        description: "Recipe ingredients have been automatically added.",
-      });
-    } catch (error) {
-      toast({
-        title: "Error fetching ingredients",
-        description: "Could not automatically detect ingredients.",
-        variant: "destructive"
-      });
-    } finally {
-      setIsFetchingIngredients(false);
-    }
+  const handleEditMeal = (meal: Meal) => {
+    setEditingMeal(meal);
+    setSelectedDay(meal.day);
+    setShowAddRecipe(true);
   };
 
-  const onSubmitNewRecipe = (data) => {
-    const newMeal: Meal = {
-      id: `${selectedDay}-${Date.now()}`,
-      day: selectedDay,
-      title: data.title,
-      recipeUrl: data.recipeUrl,
-      ingredients: data.ingredients.split(',').map(item => item.trim()),
-      dietaryPreferences: Array.isArray(data.dietaryPreferences) 
-        ? data.dietaryPreferences 
-        : [data.dietaryPreferences] as DietaryPreference[],
-      lastUsed: new Date()
-    };
+  const handleAddRecipe = (recipeData: any) => {
+    if (editingMeal) {
+      // Update existing meal
+      const updatedMeal: Meal = {
+        ...editingMeal,
+        title: recipeData.title,
+        recipeUrl: recipeData.recipeUrl,
+        ingredients: recipeData.ingredients,
+        dietaryPreferences: Array.isArray(recipeData.dietaryPreferences) 
+          ? recipeData.dietaryPreferences 
+          : [recipeData.dietaryPreferences] as DietaryPreference[],
+        lastUsed: new Date()
+      };
+      onUpdateMeal(updatedMeal);
+      
+      toast({
+        title: "Meal Updated",
+        description: `${updatedMeal.title} has been updated`,
+      });
+    } else {
+      // Add new meal
+      const newMeal: Meal = {
+        id: `${selectedDay}-${Date.now()}`,
+        day: selectedDay,
+        title: recipeData.title,
+        recipeUrl: recipeData.recipeUrl,
+        ingredients: recipeData.ingredients,
+        dietaryPreferences: Array.isArray(recipeData.dietaryPreferences) 
+          ? recipeData.dietaryPreferences 
+          : [recipeData.dietaryPreferences] as DietaryPreference[],
+        lastUsed: new Date()
+      };
+      
+      onAddMealToDay(newMeal, selectedDay);
+      
+      toast({
+        title: "Meal Added",
+        description: `${newMeal.title} has been added to ${selectedDay}`,
+      });
+    }
     
-    onAddMealToDay(newMeal, selectedDay);
     setShowAddRecipe(false);
-    form.reset();
+    setEditingMeal(null);
   };
 
   return (
@@ -288,6 +274,7 @@ export const MealPlanSection = ({
           <div className="mb-6 flex justify-end">
             <Button onClick={() => {
               setSelectedDay(daysOfWeek.find(day => !getMealsForDay(day).length) || 'Sunday');
+              setEditingMeal(null);
               setShowAddRecipe(true);
             }}>
               <Plus className="mr-1 h-4 w-4" /> Add Recipe
@@ -306,7 +293,7 @@ export const MealPlanSection = ({
                 day={day} 
                 meals={getMealsForDay(day)}
                 onDrop={handleMoveMeal}
-                onEdit={onEditMeal}
+                onEdit={handleEditMeal}
                 onRate={handleOpenRatingDialog}
                 onMove={handleMoveMeal}
                 onAddMeal={handleAddNewRecipe}
@@ -324,123 +311,18 @@ export const MealPlanSection = ({
             />
           )}
 
-          {/* Add Recipe Dialog */}
-          <Dialog open={showAddRecipe} onOpenChange={setShowAddRecipe}>
-            <DialogContent className="sm:max-w-[500px]">
-              <DialogHeader>
-                <DialogTitle>Add Recipe for {selectedDay}</DialogTitle>
-              </DialogHeader>
-              <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmitNewRecipe)} className="space-y-4">
-                  <FormField
-                    control={form.control}
-                    name="title"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Recipe Title</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Enter recipe name" {...field} required />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="recipeUrl"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Recipe URL (optional)</FormLabel>
-                        <FormControl>
-                          <div className="flex gap-2">
-                            <Input 
-                              placeholder="https://cooking.nytimes.com/..." 
-                              type="url"
-                              {...field} 
-                              onChange={(e) => {
-                                field.onChange(e);
-                                // Don't auto-fetch on every keystroke, only when the field loses focus
-                              }}
-                              onBlur={(e) => {
-                                field.onBlur();
-                                if (e.target.value) {
-                                  handleRecipeUrlChange(e.target.value);
-                                }
-                              }}
-                            />
-                            <Button 
-                              type="button" 
-                              variant="outline" 
-                              onClick={() => handleRecipeUrlChange(field.value)}
-                              disabled={isFetchingIngredients || !field.value}
-                            >
-                              {isFetchingIngredients ? (
-                                <Loader2 className="h-4 w-4 mr-1 animate-spin" />
-                              ) : (
-                                "Fetch"
-                              )}
-                            </Button>
-                          </div>
-                        </FormControl>
-                        {isFetchingIngredients && <p className="text-xs text-muted-foreground mt-1">Fetching ingredients...</p>}
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="ingredients"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Ingredients (comma separated)</FormLabel>
-                        <FormControl>
-                          <Input 
-                            placeholder="onions, garlic, tomatoes..." 
-                            {...field} 
-                            required
-                          />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="dietaryPreferences"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Dietary Preferences</FormLabel>
-                        <Select
-                          value={field.value[0] || "none"}
-                          onValueChange={(value) => field.onChange([value])}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select diet" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {dietaryOptions.map((option) => (
-                              <SelectItem key={option.value} value={option.value}>
-                                {option.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <div className="flex justify-end gap-2 pt-2">
-                    <Button variant="outline" type="button" onClick={() => setShowAddRecipe(false)}>
-                      Cancel
-                    </Button>
-                    <Button type="submit">
-                      Add Recipe
-                    </Button>
-                  </div>
-                </form>
-              </Form>
-            </DialogContent>
-          </Dialog>
+          {/* Add/Edit Recipe Dialog */}
+          <AddRecipeDialog
+            isOpen={showAddRecipe}
+            onClose={() => {
+              setShowAddRecipe(false);
+              setEditingMeal(null);
+            }}
+            onAddRecipe={handleAddRecipe}
+            selectedDay={selectedDay}
+            onFetchIngredients={fetchIngredientsFromUrl}
+            editingMeal={editingMeal}
+          />
         </div>
       </section>
     </DndProvider>

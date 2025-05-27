@@ -15,6 +15,7 @@ const Index = () => {
     meals,
     weeklyPlans,
     handleEditMeal,
+    handleUpdateMeal,
     handleRateMeal,
     handleAddMealToDay,
     handleSaveWeeklyPlan,
@@ -23,7 +24,7 @@ const Index = () => {
   } = useMealPlan();
 
   // Get the shopping list items for printing
-  const { groceryItems } = useSimpleShoppingList(meals, []);
+  const { groceryItems, getCurrentItems } = useSimpleShoppingList(meals, []);
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -31,12 +32,17 @@ const Index = () => {
       
       <main className="flex-1">
         <div className="container mx-auto px-4 py-4 flex justify-end">
-          <PrintButton meals={meals} groceryItems={groceryItems} />
+          <PrintButton 
+            meals={meals} 
+            groceryItems={groceryItems} 
+            getCurrentItems={getCurrentItems}
+          />
         </div>
         
         <MealPlanSection 
           meals={meals} 
           onEditMeal={handleEditMeal}
+          onUpdateMeal={handleUpdateMeal}
           onRateMeal={handleRateMeal}
           onAddMealToDay={handleAddMealToDay}
           onResetMealPlan={handleResetMealPlan}

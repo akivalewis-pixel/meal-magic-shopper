@@ -21,7 +21,7 @@ import {
   SelectValue 
 } from "@/components/ui/select";
 import { dietaryOptions } from "@/utils/constants";
-import { DietaryPreference } from "@/types";
+import { DietaryPreference, Meal } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 
 interface AddRecipeDialogProps {
@@ -34,6 +34,7 @@ interface AddRecipeDialogProps {
     ingredients: string[];
     quantities?: Record<string, string>;
   }>;
+  editingMeal?: Meal | null;
 }
 
 export const AddRecipeDialog = ({
@@ -41,7 +42,8 @@ export const AddRecipeDialog = ({
   onClose,
   onAddRecipe,
   selectedDay,
-  onFetchIngredients
+  onFetchIngredients,
+  editingMeal
 }: AddRecipeDialogProps) => {
   const [isFetchingIngredients, setIsFetchingIngredients] = useState(false);
   const { toast } = useToast();
@@ -55,17 +57,28 @@ export const AddRecipeDialog = ({
     }
   });
 
-  // Reset form when dialog opens/closes
+  // Reset form when dialog opens/closes or when editing meal changes
   useEffect(() => {
     if (isOpen) {
-      form.reset({
-        title: "",
-        recipeUrl: "",
-        ingredients: "",
-        dietaryPreferences: ["none"]
-      });
+      if (editingMeal) {
+        // Pre-populate form with existing meal data
+        form.reset({
+          title: editingMeal.title || "",
+          recipeUrl: editingMeal.recipeUrl || "",
+          ingredients: editingMeal.ingredients ? editingMeal.ingredients.join(', ') : "",
+          dietaryPreferences: editingMeal.dietaryPreferences || ["none"]
+        });
+      } else {
+        // Reset to empty form for new meal
+        form.reset({
+          title: "",
+          recipeUrl: "",
+          ingredients: "",
+          dietaryPreferences: ["none"]
+        });
+      }
     }
-  }, [isOpen, form]);
+  }, [isOpen, editingMeal, form]);
 
   // Function to handle recipe URL change and auto-fetch ingredients
   const handleRecipeUrlChange = async (url: string) => {
@@ -75,8 +88,8 @@ export const AddRecipeDialog = ({
       setIsFetchingIngredients(true);
       const recipeData = await onFetchIngredients(url);
       
-      // If a title was extracted, set it
-      if (recipeData.title) {
+      // If a title was extracted and we're not editing an existing meal, set it
+      if (recipeData.title && !editingMeal) {
         form.setValue('title', recipeData.title);
       }
       
@@ -94,7 +107,7 @@ export const AddRecipeDialog = ({
         
         toast({
           title: "Recipe details extracted",
-          description: "Title and ingredients have been automatically added.",
+          description: "Ingredients have been automatically added.",
         });
       } else {
         toast({
@@ -126,9 +139,14 @@ export const AddRecipeDialog = ({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>Add Recipe for {selectedDay}</DialogTitle>
+          <DialogTitle>
+            {editingMeal ? `Edit Recipe for ${selectedDay}` : `Add Recipe for ${selectedDay}`}
+          </DialogTitle>
           <DialogDescription>
-            Enter a recipe URL to automatically extract ingredients, or add them manually. Ingredients are optional.
+            {editingMeal 
+              ? "Update the recipe details below."
+              : "Enter a recipe URL to automatically extract ingredients, or add them manually. Ingredients are optional."
+            }
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -225,7 +243,7 @@ export const AddRecipeDialog = ({
                 Cancel
               </Button>
               <Button type="submit">
-                Add Recipe
+                {editingMeal ? "Update Recipe" : "Add Recipe"}
               </Button>
             </DialogFooter>
           </form>

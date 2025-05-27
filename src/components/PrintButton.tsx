@@ -21,6 +21,10 @@ export const PrintButton = ({ meals, groceryItems, getCurrentItems }: PrintButto
       return;
     }
     
+    // Debug: Log the state before filtering
+    console.log("PrintButton: groceryItems prop length:", groceryItems.length);
+    console.log("PrintButton: getCurrentItems function exists:", !!getCurrentItems);
+    
     // ALWAYS use getCurrentItems if available, never fall back to groceryItems prop
     const currentItems = getCurrentItems ? getCurrentItems() : groceryItems.filter(item => !item.checked);
     
