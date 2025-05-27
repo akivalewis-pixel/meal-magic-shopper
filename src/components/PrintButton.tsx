@@ -20,27 +20,20 @@ export const PrintButton = ({ meals, groceryItems }: PrintButtonProps) => {
       return;
     }
     
-    // Debug logging - let's see exactly what we're receiving
-    console.log("PrintButton: DEBUG - Total groceryItems received:", groceryItems.length);
-    console.log("PrintButton: DEBUG - All received items:", groceryItems.map(item => ({ 
-      id: item.id,
-      name: item.name, 
-      checked: item.checked,
-      status: (item as any).status,
-      source: (item as any).source
-    })));
-    
-    // Apply aggressive filtering - only items that are explicitly NOT checked
+    // Get the most current active items (force fresh data)
     const activeItems = groceryItems.filter(item => {
-      const isActive = !item.checked && item.checked !== true;
-      console.log(`PrintButton: DEBUG - Item "${item.name}" - checked: ${item.checked}, typeof: ${typeof item.checked}, isActive: ${isActive}`);
+      const isActive = !item.checked;
+      console.log(`PrintButton: Item "${item.name}" - checked: ${item.checked}, store: ${item.store}, quantity: ${item.quantity}, category: ${item.category}, isActive: ${isActive}`);
       return isActive;
     });
     
-    console.log("PrintButton: DEBUG - Active items for printing:", activeItems.length);
-    console.log("PrintButton: DEBUG - Active item details:", activeItems.map(item => ({ 
+    console.log("PrintButton: Active items for printing:", activeItems.length);
+    console.log("PrintButton: Active item details:", activeItems.map(item => ({ 
       id: item.id,
       name: item.name, 
+      quantity: item.quantity,
+      store: item.store,
+      category: item.category,
       checked: item.checked 
     })));
 
@@ -198,8 +191,9 @@ export const PrintButton = ({ meals, groceryItems }: PrintButtonProps) => {
       printWindow.document.write('<p>No active items to print!</p>');
     } else {
       // Sort and group active items by store and category for printing
+      // Use the most current data with all user modifications
       const sortedItems = [...activeItems].sort((a, b) => {
-        // First sort by store
+        // First sort by store (use current store assignments)
         const storeA = a.store || "Unassigned";
         const storeB = b.store || "Unassigned";
         
@@ -209,11 +203,11 @@ export const PrintButton = ({ meals, groceryItems }: PrintButtonProps) => {
           return storeA.localeCompare(storeB);
         }
         
-        // If same store, sort by category
+        // If same store, sort by category (use current category assignments)
         return a.category.localeCompare(b.category);
       });
 
-      // Group items by store and then by category
+      // Group items by store and then by category (using current assignments)
       const groupedByStore: Record<string, Record<string, GroceryItem[]>> = {};
       
       sortedItems.forEach(item => {
@@ -247,11 +241,15 @@ export const PrintButton = ({ meals, groceryItems }: PrintButtonProps) => {
         `);
         
         Object.entries(categories).forEach(([category, items]) => {
+          // Capitalize category name for display
+          const displayCategory = category.charAt(0).toUpperCase() + category.slice(1);
+          
           printWindow.document.write(`
-            <div class="category-title">${category}</div>
+            <div class="category-title">${displayCategory}</div>
           `);
           
           items.forEach(item => {
+            // Use the current name and quantity (with all user modifications)
             printWindow.document.write(`
               <div class="item">
                 <span>${item.name}</span>

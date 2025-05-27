@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef, useCallback } from "react";
 import { GroceryItem, Meal } from "@/types";
 import { generateShoppingList } from "@/utils/groceryUtils";
@@ -45,7 +44,7 @@ export function useSimplifiedShoppingList(meals: Meal[], pantryItems: string[] =
     }
   }, []);
 
-  // Save to localStorage
+  // Save to localStorage - enhanced to save immediately
   const saveToStorage = useCallback(() => {
     if (!isInitialized.current) return;
     
@@ -58,6 +57,8 @@ export function useSimplifiedShoppingList(meals: Meal[], pantryItems: string[] =
         JSON.stringify(Array.from(storeAssignments.current.entries())));
       localStorage.setItem('shoppingList_removedIds', 
         JSON.stringify(Array.from(removedItemIds.current)));
+      
+      console.log('SimplifiedShoppingList: Data saved to localStorage');
     } catch (error) {
       console.warn('Failed to save to localStorage:', error);
     }
@@ -105,10 +106,12 @@ export function useSimplifiedShoppingList(meals: Meal[], pantryItems: string[] =
   // Actions
   const updateItem = useCallback((updatedItem: GroceryItem) => {
     console.log("SimplifiedShoppingList: Updating item", updatedItem.name, "checked:", updatedItem.checked);
+    console.log("SimplifiedShoppingList: Item details - store:", updatedItem.store, "quantity:", updatedItem.quantity, "category:", updatedItem.category);
     
-    // Update store assignment
+    // Update store assignment for persistence
     if (updatedItem.store && updatedItem.store !== "Unassigned") {
       storeAssignments.current.set(updatedItem.name.toLowerCase(), updatedItem.store);
+      console.log("SimplifiedShoppingList: Store assignment saved for", updatedItem.name, "->", updatedItem.store);
     }
 
     // If item is being checked, use toggleItem instead
@@ -118,15 +121,29 @@ export function useSimplifiedShoppingList(meals: Meal[], pantryItems: string[] =
       return;
     }
 
-    // Regular update for unchecked items only
-    setGroceryItems(prev => 
-      prev.map(item => 
+    // Regular update for unchecked items - ensure all properties are updated
+    setGroceryItems(prev => {
+      const updated = prev.map(item => 
         item.id === updatedItem.id 
-          ? { ...updatedItem, __updateTimestamp: Date.now() }
+          ? { 
+              ...updatedItem, 
+              __updateTimestamp: Date.now(),
+              // Ensure all user modifications are preserved
+              name: updatedItem.name,
+              quantity: updatedItem.quantity,
+              store: updatedItem.store || "Unassigned",
+              category: updatedItem.category
+            }
           : item
-      ).filter(item => !item.checked && !removedItemIds.current.has(item.id))
-    );
-  }, []);
+      ).filter(item => !item.checked && !removedItemIds.current.has(item.id));
+      
+      console.log("SimplifiedShoppingList: Updated items count:", updated.length);
+      return updated;
+    });
+
+    // Force immediate save to localStorage
+    setTimeout(() => saveToStorage(), 0);
+  }, [saveToStorage]);
 
   const toggleItem = useCallback((id: string) => {
     console.log("SimplifiedShoppingList: Toggling item with ID:", id);
