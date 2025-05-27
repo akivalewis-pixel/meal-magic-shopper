@@ -8,7 +8,7 @@ import { daysOfWeek } from "@/utils/constants";
 interface PrintButtonProps {
   meals: Meal[];
   groceryItems: GroceryItem[];
-  getCurrentItems?: () => GroceryItem[]; // New callback to get current state
+  getCurrentItems?: () => GroceryItem[];
 }
 
 export const PrintButton = ({ meals, groceryItems, getCurrentItems }: PrintButtonProps) => {
@@ -21,15 +21,10 @@ export const PrintButton = ({ meals, groceryItems, getCurrentItems }: PrintButto
       return;
     }
     
-    // Debug: Log the state before filtering
-    console.log("PrintButton: groceryItems prop length:", groceryItems.length);
-    console.log("PrintButton: getCurrentItems function exists:", !!getCurrentItems);
+    // ALWAYS use getCurrentItems if available to get the most current state
+    const currentItems = getCurrentItems ? getCurrentItems() : groceryItems;
     
-    // ALWAYS use getCurrentItems if available, never fall back to groceryItems prop
-    const currentItems = getCurrentItems ? getCurrentItems() : groceryItems.filter(item => !item.checked);
-    
-    console.log("PrintButton: Using getCurrentItems callback:", !!getCurrentItems);
-    console.log("PrintButton: Total current items:", currentItems.length);
+    console.log("PrintButton: Total current items from getCurrentItems:", currentItems.length);
     console.log("PrintButton: Current items details:", currentItems.map(item => ({ 
       id: item.id,
       name: item.name, 
