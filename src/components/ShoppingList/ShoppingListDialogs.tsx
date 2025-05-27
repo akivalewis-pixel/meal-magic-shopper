@@ -13,6 +13,7 @@ interface ShoppingListDialogsProps {
   onSaveStores: (stores: string[]) => void;
   onAddItem: (item: GroceryItem) => void;
   archivedItems: GroceryItem[];
+  getCurrentItems: () => GroceryItem[];
 }
 
 export const ShoppingListDialogs = ({
@@ -23,7 +24,8 @@ export const ShoppingListDialogs = ({
   availableStores,
   onSaveStores,
   onAddItem,
-  archivedItems
+  archivedItems,
+  getCurrentItems
 }: ShoppingListDialogsProps) => {
   return (
     <>
