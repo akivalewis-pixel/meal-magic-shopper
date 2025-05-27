@@ -8,9 +8,10 @@ import { daysOfWeek } from "@/utils/constants";
 interface PrintButtonProps {
   meals: Meal[];
   groceryItems: GroceryItem[];
+  getCurrentItems?: () => GroceryItem[]; // New callback to get current state
 }
 
-export const PrintButton = ({ meals, groceryItems }: PrintButtonProps) => {
+export const PrintButton = ({ meals, groceryItems, getCurrentItems }: PrintButtonProps) => {
   const handlePrint = () => {
     // Create a new window for printing
     const printWindow = window.open('', '_blank');
@@ -20,8 +21,11 @@ export const PrintButton = ({ meals, groceryItems }: PrintButtonProps) => {
       return;
     }
     
+    // Get the most current items - use callback if available, otherwise fallback to prop
+    const currentItems = getCurrentItems ? getCurrentItems() : groceryItems;
+    
     // Get the most current active items (force fresh data)
-    const activeItems = groceryItems.filter(item => {
+    const activeItems = currentItems.filter(item => {
       const isActive = !item.checked;
       console.log(`PrintButton: Item "${item.name}" - checked: ${item.checked}, store: ${item.store}, quantity: ${item.quantity}, category: ${item.category}, isActive: ${isActive}`);
       return isActive;
