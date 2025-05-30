@@ -1,4 +1,3 @@
-
 import { useToast } from "@/hooks/use-toast";
 import { Meal, WeeklyMealPlan } from "@/types";
 import { getCurrentWeekStart } from "@/utils";
@@ -70,14 +69,21 @@ export function useMealPlanActions({ meals, weeklyPlans, setMeals, setWeeklyPlan
 
   const handleLoadWeeklyPlan = (plan: WeeklyMealPlan) => {
     // Replace current meals with the selected plan
-    setMeals(plan.meals.map(meal => ({
+    const updatedMeals = plan.meals.map(meal => ({
       ...meal,
       lastUsed: new Date() // Update the last used date
-    })));
+    }));
+    
+    setMeals(updatedMeals);
+    
+    // Force a shopping list regeneration by triggering a state change
+    // The shopping list will automatically update based on the new meals
+    console.log("Loading meal plan with", updatedMeals.length, "meals");
+    console.log("Meals being loaded:", updatedMeals.map(m => ({ title: m.title, day: m.day, ingredients: m.ingredients.length })));
     
     toast({
       title: "Weekly Plan Loaded",
-      description: `"${plan.name}" has been loaded.`,
+      description: `"${plan.name}" has been loaded with updated shopping list.`,
     });
   };
 
