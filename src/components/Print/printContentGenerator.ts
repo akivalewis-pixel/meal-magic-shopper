@@ -41,16 +41,22 @@ export const generateMealPlanContent = (meals: Meal[]): string => {
 };
 
 export const groupItemsByStoreAndCategory = (items: GroceryItem[]): GroupedItems => {
+  console.log("PrintContentGenerator: Grouping", items.length, "items for print");
+  
+  // Sort items first by store, then by category
   const sortedItems = [...items].sort((a, b) => {
     const storeA = a.store || "Unassigned";
     const storeB = b.store || "Unassigned";
     
+    // First sort by store
     if (storeA !== storeB) {
+      // Put "Unassigned" at the end
       if (storeA === "Unassigned") return 1;
       if (storeB === "Unassigned") return -1;
       return storeA.localeCompare(storeB);
     }
     
+    // Then sort by category within the same store
     return a.category.localeCompare(b.category);
   });
 
@@ -71,6 +77,14 @@ export const groupItemsByStoreAndCategory = (items: GroceryItem[]): GroupedItems
     groupedByStore[store][category].push(item);
   });
 
+  console.log("PrintContentGenerator: Grouped items by store:", 
+    Object.entries(groupedByStore).map(([store, categories]) => ({
+      store,
+      categoryCount: Object.keys(categories).length,
+      totalItems: Object.values(categories).flat().length
+    }))
+  );
+
   return groupedByStore;
 };
 
@@ -79,6 +93,8 @@ export const generateShoppingListContent = (items: GroceryItem[]): string => {
     return '<p>No active items to print!</p>';
   }
 
+  console.log("PrintContentGenerator: Generating content for", items.length, "items");
+  
   const groupedByStore = groupItemsByStoreAndCategory(items);
   const storeNames = Object.keys(groupedByStore);
   
@@ -117,10 +133,14 @@ export const generateShoppingListContent = (items: GroceryItem[]): string => {
   });
   
   content += '</div>';
+  
+  console.log("PrintContentGenerator: Generated content for stores:", storeNames);
   return content;
 };
 
 export const generateFullPrintContent = (meals: Meal[], items: GroceryItem[]): string => {
+  console.log("PrintContentGenerator: Generating full print content with", meals.length, "meals and", items.length, "items");
+  
   const mealPlanContent = generateMealPlanContent(meals);
   const shoppingListContent = generateShoppingListContent(items);
   

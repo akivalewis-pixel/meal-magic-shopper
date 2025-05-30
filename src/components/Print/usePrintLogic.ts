@@ -14,12 +14,15 @@ export const usePrintLogic = () => {
     let currentItems: GroceryItem[] = [];
     
     if (getCurrentItems) {
+      // Get the absolute latest state
       currentItems = getCurrentItems();
       console.log("PrintButton: Got", currentItems.length, "total items from getCurrentItems");
       
+      // Filter out checked items only
       currentItems = currentItems.filter(item => !item.checked);
       console.log("PrintButton: After filtering checked items:", currentItems.length, "active items");
     } else {
+      // Fallback to groceryItems if getCurrentItems not available
       currentItems = groceryItems.filter(item => !item.checked);
       console.log("PrintButton: Using groceryItems fallback, found", currentItems.length, "active items");
     }
