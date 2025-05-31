@@ -2,8 +2,16 @@
 import { useMealPlanState } from "./useMealPlan/useMealPlanState";
 import { useMealPlanActions } from "./useMealPlan/useMealPlanActions";
 import { useMealPlanDayActions } from "./useMealPlan/useMealPlanDayActions";
+import { GroceryItem } from "@/types";
 
-export function useMealPlan() {
+interface UseMealPlanProps {
+  getCurrentItems?: () => GroceryItem[];
+  getAvailableStores?: () => string[];
+  resetShoppingList?: () => void;
+  loadShoppingList?: (items: GroceryItem[], stores: string[]) => void;
+}
+
+export function useMealPlan(shoppingListProps?: UseMealPlanProps) {
   const {
     meals,
     weeklyPlans,
@@ -11,7 +19,14 @@ export function useMealPlan() {
     setWeeklyPlans
   } = useMealPlanState();
 
-  const actions = useMealPlanActions({ meals, weeklyPlans, setMeals, setWeeklyPlans });
+  const actions = useMealPlanActions({ 
+    meals, 
+    weeklyPlans, 
+    setMeals, 
+    setWeeklyPlans,
+    ...shoppingListProps
+  });
+  
   const dayActions = useMealPlanDayActions({ meals, setMeals });
 
   return {

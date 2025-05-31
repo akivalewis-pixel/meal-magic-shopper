@@ -1,3 +1,4 @@
+
 export type DietaryPreference = 'vegetarian' | 'vegan' | 'kosher' | 'halal' | 'gluten-free' | 'dairy-free' | 'nut-free' | 'none';
 
 export type GroceryCategory = 
@@ -56,4 +57,6 @@ export interface WeeklyMealPlan {
   weekStartDate: string; // ISO date string for the start of the week
   name: string; // Optional name/label for the week
   meals: Meal[];
+  shoppingList?: GroceryItem[]; // Save the shopping list with the meal plan
+  stores?: string[]; // Save the available stores
 }

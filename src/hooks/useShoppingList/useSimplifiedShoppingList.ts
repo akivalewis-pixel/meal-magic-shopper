@@ -1,6 +1,6 @@
 
 import { useEffect } from "react";
-import { Meal } from "@/types";
+import { Meal, GroceryItem } from "@/types";
 import { useShoppingListStorage } from "./useShoppingListStorage";
 import { useShoppingListItems } from "./useShoppingListItems";
 import { useShoppingListStores } from "./useShoppingListStores";
@@ -72,6 +72,29 @@ export function useSimplifiedShoppingList(meals: Meal[], pantryItems: string[] =
     return currentItems;
   };
 
+  // Function to get available stores
+  const getAvailableStores = () => {
+    console.log("getAvailableStores: Returning", availableStores.length, "stores");
+    return availableStores;
+  };
+
+  // Function to load shopping list data (for meal plan loading)
+  const loadShoppingList = (items: GroceryItem[], stores: string[]) => {
+    console.log("loadShoppingList: Loading", items.length, "items and", stores.length, "stores");
+    
+    // Update stores first
+    updateStores(stores);
+    
+    // Clear removed items and update grocery items
+    removedItemIds.current.clear();
+    setGroceryItems(items);
+    
+    // Save immediately
+    saveToStorage(items, archivedItems, stores);
+    
+    console.log("loadShoppingList: Shopping list loaded successfully");
+  };
+
   console.log("SimplifiedShoppingList: Returning", activeGroceryItems.length, "active items");
 
   return {
@@ -84,6 +107,8 @@ export function useSimplifiedShoppingList(meals: Meal[], pantryItems: string[] =
     addItem,
     updateStores,
     resetList,
-    getCurrentItems // Function to get current state for printing
+    getCurrentItems, // Function to get current state for printing
+    getAvailableStores, // Function to get available stores
+    loadShoppingList // Function to load shopping list data
   };
 }

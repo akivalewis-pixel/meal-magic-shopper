@@ -1,5 +1,5 @@
 import { useToast } from "@/hooks/use-toast";
-import { Meal, WeeklyMealPlan } from "@/types";
+import { Meal, WeeklyMealPlan, GroceryItem } from "@/types";
 import { getCurrentWeekStart } from "@/utils";
 import { extractIngredientsFromRecipeUrl } from "@/utils/recipeUtils";
 
@@ -8,9 +8,22 @@ interface UseMealPlanActionsProps {
   weeklyPlans: WeeklyMealPlan[];
   setMeals: React.Dispatch<React.SetStateAction<Meal[]>>;
   setWeeklyPlans: React.Dispatch<React.SetStateAction<WeeklyMealPlan[]>>;
+  getCurrentItems?: () => GroceryItem[];
+  getAvailableStores?: () => string[];
+  resetShoppingList?: () => void;
+  loadShoppingList?: (items: GroceryItem[], stores: string[]) => void;
 }
 
-export function useMealPlanActions({ meals, weeklyPlans, setMeals, setWeeklyPlans }: UseMealPlanActionsProps) {
+export function useMealPlanActions({ 
+  meals, 
+  weeklyPlans, 
+  setMeals, 
+  setWeeklyPlans,
+  getCurrentItems,
+  getAvailableStores,
+  resetShoppingList,
+  loadShoppingList
+}: UseMealPlanActionsProps) {
   const { toast } = useToast();
 
   const handleEditMeal = (meal: Meal) => {
@@ -51,23 +64,47 @@ export function useMealPlanActions({ meals, weeklyPlans, setMeals, setWeeklyPlan
   };
 
   const handleSaveWeeklyPlan = (name: string) => {
-    // Create a new weekly plan with the current meals
+    // Get current shopping list and stores if available
+    const currentShoppingList = getCurrentItems ? getCurrentItems() : [];
+    const currentStores = getAvailableStores ? getAvailableStores() : [];
+    
+    console.log("Saving meal plan with", currentShoppingList.length, "shopping list items");
+    console.log("Shopping list items:", currentShoppingList.map(item => ({ 
+      name: item.name, 
+      store: item.store, 
+      category: item.category,
+      checked: item.checked 
+    })));
+    
+    // Create a new weekly plan with the current meals and shopping list
     const newPlan: WeeklyMealPlan = {
       id: Date.now().toString(),
       name,
       weekStartDate: getCurrentWeekStart(),
-      meals: [...meals]
+      meals: [...meals],
+      shoppingList: currentShoppingList,
+      stores: currentStores
     };
     
     setWeeklyPlans([...weeklyPlans, newPlan]);
     
     toast({
       title: "Weekly Plan Saved",
-      description: `"${name}" has been saved for future reference.`,
+      description: `"${name}" has been saved with ${currentShoppingList.length} shopping list items.`,
     });
   };
 
   const handleLoadWeeklyPlan = (plan: WeeklyMealPlan) => {
+    console.log("Loading meal plan:", plan.name);
+    console.log("Plan has", plan.meals.length, "meals");
+    console.log("Plan has", plan.shoppingList?.length || 0, "shopping list items");
+    
+    // First reset the current shopping list
+    if (resetShoppingList) {
+      console.log("Resetting current shopping list");
+      resetShoppingList();
+    }
+    
     // Replace current meals with the selected plan
     const updatedMeals = plan.meals.map(meal => ({
       ...meal,
@@ -76,14 +113,16 @@ export function useMealPlanActions({ meals, weeklyPlans, setMeals, setWeeklyPlan
     
     setMeals(updatedMeals);
     
-    // Force a shopping list regeneration by triggering a state change
-    // The shopping list will automatically update based on the new meals
-    console.log("Loading meal plan with", updatedMeals.length, "meals");
-    console.log("Meals being loaded:", updatedMeals.map(m => ({ title: m.title, day: m.day, ingredients: m.ingredients.length })));
+    // Load the saved shopping list if it exists
+    if (plan.shoppingList && loadShoppingList) {
+      console.log("Loading saved shopping list with", plan.shoppingList.length, "items");
+      const savedStores = plan.stores || ["Unassigned", "Supermarket", "Farmers Market", "Specialty Store"];
+      loadShoppingList(plan.shoppingList, savedStores);
+    }
     
     toast({
       title: "Weekly Plan Loaded",
-      description: `"${plan.name}" has been loaded with updated shopping list.`,
+      description: `"${plan.name}" has been loaded with ${plan.shoppingList?.length || 0} shopping list items.`,
     });
   };
 

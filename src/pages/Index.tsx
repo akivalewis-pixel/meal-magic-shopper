@@ -10,7 +10,17 @@ import { useMealPlan } from "@/hooks/useMealPlan";
 import { useSimpleShoppingList } from "@/hooks/useShoppingList/useSimpleShoppingList";
 
 const Index = () => {
-  // Custom hooks for state management
+  // Get the shopping list items first
+  const shoppingListHook = useSimpleShoppingList([], []); // We'll update meals later
+  const { 
+    groceryItems, 
+    getCurrentItems, 
+    getAvailableStores, 
+    resetList, 
+    loadShoppingList 
+  } = shoppingListHook;
+
+  // Custom hooks for state management with shopping list integration
   const {
     meals,
     weeklyPlans,
@@ -20,10 +30,15 @@ const Index = () => {
     handleSaveWeeklyPlan,
     handleLoadWeeklyPlan,
     handleResetMealPlan
-  } = useMealPlan();
+  } = useMealPlan({
+    getCurrentItems,
+    getAvailableStores,
+    resetShoppingList: resetList,
+    loadShoppingList
+  });
 
-  // Get the shopping list items for printing
-  const { groceryItems, getCurrentItems } = useSimpleShoppingList(meals, []);
+  // Update the shopping list hook with the current meals
+  const shoppingListWithMeals = useSimpleShoppingList(meals, []);
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -33,8 +48,8 @@ const Index = () => {
         <div className="container mx-auto px-4 py-4 flex justify-end">
           <PrintButton 
             meals={meals} 
-            groceryItems={groceryItems} 
-            getCurrentItems={getCurrentItems}
+            groceryItems={shoppingListWithMeals.groceryItems} 
+            getCurrentItems={shoppingListWithMeals.getCurrentItems}
           />
         </div>
         
