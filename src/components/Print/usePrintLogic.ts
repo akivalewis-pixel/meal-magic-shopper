@@ -2,6 +2,7 @@
 import { useCallback } from "react";
 import { Meal, GroceryItem } from "@/types";
 import { generateFullPrintContent } from "./printContentGenerator";
+import { shoppingListStateRef } from "@/hooks/useShoppingList/useShoppingListSync";
 
 export const usePrintLogic = () => {
   const handlePrint = useCallback((
@@ -13,8 +14,12 @@ export const usePrintLogic = () => {
     
     let currentItems: GroceryItem[] = [];
     
-    if (getCurrentItems) {
-      // Get the absolute latest state
+    // Try to get from global state reference first (most reliable)
+    if (shoppingListStateRef.currentItems.length > 0) {
+      currentItems = shoppingListStateRef.currentItems.filter(item => !item.checked);
+      console.log("PrintButton: Using global state reference with", currentItems.length, "items");
+    } else if (getCurrentItems) {
+      // Fallback to getCurrentItems function
       currentItems = getCurrentItems();
       console.log("PrintButton: Got", currentItems.length, "total items from getCurrentItems");
       
@@ -22,7 +27,7 @@ export const usePrintLogic = () => {
       currentItems = currentItems.filter(item => !item.checked);
       console.log("PrintButton: After filtering checked items:", currentItems.length, "active items");
     } else {
-      // Fallback to groceryItems if getCurrentItems not available
+      // Final fallback to groceryItems if getCurrentItems not available
       currentItems = groceryItems.filter(item => !item.checked);
       console.log("PrintButton: Using groceryItems fallback, found", currentItems.length, "active items");
     }

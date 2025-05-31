@@ -1,10 +1,11 @@
 
-import React from "react";
+import React, { useEffect } from "react";
 import { useSimplifiedShoppingList } from "@/hooks/useShoppingList/useSimplifiedShoppingList";
 import { useUndo } from "@/hooks/useUndo";
 import { useShoppingListState } from "./ShoppingListState";
 import { ShoppingListLayout } from "./ShoppingListLayout";
 import { GroceryItem } from "@/types";
+import { shoppingListStateRef } from "@/hooks/useShoppingList/useShoppingListSync";
 
 interface ShoppingListContainerProps {
   meals: any[];
@@ -27,6 +28,13 @@ export const ShoppingListContainer = ({ meals, pantryItems = [] }: ShoppingListC
     resetList,
     getCurrentItems
   } = useSimplifiedShoppingList(meals, pantryItems);
+
+  // Ensure global state is updated whenever items change
+  useEffect(() => {
+    console.log("ShoppingListContainer: Updating global state with", groceryItems.length, "items");
+    shoppingListStateRef.currentItems = [...groceryItems];
+    shoppingListStateRef.availableStores = [...availableStores];
+  }, [groceryItems, availableStores]);
 
   const { addAction, undo, redo, canUndo, canRedo } = useUndo();
 

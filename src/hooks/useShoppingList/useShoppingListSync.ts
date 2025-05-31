@@ -1,58 +1,41 @@
 
+import { useCallback, useRef } from "react";
 import { GroceryItem } from "@/types";
-import { useShoppingListSyncState } from "./useShoppingListSyncState";
-import { useShoppingListSyncEffects } from "./useShoppingListSyncEffects";
-import { useShoppingListSyncHandlers } from "./useShoppingListSyncHandlers";
 
-interface UseShoppingListSyncProps {
-  combinedItems: GroceryItem[];
-  mealItems: GroceryItem[];
-  setAllItems: React.Dispatch<React.SetStateAction<GroceryItem[]>>;
-  setItemOverrides: React.Dispatch<React.SetStateAction<Map<string, Partial<GroceryItem>>>>;
-  setManualItems: React.Dispatch<React.SetStateAction<GroceryItem[]>>;
-  setAvailableStores: React.Dispatch<React.SetStateAction<string[]>>;
-  setArchivedItems: React.Dispatch<React.SetStateAction<GroceryItem[]>>;
-  loadFromStorage: () => any;
-  loadOverrides: (items: GroceryItem[]) => void;
-  saveToLocalStorage: () => void;
-  isProcessing?: () => boolean;
-}
+// Create a global state reference that can be accessed by the print function
+export const shoppingListStateRef = {
+  currentItems: [] as GroceryItem[],
+  availableStores: [] as string[]
+};
 
-export function useShoppingListSync({
-  combinedItems,
-  mealItems,
-  setAllItems,
-  setItemOverrides,
-  setManualItems,
-  setAvailableStores,
-  setArchivedItems,
-  loadFromStorage,
-  loadOverrides,
-  saveToLocalStorage,
-  isProcessing
-}: UseShoppingListSyncProps) {
-  const { isInitializedRef } = useShoppingListSyncState();
-
-  useShoppingListSyncEffects({
-    isInitializedRef,
-    loadFromStorage,
-    setAvailableStores,
-    setArchivedItems,
-    setManualItems,
-    loadOverrides,
-    combinedItems,
-    setAllItems,
-    isProcessing
+export function useShoppingListSync() {
+  const syncStateRef = useRef<{
+    items: GroceryItem[];
+    stores: string[];
+  }>({
+    items: [],
+    stores: []
   });
 
-  const { createSetAllItemsHandler } = useShoppingListSyncHandlers({
-    combinedItems,
-    mealItems,
-    setManualItems,
-    setItemOverrides,
-    saveToLocalStorage,
-    isProcessing
-  });
+  // Function to update the global state reference
+  const updateGlobalState = useCallback((items: GroceryItem[], stores: string[]) => {
+    console.log("ShoppingListSync: Updating global state with", items.length, "items");
+    shoppingListStateRef.currentItems = [...items];
+    shoppingListStateRef.availableStores = [...stores];
+    syncStateRef.current = { items: [...items], stores: [...stores] };
+  }, []);
 
-  return { isInitializedRef, createSetAllItemsHandler };
+  // Function to get the most current state
+  const getCurrentState = useCallback(() => {
+    console.log("ShoppingListSync: Getting current state with", syncStateRef.current.items.length, "items");
+    return {
+      items: [...syncStateRef.current.items],
+      stores: [...syncStateRef.current.stores]
+    };
+  }, []);
+
+  return {
+    updateGlobalState,
+    getCurrentState
+  };
 }
