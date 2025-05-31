@@ -1,6 +1,5 @@
 
 import React, { useEffect } from "react";
-import { useSimplifiedShoppingList } from "@/hooks/useShoppingList/useSimplifiedShoppingList";
 import { useUndo } from "@/hooks/useUndo";
 import { useShoppingListState } from "./ShoppingListState";
 import { ShoppingListLayout } from "./ShoppingListLayout";
@@ -10,24 +9,34 @@ import { shoppingListStateRef } from "@/hooks/useShoppingList/useShoppingListSyn
 interface ShoppingListContainerProps {
   meals: any[];
   pantryItems?: string[];
+  // Accept shopping list data from parent instead of creating our own
+  groceryItems: GroceryItem[];
+  archivedItems: GroceryItem[];
+  availableStores: string[];
+  updateItem: (item: GroceryItem) => void;
+  toggleItem: (id: string) => void;
+  archiveItem: (id: string) => void;
+  addItem: (item: Omit<GroceryItem, 'id' | 'checked'>) => void;
+  updateStores: (stores: string[]) => void;
+  resetList: () => void;
+  getCurrentItems: () => GroceryItem[];
 }
 
-export const ShoppingListContainer = ({ meals, pantryItems = [] }: ShoppingListContainerProps) => {
+export const ShoppingListContainer = ({ 
+  meals, 
+  pantryItems = [],
+  groceryItems,
+  archivedItems,
+  availableStores,
+  updateItem,
+  toggleItem,
+  archiveItem,
+  addItem,
+  updateStores,
+  resetList,
+  getCurrentItems
+}: ShoppingListContainerProps) => {
   const { state, actions } = useShoppingListState();
-  
-  // Use the same shopping list hook that's used in Index.tsx
-  const {
-    groceryItems,
-    archivedItems,
-    availableStores,
-    updateItem,
-    toggleItem,
-    archiveItem,
-    addItem,
-    updateStores,
-    resetList,
-    getCurrentItems
-  } = useSimplifiedShoppingList(meals, pantryItems);
 
   // Ensure global state is updated whenever items change
   useEffect(() => {

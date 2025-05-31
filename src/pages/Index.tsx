@@ -26,17 +26,20 @@ const Index = () => {
   const shoppingListHook = useSimpleShoppingList(meals, []);
   const { 
     groceryItems, 
+    archivedItems,
+    availableStores,
+    updateItem,
+    toggleItem,
+    archiveItem,
+    addItem,
+    updateStores,
+    resetList,
     getCurrentItems, 
     getAvailableStores, 
-    resetList, 
     loadShoppingList 
   } = shoppingListHook;
 
-  // Update meal plan hook with shopping list functions
-  React.useEffect(() => {
-    // This ensures the meal plan hook has access to the shopping list functions
-    // We can't pass these during initialization due to hook order dependencies
-  }, [getCurrentItems, getAvailableStores, resetList, loadShoppingList]);
+  console.log("Index.tsx: Shopping list has", groceryItems.length, "items");
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -62,6 +65,16 @@ const Index = () => {
         <ShoppingListContainer 
           meals={meals}
           pantryItems={[]}
+          groceryItems={groceryItems}
+          archivedItems={archivedItems}
+          availableStores={availableStores}
+          updateItem={updateItem}
+          toggleItem={toggleItem}
+          archiveItem={archiveItem}
+          addItem={addItem}
+          updateStores={updateStores}
+          resetList={resetList}
+          getCurrentItems={getCurrentItems}
         />
         
         <WeeklyMealPlansSection
