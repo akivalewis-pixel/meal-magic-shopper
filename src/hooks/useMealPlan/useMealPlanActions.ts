@@ -127,6 +127,18 @@ export function useMealPlanActions({
     });
   };
 
+  const handleDeleteWeeklyPlan = (planId: string) => {
+    const planToDelete = weeklyPlans.find(plan => plan.id === planId);
+    if (!planToDelete) return;
+
+    setWeeklyPlans(weeklyPlans.filter(plan => plan.id !== planId));
+    
+    toast({
+      title: "Weekly Plan Deleted",
+      description: `"${planToDelete.name}" has been deleted.`,
+    });
+  };
+
   // New function to reset the meal plan
   const handleResetMealPlan = () => {
     setMeals([]);
@@ -143,6 +155,7 @@ export function useMealPlanActions({
     handleRateMeal,
     handleSaveWeeklyPlan,
     handleLoadWeeklyPlan,
+    handleDeleteWeeklyPlan,
     handleResetMealPlan
   };
 }

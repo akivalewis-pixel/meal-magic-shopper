@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { 
   WeeklyMealPlan, 
@@ -12,6 +11,16 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -25,13 +34,14 @@ import {
   countMealUsage 
 } from "@/utils/mealUtils";
 import { findLastUsedDate } from "@/utils/dateUtils";
-import { Search, Calendar } from "lucide-react";
+import { Search, Calendar, Trash2 } from "lucide-react";
 
 interface WeeklyMealPlansSectionProps {
   weeklyPlans: WeeklyMealPlan[];
   currentMeals: Meal[];
   onSaveCurrentPlan: (name: string) => void;
   onLoadPlan: (plan: WeeklyMealPlan) => void;
+  onDeletePlan: (planId: string) => void;
 }
 
 export const WeeklyMealPlansSection = ({
@@ -39,8 +49,11 @@ export const WeeklyMealPlansSection = ({
   currentMeals,
   onSaveCurrentPlan,
   onLoadPlan,
+  onDeletePlan,
 }: WeeklyMealPlansSectionProps) => {
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [planToDelete, setPlanToDelete] = useState<WeeklyMealPlan | null>(null);
   const [planName, setPlanName] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [searchType, setSearchType] = useState<"week" | "meal">("week");
@@ -80,6 +93,23 @@ export const WeeklyMealPlansSection = ({
     if (selectedPlan) {
       onLoadPlan(selectedPlan);
       setSelectedPlan(null);
+    }
+  };
+
+  const handleDeleteClick = (plan: WeeklyMealPlan, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setPlanToDelete(plan);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleConfirmDelete = () => {
+    if (planToDelete) {
+      onDeletePlan(planToDelete.id);
+      setDeleteDialogOpen(false);
+      setPlanToDelete(null);
+      if (selectedPlan?.id === planToDelete.id) {
+        setSelectedPlan(null);
+      }
     }
   };
 
@@ -148,12 +178,20 @@ export const WeeklyMealPlansSection = ({
                   {filteredPlans.map((plan) => (
                     <div
                       key={plan.id}
-                      className={`border rounded-lg p-4 cursor-pointer hover:bg-gray-50 transition-colors ${
+                      className={`border rounded-lg p-4 cursor-pointer hover:bg-gray-50 transition-colors relative ${
                         selectedPlan?.id === plan.id ? "bg-blue-50 border-blue-300" : ""
                       }`}
                       onClick={() => handlePlanClick(plan)}
                     >
-                      <h4 className="font-medium">{plan.name}</h4>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="absolute top-2 right-2 p-1 h-auto text-red-600 hover:text-red-800 hover:bg-red-50"
+                        onClick={(e) => handleDeleteClick(plan, e)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                      <h4 className="font-medium pr-8">{plan.name}</h4>
                       <p className="text-sm text-gray-600">{formatWeekRange(plan.weekStartDate)}</p>
                       <p className="text-sm mt-2">
                         {plan.meals.filter(m => m.day).length} meals planned
@@ -293,6 +331,24 @@ export const WeeklyMealPlansSection = ({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Weekly Plan</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete "{planToDelete?.name}"? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmDelete} className="bg-red-600 hover:bg-red-700">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </section>
   );
 };

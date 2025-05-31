@@ -19,6 +19,7 @@ const Index = () => {
     handleAddMealToDay,
     handleSaveWeeklyPlan,
     handleLoadWeeklyPlan,
+    handleDeleteWeeklyPlan,
     handleResetMealPlan
   } = useMealPlan();
 
@@ -82,6 +83,7 @@ const Index = () => {
           currentMeals={meals}
           onSaveCurrentPlan={(name) => handleSaveWeeklyPlan(name, getCurrentItems, getAvailableStores)}
           onLoadPlan={(plan) => handleLoadWeeklyPlan(plan, resetList, loadShoppingList)}
+          onDeletePlan={handleDeleteWeeklyPlan}
         />
       </main>
       
