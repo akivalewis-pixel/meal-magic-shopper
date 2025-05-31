@@ -14,6 +14,7 @@ interface ShoppingListContainerProps {
 export const ShoppingListContainer = ({ meals, pantryItems = [] }: ShoppingListContainerProps) => {
   const { state, actions } = useShoppingListState();
   
+  // Use the same shopping list hook that's used in Index.tsx
   const {
     groceryItems,
     archivedItems,

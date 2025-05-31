@@ -1,3 +1,4 @@
+
 import { useToast } from "@/hooks/use-toast";
 import { Meal, WeeklyMealPlan, GroceryItem } from "@/types";
 import { getCurrentWeekStart } from "@/utils";
@@ -8,21 +9,13 @@ interface UseMealPlanActionsProps {
   weeklyPlans: WeeklyMealPlan[];
   setMeals: React.Dispatch<React.SetStateAction<Meal[]>>;
   setWeeklyPlans: React.Dispatch<React.SetStateAction<WeeklyMealPlan[]>>;
-  getCurrentItems?: () => GroceryItem[];
-  getAvailableStores?: () => string[];
-  resetShoppingList?: () => void;
-  loadShoppingList?: (items: GroceryItem[], stores: string[]) => void;
 }
 
 export function useMealPlanActions({ 
   meals, 
   weeklyPlans, 
   setMeals, 
-  setWeeklyPlans,
-  getCurrentItems,
-  getAvailableStores,
-  resetShoppingList,
-  loadShoppingList
+  setWeeklyPlans
 }: UseMealPlanActionsProps) {
   const { toast } = useToast();
 
@@ -63,7 +56,11 @@ export function useMealPlanActions({
     });
   };
 
-  const handleSaveWeeklyPlan = (name: string) => {
+  const handleSaveWeeklyPlan = (
+    name: string, 
+    getCurrentItems?: () => GroceryItem[], 
+    getAvailableStores?: () => string[]
+  ) => {
     // Get current shopping list and stores if available
     const currentShoppingList = getCurrentItems ? getCurrentItems() : [];
     const currentStores = getAvailableStores ? getAvailableStores() : [];
@@ -94,7 +91,11 @@ export function useMealPlanActions({
     });
   };
 
-  const handleLoadWeeklyPlan = (plan: WeeklyMealPlan) => {
+  const handleLoadWeeklyPlan = (
+    plan: WeeklyMealPlan,
+    resetShoppingList?: () => void,
+    loadShoppingList?: (items: GroceryItem[], stores: string[]) => void
+  ) => {
     console.log("Loading meal plan:", plan.name);
     console.log("Plan has", plan.meals.length, "meals");
     console.log("Plan has", plan.shoppingList?.length || 0, "shopping list items");

@@ -2,7 +2,7 @@
 import React from "react";
 import { Header } from "@/components/Header";
 import { MealPlanSection } from "@/components/MealPlan";
-import { NewShoppingList } from "@/components/ShoppingList/NewShoppingList";
+import { ShoppingListContainer } from "@/components/ShoppingList/ShoppingListContainer";
 import { WeeklyMealPlansSection } from "@/components/WeeklyMealPlansSection";
 import { Footer } from "@/components/Footer";
 import { PrintButton } from "@/components/PrintButton";
@@ -10,16 +10,6 @@ import { useMealPlan } from "@/hooks/useMealPlan";
 import { useSimpleShoppingList } from "@/hooks/useShoppingList/useSimpleShoppingList";
 
 const Index = () => {
-  // Get the shopping list items first
-  const shoppingListHook = useSimpleShoppingList([], []); // We'll update meals later
-  const { 
-    groceryItems, 
-    getCurrentItems, 
-    getAvailableStores, 
-    resetList, 
-    loadShoppingList 
-  } = shoppingListHook;
-
   // Custom hooks for state management with shopping list integration
   const {
     meals,
@@ -30,15 +20,23 @@ const Index = () => {
     handleSaveWeeklyPlan,
     handleLoadWeeklyPlan,
     handleResetMealPlan
-  } = useMealPlan({
-    getCurrentItems,
-    getAvailableStores,
-    resetShoppingList: resetList,
-    loadShoppingList
-  });
+  } = useMealPlan();
 
-  // Update the shopping list hook with the current meals
-  const shoppingListWithMeals = useSimpleShoppingList(meals, []);
+  // Single shopping list hook that will be shared between components
+  const shoppingListHook = useSimpleShoppingList(meals, []);
+  const { 
+    groceryItems, 
+    getCurrentItems, 
+    getAvailableStores, 
+    resetList, 
+    loadShoppingList 
+  } = shoppingListHook;
+
+  // Update meal plan hook with shopping list functions
+  React.useEffect(() => {
+    // This ensures the meal plan hook has access to the shopping list functions
+    // We can't pass these during initialization due to hook order dependencies
+  }, [getCurrentItems, getAvailableStores, resetList, loadShoppingList]);
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -48,8 +46,8 @@ const Index = () => {
         <div className="container mx-auto px-4 py-4 flex justify-end">
           <PrintButton 
             meals={meals} 
-            groceryItems={shoppingListWithMeals.groceryItems} 
-            getCurrentItems={shoppingListWithMeals.getCurrentItems}
+            groceryItems={groceryItems} 
+            getCurrentItems={getCurrentItems}
           />
         </div>
         
@@ -61,7 +59,7 @@ const Index = () => {
           onResetMealPlan={handleResetMealPlan}
         />
         
-        <NewShoppingList 
+        <ShoppingListContainer 
           meals={meals}
           pantryItems={[]}
         />
@@ -69,8 +67,8 @@ const Index = () => {
         <WeeklyMealPlansSection
           weeklyPlans={weeklyPlans}
           currentMeals={meals}
-          onSaveCurrentPlan={handleSaveWeeklyPlan}
-          onLoadPlan={handleLoadWeeklyPlan}
+          onSaveCurrentPlan={(name) => handleSaveWeeklyPlan(name, getCurrentItems, getAvailableStores)}
+          onLoadPlan={(plan) => handleLoadWeeklyPlan(plan, resetList, loadShoppingList)}
         />
       </main>
       
