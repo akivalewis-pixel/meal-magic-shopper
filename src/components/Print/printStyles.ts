@@ -96,5 +96,7 @@ export const getPrintStyles = () => `
     font-style: italic;
     font-size: 9px;
     color: #555;
+    text-transform: uppercase;
+    text-decoration: underline;
   }
 `;
