@@ -1,10 +1,9 @@
-
 import React, { useEffect } from "react";
 import { useUndo } from "@/hooks/useUndo";
 import { useShoppingListState } from "./ShoppingListState";
 import { ShoppingListLayout } from "./ShoppingListLayout";
 import { GroceryItem } from "@/types";
-import { shoppingListStateRef } from "@/hooks/useShoppingList/useShoppingListSync";
+import { shoppingListStateRef } from "@/hooks/useShoppingList";
 
 interface ShoppingListContainerProps {
   meals: any[];

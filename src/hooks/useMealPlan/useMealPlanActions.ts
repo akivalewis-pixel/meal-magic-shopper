@@ -2,7 +2,6 @@
 import { useToast } from "@/hooks/use-toast";
 import { Meal, WeeklyMealPlan, GroceryItem } from "@/types";
 import { getCurrentWeekStart } from "@/utils";
-import { extractIngredientsFromRecipeUrl } from "@/utils/recipeUtils";
 
 interface UseMealPlanActionsProps {
   meals: Meal[];
@@ -56,24 +55,32 @@ export function useMealPlanActions({
     });
   };
 
+  const handleAddMealToDay = (meal: Meal, day: string) => {
+    const newMeal: Meal = {
+      ...meal,
+      id: `${meal.id}-${day}-${Date.now()}`,
+      day,
+      lastUsed: new Date()
+    };
+
+    setMeals(prevMeals => [...prevMeals, newMeal]);
+    
+    toast({
+      title: "Meal Added",
+      description: `${meal.title} has been added to ${day}`,
+    });
+  };
+
   const handleSaveWeeklyPlan = (
     name: string, 
     getCurrentItems?: () => GroceryItem[], 
     getAvailableStores?: () => string[]
   ) => {
-    // Get current shopping list and stores if available
     const currentShoppingList = getCurrentItems ? getCurrentItems() : [];
     const currentStores = getAvailableStores ? getAvailableStores() : [];
     
     console.log("Saving meal plan with", currentShoppingList.length, "shopping list items");
-    console.log("Shopping list items:", currentShoppingList.map(item => ({ 
-      name: item.name, 
-      store: item.store, 
-      category: item.category,
-      checked: item.checked 
-    })));
     
-    // Create a new weekly plan with the current meals and shopping list
     const newPlan: WeeklyMealPlan = {
       id: Date.now().toString(),
       name,
@@ -97,26 +104,19 @@ export function useMealPlanActions({
     loadShoppingList?: (items: GroceryItem[], stores: string[]) => void
   ) => {
     console.log("Loading meal plan:", plan.name);
-    console.log("Plan has", plan.meals.length, "meals");
-    console.log("Plan has", plan.shoppingList?.length || 0, "shopping list items");
     
-    // First reset the current shopping list
     if (resetShoppingList) {
-      console.log("Resetting current shopping list");
       resetShoppingList();
     }
     
-    // Replace current meals with the selected plan
     const updatedMeals = plan.meals.map(meal => ({
       ...meal,
-      lastUsed: new Date() // Update the last used date
+      lastUsed: new Date()
     }));
     
     setMeals(updatedMeals);
     
-    // Load the saved shopping list if it exists
     if (plan.shoppingList && loadShoppingList) {
-      console.log("Loading saved shopping list with", plan.shoppingList.length, "items");
       const savedStores = plan.stores || ["Unassigned", "Supermarket", "Farmers Market", "Specialty Store"];
       loadShoppingList(plan.shoppingList, savedStores);
     }
@@ -139,7 +139,6 @@ export function useMealPlanActions({
     });
   };
 
-  // New function to reset the meal plan
   const handleResetMealPlan = () => {
     setMeals([]);
     
@@ -153,6 +152,7 @@ export function useMealPlanActions({
     handleEditMeal,
     handleUpdateMeal,
     handleRateMeal,
+    handleAddMealToDay,
     handleSaveWeeklyPlan,
     handleLoadWeeklyPlan,
     handleDeleteWeeklyPlan,

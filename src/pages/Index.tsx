@@ -7,10 +7,10 @@ import { WeeklyMealPlansSection } from "@/components/WeeklyMealPlansSection";
 import { Footer } from "@/components/Footer";
 import { PrintButton } from "@/components/PrintButton";
 import { useMealPlan } from "@/hooks/useMealPlan";
-import { useSimpleShoppingList } from "@/hooks/useShoppingList/useSimpleShoppingList";
+import { useShoppingList } from "@/hooks/useShoppingList";
 
 const Index = () => {
-  // Custom hooks for state management with shopping list integration
+  // Meal plan state and actions
   const {
     meals,
     weeklyPlans,
@@ -23,8 +23,8 @@ const Index = () => {
     handleResetMealPlan
   } = useMealPlan();
 
-  // Single shopping list hook that will be shared between components
-  const shoppingListHook = useSimpleShoppingList(meals, []);
+  // Shopping list state and actions
+  const shoppingList = useShoppingList(meals, []);
   const { 
     groceryItems, 
     archivedItems,
@@ -38,7 +38,7 @@ const Index = () => {
     getCurrentItems, 
     getAvailableStores, 
     loadShoppingList 
-  } = shoppingListHook;
+  } = shoppingList;
 
   console.log("Index.tsx: Shopping list has", groceryItems.length, "items");
 
