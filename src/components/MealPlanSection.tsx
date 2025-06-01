@@ -190,7 +190,7 @@ export const MealPlanSection = ({
     setShowAddRecipe(true);
   };
 
-  const handleEditMeal = (meal: Meal) => {
+  const handleEditMealClick = (meal: Meal) => {
     setEditingMeal(meal);
     setSelectedDay(meal.day);
     setShowAddRecipe(true);
@@ -293,7 +293,7 @@ export const MealPlanSection = ({
                 day={day} 
                 meals={getMealsForDay(day)}
                 onDrop={handleMoveMeal}
-                onEdit={handleEditMeal}
+                onEdit={handleEditMealClick}
                 onRate={handleOpenRatingDialog}
                 onMove={handleMoveMeal}
                 onAddMeal={handleAddNewRecipe}
