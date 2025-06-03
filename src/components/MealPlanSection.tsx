@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { DndProvider, useDrag, useDrop } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
@@ -190,7 +189,7 @@ export const MealPlanSection = ({
     setShowAddRecipe(true);
   };
 
-  // This is the function that should open the edit dialog
+  // This function opens the edit dialog with the meal data pre-populated
   const handleEditMealClick = (meal: Meal) => {
     console.log("Edit meal clicked:", meal.title);
     setEditingMeal(meal);
@@ -300,6 +299,7 @@ export const MealPlanSection = ({
                 onMove={handleMoveMeal}
                 onAddMeal={handleAddNewRecipe}
                 onRemove={handleRemoveMeal}
+                onUpdateMeal={onUpdateMeal}
               />
             ))}
           </div>
