@@ -39,7 +39,7 @@ const ItemTypes = {
 };
 
 // Draggable meal component
-const DraggableMeal = ({ meal, day, onEdit, onRate, onMove, onRemove }) => {
+const DraggableMeal = ({ meal, day, onEdit, onRate, onMove, onRemove, onUpdateMeal }) => {
   const [{ isDragging }, drag] = useDrag(() => ({
     type: ItemTypes.MEAL,
     item: { id: meal.id, day: day, meal: meal },
@@ -58,13 +58,14 @@ const DraggableMeal = ({ meal, day, onEdit, onRate, onMove, onRemove }) => {
         onEdit={onEdit} 
         onRate={onRate}
         onRemove={onRemove}
+        onUpdateMeal={onUpdateMeal}
       />
     </div>
   );
 };
 
 // Droppable day component
-const DroppableDay = ({ day, meals, onDrop, onEdit, onRate, onMove, onAddMeal, onRemove }) => {
+const DroppableDay = ({ day, meals, onDrop, onEdit, onRate, onMove, onAddMeal, onRemove, onUpdateMeal }) => {
   const [{ isOver }, drop] = useDrop(() => ({
     accept: ItemTypes.MEAL,
     drop: (item: { id: string, day: string, meal: Meal }) => {
@@ -93,6 +94,7 @@ const DroppableDay = ({ day, meals, onDrop, onEdit, onRate, onMove, onAddMeal, o
               onRate={onRate}
               onMove={onMove}
               onRemove={() => onRemove(meal)}
+              onUpdateMeal={onUpdateMeal}
             />
           ))
         ) : (
