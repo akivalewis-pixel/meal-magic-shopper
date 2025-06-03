@@ -1,7 +1,7 @@
 
 import React from "react";
 import { Header } from "@/components/Header";
-import { MealPlanSection } from "@/components/MealPlan";
+import { MealPlanSection } from "@/components/MealPlanSection";
 import { ShoppingListContainer } from "@/components/ShoppingList/ShoppingListContainer";
 import { WeeklyMealPlansSection } from "@/components/WeeklyMealPlansSection";
 import { Footer } from "@/components/Footer";

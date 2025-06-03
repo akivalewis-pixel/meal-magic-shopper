@@ -1,28 +1,17 @@
+
 import React, { useState } from "react";
-import { DndProvider, useDrag, useDrop } from "react-dnd";
+import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
-import { MealCard } from "./MealCard";
 import { MealRatingDialog } from "./MealRatingDialog";
 import { MealRecommendations } from "./MealRecommendations";
 import { AddRecipeDialog } from "./MealPlan/AddRecipeDialog";
+import { DroppableDay } from "./MealPlan/DroppableDay";
+import { MealPlanHeader } from "./MealPlan/MealPlanHeader";
 import { Meal, DietaryPreference } from "@/types";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
-import { daysOfWeek, dietaryOptions } from "@/utils/constants";
+import { daysOfWeek } from "@/utils/constants";
 import { filterMealsByDiet } from "@/utils/mealUtils";
 import { useToast } from "@/hooks/use-toast";
 import { extractIngredientsFromRecipeUrl } from "@/utils/recipeUtils";
-
-// Function to extract ingredients from a recipe URL
-const fetchIngredientsFromUrl = async (url: string): Promise<{
-  title?: string;
-  ingredients: string[];
-  quantities?: Record<string, string>;
-}> => {
-  return await extractIngredientsFromRecipeUrl(url);
-};
 
 interface MealPlanSectionProps {
   meals: Meal[];
@@ -32,96 +21,6 @@ interface MealPlanSectionProps {
   onAddMealToDay: (meal: Meal, day: string) => void;
   onResetMealPlan: () => void;
 }
-
-// Drag item type
-const ItemTypes = {
-  MEAL: 'meal'
-};
-
-// Draggable meal component
-const DraggableMeal = ({ meal, day, onEdit, onRate, onMove, onRemove, onUpdateMeal }) => {
-  const [{ isDragging }, drag] = useDrag(() => ({
-    type: ItemTypes.MEAL,
-    item: { id: meal.id, day: day, meal: meal },
-    collect: (monitor) => ({
-      isDragging: !!monitor.isDragging()
-    })
-  }));
-
-  return (
-    <div 
-      ref={drag} 
-      className={`${isDragging ? 'opacity-50' : 'opacity-100'} mb-2 last:mb-0`}
-    >
-      <MealCard 
-        meal={meal} 
-        onEdit={onEdit} 
-        onRate={onRate}
-        onRemove={onRemove}
-        onUpdateMeal={onUpdateMeal}
-      />
-    </div>
-  );
-};
-
-// Droppable day component
-const DroppableDay = ({ day, meals, onDrop, onEdit, onRate, onMove, onAddMeal, onRemove, onUpdateMeal }) => {
-  const [{ isOver }, drop] = useDrop(() => ({
-    accept: ItemTypes.MEAL,
-    drop: (item: { id: string, day: string, meal: Meal }) => {
-      onMove(item.meal, item.day, day);
-      return { name: day };
-    },
-    collect: (monitor) => ({
-      isOver: !!monitor.isOver()
-    })
-  }));
-
-  return (
-    <div 
-      ref={drop} 
-      className={`flex flex-col ${isOver ? 'bg-gray-100' : ''} h-full`}
-    >
-      <h3 className="mb-2 text-center font-semibold">{day}</h3>
-      <div className="flex-1 flex flex-col">
-        {meals && meals.length > 0 ? (
-          meals.map(meal => (
-            <DraggableMeal 
-              key={meal.id}
-              meal={meal} 
-              day={day} 
-              onEdit={onEdit} 
-              onRate={onRate}
-              onMove={onMove}
-              onRemove={() => onRemove(meal)}
-              onUpdateMeal={onUpdateMeal}
-            />
-          ))
-        ) : (
-          <div 
-            className="meal-card flex h-full flex-col items-center justify-center p-4 text-center text-muted-foreground cursor-pointer"
-            onClick={() => onAddMeal(day)}
-          >
-            <p className="mb-2">No meals planned</p>
-            <p className="text-sm">
-              Click to add a meal
-            </p>
-          </div>
-        )}
-      </div>
-      <div className="mt-2 flex justify-center">
-        <Button 
-          variant="outline" 
-          size="sm" 
-          className="w-full"
-          onClick={() => onAddMeal(day)}
-        >
-          <Plus className="h-4 w-4 mr-1" /> Add Meal
-        </Button>
-      </div>
-    </div>
-  );
-};
 
 export const MealPlanSection = ({ 
   meals, 
@@ -142,7 +41,6 @@ export const MealPlanSection = ({
     ? meals 
     : filterMealsByDiet(meals, dietFilter);
 
-  // Get meals for a specific day
   const getMealsForDay = (day: string) => {
     return filteredMeals.filter(meal => meal.day === day);
   };
@@ -161,26 +59,20 @@ export const MealPlanSection = ({
   };
 
   const handleSelectRecommendation = (meal: Meal) => {
-    // Find the first day without a meal
     const dayWithoutMeal = daysOfWeek.find(day => !meals.some(m => m.day === day));
     if (dayWithoutMeal) {
       onAddMealToDay(meal, dayWithoutMeal);
     } else {
-      // If all days have meals, suggest adding to Sunday
       onAddMealToDay(meal, 'Sunday');
     }
   };
 
   const handleMoveMeal = (meal: Meal, fromDay: string, toDay: string) => {
-    // Create a copy of the meal with the new day
     const updatedMeal = { ...meal, day: toDay };
-    
-    // Add to the new day without removing anything from the original day
     onAddMealToDay(updatedMeal, toDay);
   };
 
   const handleRemoveMeal = (meal: Meal) => {
-    // Create a copy of the meal with empty day to remove it
     const updatedMeal = { ...meal, day: "" };
     onAddMealToDay(updatedMeal, "");
   };
@@ -191,7 +83,6 @@ export const MealPlanSection = ({
     setShowAddRecipe(true);
   };
 
-  // This function opens the edit dialog with the meal data pre-populated
   const handleEditMealClick = (meal: Meal) => {
     console.log("Edit meal clicked:", meal.title);
     setEditingMeal(meal);
@@ -201,7 +92,6 @@ export const MealPlanSection = ({
 
   const handleAddRecipe = (recipeData: any) => {
     if (editingMeal) {
-      // Update existing meal
       const updatedMeal: Meal = {
         ...editingMeal,
         title: recipeData.title,
@@ -219,7 +109,6 @@ export const MealPlanSection = ({
         description: `${updatedMeal.title} has been updated`,
       });
     } else {
-      // Add new meal
       const newMeal: Meal = {
         id: `${selectedDay}-${Date.now()}`,
         day: selectedDay,
@@ -248,41 +137,15 @@ export const MealPlanSection = ({
     <DndProvider backend={HTML5Backend}>
       <section id="meal-plan" className="py-8">
         <div className="container mx-auto">
-          <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between">
-            <h2 className="text-2xl font-bold text-leaf-dark">Weekly Meal Plan</h2>
-            <div className="mt-4 sm:mt-0">
-              <div className="flex items-center gap-2">
-                <Label htmlFor="diet-filter" className="whitespace-nowrap">
-                  Dietary Filter:
-                </Label>
-                <Select
-                  value={dietFilter}
-                  onValueChange={(value) => setDietFilter(value as DietaryPreference)}
-                >
-                  <SelectTrigger id="diet-filter" className="w-[180px]">
-                    <SelectValue placeholder="Select diet" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {dietaryOptions.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </div>
-
-          <div className="mb-6 flex justify-end">
-            <Button onClick={() => {
+          <MealPlanHeader
+            dietFilter={dietFilter}
+            onDietFilterChange={setDietFilter}
+            onAddRecipe={() => {
               setSelectedDay(daysOfWeek.find(day => !getMealsForDay(day).length) || 'Sunday');
               setEditingMeal(null);
               setShowAddRecipe(true);
-            }}>
-              <Plus className="mr-1 h-4 w-4" /> Add Recipe
-            </Button>
-          </div>
+            }}
+          />
 
           <MealRecommendations 
             meals={meals}
@@ -315,7 +178,6 @@ export const MealPlanSection = ({
             />
           )}
 
-          {/* Add/Edit Recipe Dialog */}
           <AddRecipeDialog
             isOpen={showAddRecipe}
             onClose={() => {
@@ -324,7 +186,7 @@ export const MealPlanSection = ({
             }}
             onAddRecipe={handleAddRecipe}
             selectedDay={selectedDay}
-            onFetchIngredients={fetchIngredientsFromUrl}
+            onFetchIngredients={extractIngredientsFromRecipeUrl}
             editingMeal={editingMeal}
           />
         </div>
