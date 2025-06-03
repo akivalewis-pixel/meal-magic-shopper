@@ -190,7 +190,9 @@ export const MealPlanSection = ({
     setShowAddRecipe(true);
   };
 
+  // This is the function that should open the edit dialog
   const handleEditMealClick = (meal: Meal) => {
+    console.log("Edit meal clicked:", meal.title);
     setEditingMeal(meal);
     setSelectedDay(meal.day);
     setShowAddRecipe(true);
