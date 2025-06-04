@@ -8,8 +8,11 @@ import { Footer } from "@/components/Footer";
 import { PrintButton } from "@/components/PrintButton";
 import { useMealPlan } from "@/hooks/useMealPlan";
 import { useShoppingList } from "@/hooks/useShoppingList";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const Index = () => {
+  const isMobile = useIsMobile();
+  
   // Meal plan state and actions
   const {
     meals,
@@ -48,7 +51,7 @@ const Index = () => {
       <Header />
       
       <main className="flex-1">
-        <div className="container mx-auto px-4 py-4 flex justify-end">
+        <div className="container mx-auto px-4 py-2 sm:py-4 flex justify-end">
           <PrintButton 
             meals={meals} 
             groceryItems={groceryItems} 

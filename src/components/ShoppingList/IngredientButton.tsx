@@ -4,6 +4,7 @@ import { GroceryItem } from "@/types";
 import { Button } from "@/components/ui/button";
 import { CategoryDropdown } from "./CategoryDropdown";
 import { cn } from "@/lib/utils";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface IngredientButtonProps {
   item: GroceryItem;
@@ -26,6 +27,8 @@ export const IngredientButton = ({
   onAddCustomCategory,
   onCategoryChange
 }: IngredientButtonProps) => {
+  const isMobile = useIsMobile();
+
   const handleClick = (e: React.MouseEvent) => {
     const isMultiSelect = e.ctrlKey || e.metaKey || e.shiftKey;
     onSelect(item.id, isMultiSelect);
@@ -60,13 +63,17 @@ export const IngredientButton = ({
       variant={isSelected ? "default" : "outline"}
       size="sm"
       className={cn(
-        "w-full justify-start text-left h-auto p-3 mb-2 cursor-move transition-all",
+        "w-full justify-start text-left h-auto p-2 sm:p-3 mb-2",
+        // On mobile, make it easier to tap without accidental drags
+        isMobile ? "cursor-pointer" : "cursor-move",
         isSelected && "ring-2 ring-primary",
-        item.checked && "opacity-50 line-through"
+        item.checked && "opacity-50 line-through",
+        // Increase touch target size on mobile
+        isMobile && "min-h-[50px]"
       )}
       onClick={handleClick}
       onDoubleClick={handleDoubleClick}
-      draggable={true}
+      draggable={!isMobile}
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
       data-item-id={item.id}

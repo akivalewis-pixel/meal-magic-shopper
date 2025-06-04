@@ -7,6 +7,7 @@ import { ShoppingListContent } from "./ShoppingListContent";
 import { ShoppingListUndoActions } from "./ShoppingListUndoActions";
 import { ShoppingListDialogs } from "./ShoppingListDialogs";
 import { ShoppingListViewState } from "./ShoppingListState";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface ShoppingListLayoutProps {
   state: ShoppingListViewState;
@@ -50,13 +51,15 @@ export const ShoppingListLayout = ({
   onReset,
   getCurrentItems
 }: ShoppingListLayoutProps) => {
+  const isMobile = useIsMobile();
+  
   return (
-    <section className="py-8 bg-gray-50">
-      <div className="container mx-auto">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold text-gray-800">Shopping List</h2>
+    <section className="py-4 sm:py-8 bg-gray-50">
+      <div className="container mx-auto px-2 sm:px-4">
+        <div className={`flex ${isMobile ? 'flex-col gap-3' : 'items-center justify-between'} mb-4`}>
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-800">Shopping List</h2>
           
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <ShoppingListUndoActions
               canUndo={canUndo}
               canRedo={canRedo}
@@ -85,7 +88,7 @@ export const ShoppingListLayout = ({
           onGroupByStoreChange={actions.setGroupByStore}
         />
 
-        <div className="bg-white rounded-lg shadow p-4">
+        <div className="bg-white rounded-lg shadow p-2 sm:p-4">
           <ShoppingListContent
             filteredItems={filteredItems}
             searchTerm={state.searchTerm}

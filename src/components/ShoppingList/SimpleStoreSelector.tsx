@@ -8,6 +8,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface SimpleStoreSelectorProps {
   item: GroceryItem;
@@ -20,6 +21,8 @@ export const SimpleStoreSelector = ({
   availableStores,
   onStoreChange
 }: SimpleStoreSelectorProps) => {
+  const isMobile = useIsMobile();
+  
   const handleStoreChange = (value: string) => {
     console.log(`SimpleStoreSelector: Changing ${item.name} from store: '${item.store}' to store: '${value}'`);
     
@@ -34,14 +37,12 @@ export const SimpleStoreSelector = ({
 
   const currentValue = item.store || "Unassigned";
   
-  console.log(`SimpleStoreSelector: Rendering ${item.name} with current store: '${currentValue}'`);
-
   return (
     <Select 
       value={currentValue} 
       onValueChange={handleStoreChange}
     >
-      <SelectTrigger className="w-32 h-8 text-xs">
+      <SelectTrigger className={`${isMobile ? 'w-24' : 'w-32'} h-8 text-xs`}>
         <SelectValue />
       </SelectTrigger>
       <SelectContent>

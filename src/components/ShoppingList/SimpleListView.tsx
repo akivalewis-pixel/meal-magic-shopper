@@ -1,4 +1,3 @@
-
 import React, { useMemo, useCallback, useState } from "react";
 import { GroceryItem } from "@/types";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -6,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { SimpleStoreDropdown } from "./SimpleStoreDropdown";
 import { CategoryDropdown } from "./CategoryDropdown";
 import { useCustomCategories } from "./useCustomCategories";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface SimpleListViewProps {
   items: GroceryItem[];
@@ -232,6 +232,7 @@ export const SimpleListView = React.memo(({
   customCategoryNames = {},
   onCategoryNameChange
 }: SimpleListViewProps) => {
+  const isMobile = useIsMobile();
   const { customCategories, addCustomCategory } = useCustomCategories();
   
   // Items should only include unchecked items
@@ -314,17 +315,17 @@ export const SimpleListView = React.memo(({
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {Object.entries(groupedItems).map(([storeName, storeCategories]) => (
-        <div key={storeName}>
+        <div key={storeName} className={isMobile ? "pb-2" : ""}>
           {groupByStore && (
-            <h3 className="text-lg font-semibold mb-4 pb-2 border-b border-gray-200">
+            <h3 className="text-lg font-semibold mb-3 pb-1 border-b border-gray-200">
               {storeName} ({Object.values(storeCategories).flat().length} items)
             </h3>
           )}
           
           {Object.entries(storeCategories).map(([categoryName, categoryItems]) => (
-            <div key={`${storeName}-${categoryName}`} className="mb-4">
+            <div key={`${storeName}-${categoryName}`} className="mb-3 sm:mb-4">
               <CategoryHeader
                 categoryName={getDisplayCategoryName(categoryName)}
                 originalCategoryName={categoryName}
@@ -332,7 +333,7 @@ export const SimpleListView = React.memo(({
                 onCategoryNameChange={onCategoryNameChange}
                 itemCount={categoryItems.length}
               />
-              <ul className="space-y-1">
+              <ul className={`space-y-${isMobile ? "2" : "1"}`}>
                 {categoryItems.map(item => (
                   <ItemRow
                     key={`${item.id}-${item.__updateTimestamp || 0}`}
