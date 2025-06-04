@@ -1,4 +1,3 @@
-
 // Meal-related utility functions
 import { Meal, DietaryPreference, WeeklyMealPlan } from "@/types";
 import { daysOfWeek } from "./constants";
@@ -103,6 +102,51 @@ export const searchMealsByTitle = (weeklyPlans: WeeklyMealPlan[], searchTerm: st
   });
   
   return allMeals.sort((a, b) => {
+    if (a.lastUsed && b.lastUsed) {
+      return new Date(b.lastUsed).getTime() - new Date(a.lastUsed).getTime();
+    }
+    return 0;
+  });
+};
+
+/**
+ * Search meals by rating or notes
+ */
+export const searchMealsByRating = (weeklyPlans: WeeklyMealPlan[], searchTerm: string): Meal[] => {
+  if (!searchTerm) return [];
+  
+  const allMeals: Meal[] = [];
+  const searchTermLower = searchTerm.toLowerCase();
+  
+  weeklyPlans.forEach(plan => {
+    plan.meals
+      .filter(meal => {
+        // Check if searchTerm is a number (rating search)
+        const ratingSearch = /^\d+$/.test(searchTerm);
+        if (ratingSearch) {
+          const targetRating = parseInt(searchTerm);
+          return meal.rating === targetRating;
+        }
+        
+        // Otherwise search in notes
+        return meal.notes && meal.notes.toLowerCase().includes(searchTermLower);
+      })
+      .forEach(meal => {
+        allMeals.push({
+          ...meal,
+          weekId: plan.id
+        });
+      });
+  });
+  
+  return allMeals.sort((a, b) => {
+    // Sort by rating first (highest to lowest), then by last used date
+    if (a.rating && b.rating) {
+      if (a.rating !== b.rating) {
+        return b.rating - a.rating;
+      }
+    }
+    
     if (a.lastUsed && b.lastUsed) {
       return new Date(b.lastUsed).getTime() - new Date(a.lastUsed).getTime();
     }

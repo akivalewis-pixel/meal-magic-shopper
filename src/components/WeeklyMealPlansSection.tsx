@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { 
   WeeklyMealPlan, 
@@ -31,10 +32,11 @@ import {
 } from "@/utils/dateUtils";
 import { 
   searchMealsByTitle, 
-  countMealUsage 
+  countMealUsage,
+  searchMealsByRating 
 } from "@/utils/mealUtils";
 import { findLastUsedDate } from "@/utils/dateUtils";
-import { Search, Calendar, Trash2 } from "lucide-react";
+import { Search, Calendar, Trash2, Star } from "lucide-react";
 
 interface WeeklyMealPlansSectionProps {
   weeklyPlans: WeeklyMealPlan[];
@@ -56,15 +58,21 @@ export const WeeklyMealPlansSection = ({
   const [planToDelete, setPlanToDelete] = useState<WeeklyMealPlan | null>(null);
   const [planName, setPlanName] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
-  const [searchType, setSearchType] = useState<"week" | "meal">("week");
+  const [searchType, setSearchType] = useState<"week" | "meal" | "rating">("week");
   const [selectedPlan, setSelectedPlan] = useState<WeeklyMealPlan | null>(null);
   const [mealSearchResults, setMealSearchResults] = useState<Meal[]>([]);
+  const [ratingSearchResults, setRatingSearchResults] = useState<Meal[]>([]);
   const [selectedMeal, setSelectedMeal] = useState<string | null>(null);
 
   const handleSearch = () => {
     if (searchType === "meal" && searchTerm) {
       const results = searchMealsByTitle(weeklyPlans, searchTerm);
       setMealSearchResults(results);
+      setRatingSearchResults([]);
+    } else if (searchType === "rating" && searchTerm) {
+      const results = searchMealsByRating(weeklyPlans, searchTerm);
+      setRatingSearchResults(results);
+      setMealSearchResults([]);
     }
   };
 
@@ -113,6 +121,15 @@ export const WeeklyMealPlansSection = ({
     }
   };
 
+  const renderStars = (rating: number) => {
+    return Array.from({ length: 5 }, (_, i) => (
+      <Star 
+        key={i} 
+        className={`h-4 w-4 ${i < rating ? 'text-yellow-400 fill-current' : 'text-gray-300'}`} 
+      />
+    ));
+  };
+
   return (
     <section id="weekly-meal-plans" className="py-8 bg-gray-100">
       <div className="container mx-auto">
@@ -131,7 +148,11 @@ export const WeeklyMealPlansSection = ({
                 <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
                   id="search-plans"
-                  placeholder="Search plans or meals..."
+                  placeholder={
+                    searchType === "week" ? "Search plans..." : 
+                    searchType === "meal" ? "Search meals..." :
+                    "Search by rating or notes..."
+                  }
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-8"
@@ -142,7 +163,11 @@ export const WeeklyMealPlansSection = ({
               <div className="flex items-end">
                 <Button
                   variant={searchType === "week" ? "default" : "outline"}
-                  onClick={() => setSearchType("week")}
+                  onClick={() => {
+                    setSearchType("week");
+                    setMealSearchResults([]);
+                    setRatingSearchResults([]);
+                  }}
                   className="flex-1 sm:flex-none"
                 >
                   <Calendar className="h-4 w-4 mr-2" />
@@ -155,10 +180,25 @@ export const WeeklyMealPlansSection = ({
                   onClick={() => {
                     setSearchType("meal");
                     setMealSearchResults([]);
+                    setRatingSearchResults([]);
                   }}
                   className="flex-1 sm:flex-none"
                 >
                   Search by Meal
+                </Button>
+              </div>
+              <div className="flex items-end">
+                <Button
+                  variant={searchType === "rating" ? "default" : "outline"}
+                  onClick={() => {
+                    setSearchType("rating");
+                    setMealSearchResults([]);
+                    setRatingSearchResults([]);
+                  }}
+                  className="flex-1 sm:flex-none"
+                >
+                  <Star className="h-4 w-4 mr-2" />
+                  Search by Rating
                 </Button>
               </div>
               <div className="flex items-end">
@@ -231,7 +271,7 @@ export const WeeklyMealPlansSection = ({
                 </div>
               )}
             </div>
-          ) : (
+          ) : searchType === "meal" ? (
             <div className="space-y-4">
               <h3 className="text-lg font-medium mb-4">Search Meals</h3>
               {searchTerm && (
@@ -291,6 +331,69 @@ export const WeeklyMealPlansSection = ({
               ) : (
                 <p className="text-center text-gray-500 py-8">
                   Enter a meal name and click "Search" to find when it was used.
+                </p>
+              )}
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <h3 className="text-lg font-medium mb-4">Search by Rating</h3>
+              {searchTerm && (
+                <p className="text-sm mb-4">
+                  Enter a rating (1-5) or keywords from meal notes to find matching meals.
+                </p>
+              )}
+
+              {ratingSearchResults.length > 0 ? (
+                <div>
+                  <h4 className="font-medium mb-2">Rating Search Results for "{searchTerm}"</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {ratingSearchResults.map((meal) => {
+                      const planInfo = weeklyPlans.find(plan => 
+                        plan.meals.some(m => m.id === meal.id)
+                      );
+                      
+                      return (
+                        <div 
+                          key={meal.id}
+                          className="border rounded-lg p-4 hover:bg-gray-50"
+                        >
+                          <h5 className="font-medium">{meal.title}</h5>
+                          {meal.rating && (
+                            <div className="flex items-center gap-2 mt-2">
+                              <span className="text-sm">Rating:</span>
+                              <div className="flex">
+                                {renderStars(meal.rating)}
+                              </div>
+                              <span className="text-sm text-gray-600">({meal.rating}/5)</span>
+                            </div>
+                          )}
+                          {meal.notes && (
+                            <p className="text-sm text-gray-600 mt-2">
+                              <strong>Notes:</strong> {meal.notes}
+                            </p>
+                          )}
+                          {planInfo && (
+                            <p className="text-sm text-gray-500 mt-2">
+                              From: {formatWeekRange(planInfo.weekStartDate)} - {planInfo.name}
+                            </p>
+                          )}
+                          {meal.day && (
+                            <p className="text-sm text-gray-500">
+                              Day: {meal.day}
+                            </p>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              ) : searchTerm ? (
+                <p className="text-center text-gray-500 py-8">
+                  No meals found with rating or notes matching "{searchTerm}".
+                </p>
+              ) : (
+                <p className="text-center text-gray-500 py-8">
+                  Enter a rating (1-5) or keywords from meal notes to search.
                 </p>
               )}
             </div>
