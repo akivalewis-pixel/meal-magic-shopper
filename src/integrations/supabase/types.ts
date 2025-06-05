@@ -9,7 +9,198 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      available_stores: {
+        Row: {
+          created_at: string | null
+          id: string
+          name: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          name: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          name?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      meals: {
+        Row: {
+          created_at: string | null
+          day: string | null
+          dietary_preferences: Json | null
+          id: string
+          ingredients: Json | null
+          last_used: string | null
+          notes: string | null
+          rating: number | null
+          recipe_url: string | null
+          title: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          day?: string | null
+          dietary_preferences?: Json | null
+          id?: string
+          ingredients?: Json | null
+          last_used?: string | null
+          notes?: string | null
+          rating?: number | null
+          recipe_url?: string | null
+          title: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          day?: string | null
+          dietary_preferences?: Json | null
+          id?: string
+          ingredients?: Json | null
+          last_used?: string | null
+          notes?: string | null
+          rating?: number | null
+          recipe_url?: string | null
+          title?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      pantry_items: {
+        Row: {
+          category: string | null
+          created_at: string | null
+          id: string
+          name: string
+          quantity: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string | null
+          id?: string
+          name: string
+          quantity?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string | null
+          id?: string
+          name?: string
+          quantity?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string | null
+          email: string | null
+          full_name: string | null
+          id: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          email?: string | null
+          full_name?: string | null
+          id: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      shopping_list_items: {
+        Row: {
+          category: string | null
+          checked: boolean | null
+          created_at: string | null
+          department: string | null
+          id: string
+          is_manual: boolean | null
+          meal: string | null
+          name: string
+          quantity: string | null
+          store: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          category?: string | null
+          checked?: boolean | null
+          created_at?: string | null
+          department?: string | null
+          id?: string
+          is_manual?: boolean | null
+          meal?: string | null
+          name: string
+          quantity?: string | null
+          store?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          category?: string | null
+          checked?: boolean | null
+          created_at?: string | null
+          department?: string | null
+          id?: string
+          is_manual?: boolean | null
+          meal?: string | null
+          name?: string
+          quantity?: string | null
+          store?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      weekly_meal_plans: {
+        Row: {
+          created_at: string | null
+          id: string
+          name: string
+          updated_at: string | null
+          user_id: string
+          week_start_date: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          name: string
+          updated_at?: string | null
+          user_id: string
+          week_start_date: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          name?: string
+          updated_at?: string | null
+          user_id?: string
+          week_start_date?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

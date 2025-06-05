@@ -6,17 +6,19 @@ import { ShoppingListContainer } from "@/components/ShoppingList/ShoppingListCon
 import { WeeklyMealPlansSection } from "@/components/WeeklyMealPlansSection";
 import { Footer } from "@/components/Footer";
 import { PrintButton } from "@/components/PrintButton";
-import { useMealPlan } from "@/hooks/useMealPlan";
+import { useSupabaseMealPlan } from "@/hooks/useSupabaseMealPlan";
 import { useShoppingList } from "@/hooks/useShoppingList";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { Loader2 } from "lucide-react";
 
 const Index = () => {
   const isMobile = useIsMobile();
   
-  // Meal plan state and actions
+  // Meal plan state and actions with Supabase
   const {
     meals,
     weeklyPlans,
+    loading,
     handleEditMeal,
     handleUpdateMeal,
     handleRateMeal,
@@ -25,9 +27,9 @@ const Index = () => {
     handleLoadWeeklyPlan,
     handleDeleteWeeklyPlan,
     handleResetMealPlan
-  } = useMealPlan();
+  } = useSupabaseMealPlan();
 
-  // Shopping list state and actions
+  // Shopping list state and actions (still using localStorage for now)
   const shoppingList = useShoppingList(meals, []);
   const { 
     groceryItems, 
@@ -43,6 +45,14 @@ const Index = () => {
     getAvailableStores, 
     loadShoppingList 
   } = shoppingList;
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
 
   console.log("Index.tsx: Shopping list has", groceryItems.length, "items");
 
