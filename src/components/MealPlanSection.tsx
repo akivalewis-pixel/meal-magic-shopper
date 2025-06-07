@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
@@ -11,6 +12,7 @@ import { daysOfWeek } from "@/utils/constants";
 import { filterMealsByDiet } from "@/utils/mealUtils";
 import { useToast } from "@/hooks/use-toast";
 import { extractIngredientsFromRecipeUrl } from "@/utils/recipeUtils";
+import { v4 as uuidv4 } from 'uuid';
 
 interface MealPlanSectionProps {
   meals: Meal[];
@@ -104,9 +106,9 @@ export const MealPlanSection = ({
       };
       await onUpdateMeal(updatedMeal);
     } else {
-      // Create completely new meal
+      // Create completely new meal with proper UUID
       const newMeal: Meal = {
-        id: `meal-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        id: uuidv4(),
         day: selectedDay,
         title: recipeData.title,
         recipeUrl: recipeData.recipeUrl,
