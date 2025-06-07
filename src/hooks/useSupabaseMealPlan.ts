@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -38,8 +39,8 @@ export function useSupabaseMealPlan() {
         day: meal.day || '',
         title: meal.title,
         recipeUrl: meal.recipe_url || '',
-        ingredients: Array.isArray(meal.ingredients) ? meal.ingredients : [],
-        dietaryPreferences: Array.isArray(meal.dietary_preferences) ? meal.dietary_preferences : [],
+        ingredients: Array.isArray(meal.ingredients) ? meal.ingredients.filter((item): item is string => typeof item === 'string') : [],
+        dietaryPreferences: Array.isArray(meal.dietary_preferences) ? meal.dietary_preferences.filter((item): item is any => typeof item === 'string') : [],
         notes: meal.notes || '',
         rating: meal.rating || undefined,
         lastUsed: meal.last_used ? new Date(meal.last_used) : undefined
