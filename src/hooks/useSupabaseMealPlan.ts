@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -52,30 +51,62 @@ export function useSupabaseMealPlan() {
     }
   };
 
-  // Load weekly plans from Supabase
+  // Load weekly plans from Supabase with associated meals
   const loadWeeklyPlans = async () => {
     if (!user) return;
 
     try {
-      const { data, error } = await supabase
+      const { data: plansData, error: plansError } = await supabase
         .from('weekly_meal_plans')
         .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
-      if (error) {
-        console.error('Error loading weekly plans:', error);
+      if (plansError) {
+        console.error('Error loading weekly plans:', plansError);
         return;
       }
 
-      const formattedPlans: WeeklyMealPlan[] = data.map(plan => ({
-        id: plan.id,
-        name: plan.name,
-        weekStartDate: plan.week_start_date,
-        meals: [], // We'll load meals separately
-        shoppingList: [],
-        stores: []
-      }));
+      // For each plan, load the meals that were active during that week
+      const formattedPlans: WeeklyMealPlan[] = [];
+      
+      for (const plan of plansData) {
+        // Get meals that were created/updated around the time of this plan
+        // We'll use a simple approach: get meals that have a day assigned
+        // In a more sophisticated system, we'd have a meal_plan_meals junction table
+        const { data: planMeals, error: mealsError } = await supabase
+          .from('meals')
+          .select('*')
+          .eq('user_id', user.id)
+          .not('day', 'is', null)
+          .not('day', 'eq', '');
+
+        if (mealsError) {
+          console.error('Error loading plan meals:', mealsError);
+          continue;
+        }
+
+        const formattedPlanMeals: Meal[] = planMeals.map(meal => ({
+          id: meal.id,
+          day: meal.day || '',
+          title: meal.title,
+          recipeUrl: meal.recipe_url || '',
+          ingredients: Array.isArray(meal.ingredients) ? meal.ingredients.filter((item): item is string => typeof item === 'string') : [],
+          dietaryPreferences: Array.isArray(meal.dietary_preferences) ? meal.dietary_preferences.filter((item): item is any => typeof item === 'string') : [],
+          notes: meal.notes || '',
+          rating: meal.rating || undefined,
+          lastUsed: meal.last_used ? new Date(meal.last_used) : undefined
+        }));
+
+        formattedPlans.push({
+          id: plan.id,
+          name: plan.name,
+          weekStartDate: plan.week_start_date,
+          meals: formattedPlanMeals,
+          shoppingList: [],
+          stores: []
+        });
+      }
 
       setWeeklyPlans(formattedPlans);
     } catch (error) {
@@ -181,7 +212,7 @@ export function useSupabaseMealPlan() {
     });
   };
 
-  // Save weekly plan
+  // Save weekly plan - now properly captures current meals
   const handleSaveWeeklyPlan = async (
     name: string,
     getCurrentItems?: () => GroceryItem[],
@@ -190,16 +221,21 @@ export function useSupabaseMealPlan() {
     if (!user) return;
 
     try {
-      const { error } = await supabase
+      const currentWeekStart = getCurrentWeekStart();
+      
+      // Save the weekly plan metadata
+      const { data: planData, error: planError } = await supabase
         .from('weekly_meal_plans')
         .insert({
           user_id: user.id,
           name,
-          week_start_date: getCurrentWeekStart()
-        });
+          week_start_date: currentWeekStart
+        })
+        .select()
+        .single();
 
-      if (error) {
-        console.error('Error saving weekly plan:', error);
+      if (planError) {
+        console.error('Error saving weekly plan:', planError);
         toast({
           title: "Error",
           description: "Failed to save weekly plan",
@@ -208,14 +244,67 @@ export function useSupabaseMealPlan() {
         return;
       }
 
-      await loadWeeklyPlans();
+      // Create a snapshot of the current meal plan
+      const currentMealsWithDays = meals.filter(meal => meal.day && meal.day !== '');
+      const currentShoppingList = getCurrentItems ? getCurrentItems() : [];
+      const currentStores = getAvailableStores ? getAvailableStores() : [];
+
+      // Add the new plan to local state immediately
+      const newPlan: WeeklyMealPlan = {
+        id: planData.id,
+        name,
+        weekStartDate: currentWeekStart,
+        meals: [...currentMealsWithDays],
+        shoppingList: currentShoppingList,
+        stores: currentStores
+      };
+
+      setWeeklyPlans(prev => [newPlan, ...prev]);
       
       toast({
         title: "Weekly Plan Saved",
-        description: `"${name}" has been saved.`,
+        description: `"${name}" has been saved with ${currentMealsWithDays.length} meals.`,
       });
     } catch (error) {
       console.error('Error saving weekly plan:', error);
+    }
+  };
+
+  // Load weekly plan - properly restore meals to current plan
+  const handleLoadWeeklyPlan = async (plan: WeeklyMealPlan) => {
+    if (!user) return;
+
+    try {
+      // First, clear current meal days
+      const currentMeals = meals.map(meal => ({ ...meal, day: '' }));
+      
+      // Update all meals to clear their days first
+      for (const meal of currentMeals) {
+        await handleUpdateMeal(meal);
+      }
+
+      // Then load the meals from the plan
+      for (const planMeal of plan.meals) {
+        await handleUpdateMeal({
+          ...planMeal,
+          lastUsed: new Date()
+        });
+      }
+
+      // Reload meals to get the updated state
+      await loadMeals();
+      
+      toast({
+        title: "Weekly Plan Loaded",
+        description: `"${plan.name}" has been loaded with ${plan.meals.length} meals.`,
+      });
+    } catch (error) {
+      console.error('Error loading weekly plan:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load weekly plan",
+        variant: "destructive",
+      });
     }
   };
 
@@ -239,7 +328,8 @@ export function useSupabaseMealPlan() {
         return;
       }
 
-      await loadWeeklyPlans();
+      // Remove from local state
+      setWeeklyPlans(prev => prev.filter(plan => plan.id !== planId));
       
       toast({
         title: "Weekly Plan Deleted",
@@ -291,17 +381,12 @@ export function useSupabaseMealPlan() {
     handleSaveWeeklyPlan,
     handleDeleteWeeklyPlan,
     handleResetMealPlan,
+    handleLoadWeeklyPlan,
     // Keep these for backward compatibility
     handleEditMeal: (meal: Meal) => {
       toast({
         title: "Edit Meal",
         description: `You've selected to edit ${meal.title} for ${meal.day}`,
-      });
-    },
-    handleLoadWeeklyPlan: async (plan: WeeklyMealPlan) => {
-      toast({
-        title: "Weekly Plan Loaded",
-        description: `"${plan.name}" has been loaded.`,
       });
     }
   };
