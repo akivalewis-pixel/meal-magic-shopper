@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
@@ -69,12 +68,12 @@ export const MealPlanSection = ({
 
   const handleMoveMeal = (meal: Meal, fromDay: string, toDay: string) => {
     const updatedMeal = { ...meal, day: toDay };
-    onAddMealToDay(updatedMeal, toDay);
+    onUpdateMeal(updatedMeal);
   };
 
   const handleRemoveMeal = (meal: Meal) => {
     const updatedMeal = { ...meal, day: "" };
-    onAddMealToDay(updatedMeal, "");
+    onUpdateMeal(updatedMeal);
   };
 
   const handleAddNewRecipe = (day: string) => {
@@ -90,8 +89,9 @@ export const MealPlanSection = ({
     setShowAddRecipe(true);
   };
 
-  const handleAddRecipe = (recipeData: any) => {
+  const handleAddRecipe = async (recipeData: any) => {
     if (editingMeal) {
+      // Update existing meal
       const updatedMeal: Meal = {
         ...editingMeal,
         title: recipeData.title,
@@ -102,15 +102,11 @@ export const MealPlanSection = ({
           : [recipeData.dietaryPreferences] as DietaryPreference[],
         lastUsed: new Date()
       };
-      onUpdateMeal(updatedMeal);
-      
-      toast({
-        title: "Meal Updated",
-        description: `${updatedMeal.title} has been updated`,
-      });
+      await onUpdateMeal(updatedMeal);
     } else {
+      // Create completely new meal
       const newMeal: Meal = {
-        id: `${selectedDay}-${Date.now()}`,
+        id: `meal-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         day: selectedDay,
         title: recipeData.title,
         recipeUrl: recipeData.recipeUrl,
@@ -118,15 +114,12 @@ export const MealPlanSection = ({
         dietaryPreferences: Array.isArray(recipeData.dietaryPreferences) 
           ? recipeData.dietaryPreferences 
           : [recipeData.dietaryPreferences] as DietaryPreference[],
+        notes: '',
         lastUsed: new Date()
       };
       
-      onAddMealToDay(newMeal, selectedDay);
-      
-      toast({
-        title: "Meal Added",
-        description: `${newMeal.title} has been added to ${selectedDay}`,
-      });
+      // Use onUpdateMeal instead of onAddMealToDay for new meals to ensure proper Supabase integration
+      await onUpdateMeal(newMeal);
     }
     
     setShowAddRecipe(false);

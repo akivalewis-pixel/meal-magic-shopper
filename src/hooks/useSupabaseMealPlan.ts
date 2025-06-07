@@ -92,7 +92,7 @@ export function useSupabaseMealPlan() {
     }
   }, [user]);
 
-  // Add or update meal
+  // Add or update meal - now handles both create and update operations
   const handleUpdateMeal = async (meal: Meal) => {
     if (!user) return;
 
@@ -123,14 +123,31 @@ export function useSupabaseMealPlan() {
         return;
       }
 
-      await loadMeals();
+      // Immediately update local state for instant UI feedback
+      setMeals(prevMeals => {
+        const existingIndex = prevMeals.findIndex(m => m.id === meal.id);
+        if (existingIndex >= 0) {
+          // Update existing meal
+          const updatedMeals = [...prevMeals];
+          updatedMeals[existingIndex] = meal;
+          return updatedMeals;
+        } else {
+          // Add new meal
+          return [...prevMeals, meal];
+        }
+      });
       
       toast({
-        title: "Meal Updated",
-        description: `${meal.title} has been updated`,
+        title: "Meal Saved",
+        description: `${meal.title} has been saved successfully`,
       });
     } catch (error) {
       console.error('Error updating meal:', error);
+      toast({
+        title: "Error",
+        description: "Failed to save meal",
+        variant: "destructive",
+      });
     }
   };
 
@@ -145,11 +162,6 @@ export function useSupabaseMealPlan() {
     };
 
     await handleUpdateMeal(updatedMeal);
-    
-    toast({
-      title: "Meal Added",
-      description: `${meal.title} has been added to ${day}`,
-    });
   };
 
   // Rate meal
