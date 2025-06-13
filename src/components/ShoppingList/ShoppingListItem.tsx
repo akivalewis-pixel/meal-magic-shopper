@@ -105,8 +105,8 @@ export const ShoppingListItem = ({
             autoFocus
           />
         ) : (
-          <div className="flex items-center gap-2 cursor-pointer">
-            <span className="font-medium">{item.name}</span>
+          <div className="flex items-center gap-2 cursor-pointer w-full">
+            <span className="font-medium text-left">{item.name}</span>
             {item.meal && (
               <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
                 {item.meal}

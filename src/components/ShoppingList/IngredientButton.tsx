@@ -78,9 +78,9 @@ export const IngredientButton = ({
       onDragEnd={handleDragEnd}
       data-item-id={item.id}
     >
-      <div className="flex flex-col items-start w-full">
+      <div className="flex flex-col items-start w-full text-left">
         <div className="flex justify-between items-center w-full mb-1">
-          <div className="font-medium text-sm">{item.name}</div>
+          <div className="font-medium text-sm text-left">{item.name}</div>
           {onCategoryChange && (
             <CategoryDropdown
               item={item}
@@ -90,7 +90,7 @@ export const IngredientButton = ({
             />
           )}
         </div>
-        <div className="text-xs text-muted-foreground flex justify-between w-full">
+        <div className="text-xs text-muted-foreground flex justify-between w-full text-left">
           <span>{item.quantity}</span>
           {item.meal && <span>({item.meal})</span>}
         </div>
