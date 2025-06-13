@@ -63,7 +63,7 @@ export const IngredientButton = ({
       variant={isSelected ? "default" : "outline"}
       size="sm"
       className={cn(
-        "w-full justify-start text-left h-auto p-2 sm:p-3 mb-2",
+        "w-full h-auto p-0 mb-2",
         // On mobile, make it easier to tap without accidental drags
         isMobile ? "cursor-pointer" : "cursor-move",
         isSelected && "ring-2 ring-primary",
@@ -78,11 +78,11 @@ export const IngredientButton = ({
       onDragEnd={handleDragEnd}
       data-item-id={item.id}
     >
-      <div className="flex flex-col items-start w-full">
-        <div className="flex items-center w-full mb-1">
-          <div className="font-medium text-sm text-left mr-auto">{item.name}</div>
+      <div className="w-full p-2 sm:p-3">
+        <div className="flex items-center justify-between w-full mb-1">
+          <div className="font-medium text-sm">{item.name}</div>
           {onCategoryChange && (
-            <div className="ml-2">
+            <div className="ml-2 flex-shrink-0">
               <CategoryDropdown
                 item={item}
                 onCategoryChange={handleCategoryChange}
@@ -93,8 +93,8 @@ export const IngredientButton = ({
           )}
         </div>
         <div className="text-xs text-muted-foreground flex items-start w-full">
-          <span className="text-left mr-2">{item.quantity}</span>
-          {item.meal && <span className="text-left">({item.meal})</span>}
+          <span className="mr-2">{item.quantity}</span>
+          {item.meal && <span>({item.meal})</span>}
         </div>
       </div>
     </Button>
