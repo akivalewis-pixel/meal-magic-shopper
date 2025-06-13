@@ -34,28 +34,14 @@ export const IngredientButton = ({
     onSelect(item.id, isMultiSelect);
   };
 
-  const handleDoubleClick = () => {
-    onDoubleClick(item);
-  };
-
   const handleDragStart = (e: React.DragEvent) => {
     onDragStart(e, item);
-    
     const target = e.currentTarget as HTMLElement;
-    setTimeout(() => {
-      if (target) target.classList.add("opacity-50");
-    }, 0);
+    setTimeout(() => target?.classList.add("opacity-50"), 0);
   };
 
   const handleDragEnd = (e: React.DragEvent) => {
-    const target = e.currentTarget as HTMLElement;
-    if (target) target.classList.remove("opacity-50");
-  };
-
-  const handleCategoryChange = (item: GroceryItem, category: string) => {
-    if (onCategoryChange) {
-      onCategoryChange(item, category);
-    }
+    (e.currentTarget as HTMLElement)?.classList.remove("opacity-50");
   };
 
   return (
@@ -63,36 +49,32 @@ export const IngredientButton = ({
       variant={isSelected ? "default" : "outline"}
       size="sm"
       className={cn(
-        "w-full h-auto p-0 mb-2",
-        // On mobile, make it easier to tap without accidental drags
+        "w-full h-auto p-2 mb-2 text-left",
         isMobile ? "cursor-pointer" : "cursor-move",
         isSelected && "ring-2 ring-primary",
         item.checked && "opacity-50 line-through",
-        // Increase touch target size on mobile
         isMobile && "min-h-[50px]"
       )}
       onClick={handleClick}
-      onDoubleClick={handleDoubleClick}
+      onDoubleClick={() => onDoubleClick(item)}
       draggable={!isMobile}
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
       data-item-id={item.id}
     >
-      <div className="w-full p-2 sm:p-3">
-        <div className="flex items-center justify-between w-full mb-1">
-          <div className="font-medium text-sm">{item.name}</div>
+      <div className="w-full">
+        <div className="flex items-center justify-between mb-1">
+          <span className="font-medium text-sm text-left flex-1">{item.name}</span>
           {onCategoryChange && (
-            <div className="ml-2 flex-shrink-0">
-              <CategoryDropdown
-                item={item}
-                onCategoryChange={handleCategoryChange}
-                customCategories={customCategories}
-                onAddCustomCategory={onAddCustomCategory}
-              />
-            </div>
+            <CategoryDropdown
+              item={item}
+              onCategoryChange={onCategoryChange}
+              customCategories={customCategories}
+              onAddCustomCategory={onAddCustomCategory}
+            />
           )}
         </div>
-        <div className="text-xs text-muted-foreground flex items-start w-full">
+        <div className="text-xs text-muted-foreground text-left">
           <span className="mr-2">{item.quantity}</span>
           {item.meal && <span>({item.meal})</span>}
         </div>
