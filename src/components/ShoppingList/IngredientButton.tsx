@@ -78,20 +78,22 @@ export const IngredientButton = ({
       onDragEnd={handleDragEnd}
       data-item-id={item.id}
     >
-      <div className="flex flex-col items-start w-full text-left justify-start">
-        <div className="flex justify-between items-center w-full mb-1">
-          <div className="font-medium text-sm text-left flex-shrink-0">{item.name}</div>
+      <div className="flex flex-col items-start w-full">
+        <div className="flex items-center w-full mb-1">
+          <div className="font-medium text-sm text-left mr-auto">{item.name}</div>
           {onCategoryChange && (
-            <CategoryDropdown
-              item={item}
-              onCategoryChange={handleCategoryChange}
-              customCategories={customCategories}
-              onAddCustomCategory={onAddCustomCategory}
-            />
+            <div className="ml-2">
+              <CategoryDropdown
+                item={item}
+                onCategoryChange={handleCategoryChange}
+                customCategories={customCategories}
+                onAddCustomCategory={onAddCustomCategory}
+              />
+            </div>
           )}
         </div>
-        <div className="text-xs text-muted-foreground flex justify-between w-full text-left items-start">
-          <span className="text-left">{item.quantity}</span>
+        <div className="text-xs text-muted-foreground flex items-start w-full">
+          <span className="text-left mr-2">{item.quantity}</span>
           {item.meal && <span className="text-left">({item.meal})</span>}
         </div>
       </div>

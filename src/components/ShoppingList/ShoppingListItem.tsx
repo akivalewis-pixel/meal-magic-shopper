@@ -89,7 +89,7 @@ export const ShoppingListItem = ({
         disabled={isArchiveView}
       />
       <div 
-        className={`flex flex-1 items-center justify-start ${
+        className={`flex flex-1 items-center ${
           item.checked ? "line-through text-gray-400" : ""
         }`}
         onClick={handleNameClick}
@@ -105,10 +105,10 @@ export const ShoppingListItem = ({
             autoFocus
           />
         ) : (
-          <div className="flex items-center gap-2 cursor-pointer w-full justify-start">
-            <span className="font-medium text-left flex-shrink-0">{item.name}</span>
+          <div className="flex items-center gap-2 cursor-pointer w-full">
+            <span className="font-medium text-left mr-auto">{item.name}</span>
             {item.meal && (
-              <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded flex-shrink-0">
+              <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
                 {item.meal}
               </span>
             )}
