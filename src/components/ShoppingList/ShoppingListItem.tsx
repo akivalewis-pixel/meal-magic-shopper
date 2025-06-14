@@ -73,16 +73,17 @@ export const ShoppingListItem = ({
         checked={item.checked}
         onCheckedChange={() => onToggle(item.id)}
         disabled={isArchiveView}
+        className="flex-shrink-0"
       />
       
       <div 
-        className={`flex-1 ${item.checked ? "line-through text-gray-400" : ""}`}
+        className={`flex-1 min-w-0 ${item.checked ? "line-through text-gray-400" : ""}`}
         onClick={handleNameClick}
       >
         {isEditingName ? (
           <Input
             ref={nameInputRef}
-            className="h-8 text-sm"
+            className="h-8 text-sm text-left"
             value={nameValue}
             onChange={(e) => setNameValue(e.target.value)}
             onBlur={handleNameSubmit}
@@ -90,8 +91,8 @@ export const ShoppingListItem = ({
             autoFocus
           />
         ) : (
-          <div className="flex items-center gap-2 justify-start">
-            <span className="font-medium">{item.name}</span>
+          <div className="flex items-center gap-2 text-left">
+            <span className="font-medium text-left">{item.name}</span>
             {item.meal && (
               <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded flex-shrink-0">
                 {item.meal}

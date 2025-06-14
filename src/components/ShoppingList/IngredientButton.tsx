@@ -49,7 +49,7 @@ export const IngredientButton = ({
       variant={isSelected ? "default" : "outline"}
       size="sm"
       className={cn(
-        "w-full h-auto p-3 mb-2 justify-start",
+        "w-full h-auto p-3 mb-2 !justify-start !text-left", // Force left alignment with !important
         isMobile ? "cursor-pointer" : "cursor-move",
         isSelected && "ring-2 ring-primary",
         item.checked && "opacity-50 line-through",
@@ -62,9 +62,9 @@ export const IngredientButton = ({
       onDragEnd={handleDragEnd}
       data-item-id={item.id}
     >
-      <div className="w-full">
-        <div className="flex items-start justify-between gap-2 mb-1">
-          <span className="font-medium text-sm flex-1">{item.name}</span>
+      <div className="w-full flex flex-col items-start">
+        <div className="w-full flex items-start justify-between gap-2 mb-1">
+          <span className="font-medium text-sm text-left flex-1">{item.name}</span>
           {onCategoryChange && (
             <div className="flex-shrink-0">
               <CategoryDropdown
@@ -76,7 +76,7 @@ export const IngredientButton = ({
             </div>
           )}
         </div>
-        <div className="text-xs text-muted-foreground flex items-center gap-2">
+        <div className="w-full text-xs text-muted-foreground text-left flex items-center gap-2">
           <span>{item.quantity}</span>
           {item.meal && <span>({item.meal})</span>}
         </div>
