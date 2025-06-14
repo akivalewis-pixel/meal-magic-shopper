@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from "react";
 import { GroceryItem } from "@/types";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -76,7 +75,7 @@ export const ShoppingListItem = ({
       />
       
       <div 
-        className={`flex-1 ${item.checked ? "line-through text-gray-400" : ""}`}
+        className={`flex-1 ml-2 ${item.checked ? "line-through text-gray-400" : ""}`}
         onClick={handleNameClick}
       >
         {isEditingName ? (
