@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef, useMemo } from "react";
 import { GroceryItem, Meal } from "@/types";
 import { generateShoppingList } from "@/utils/groceryUtils";
@@ -36,8 +35,7 @@ export function useShoppingListSync({ meals, pantryItems }: UseShoppingListSyncP
       return normalizeGroceryItem({
         ...item,
         id: stableId,
-        store: storedStore || "Unassigned",
-        source: 'meal' as const
+        store: storedStore || "Unassigned"
       });
     });
   }, [meals, pantryItems]);
