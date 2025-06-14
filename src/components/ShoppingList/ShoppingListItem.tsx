@@ -76,13 +76,13 @@ export const ShoppingListItem = ({
       />
       
       <div 
-        className={`flex-1 text-left ${item.checked ? "line-through text-gray-400" : ""}`}
+        className={`flex-1 min-w-0 text-left ${item.checked ? "line-through text-gray-400" : ""}`}
         onClick={handleNameClick}
       >
         {isEditingName ? (
           <Input
             ref={nameInputRef}
-            className="h-8 text-sm"
+            className="h-8 text-sm text-left"
             value={nameValue}
             onChange={(e) => setNameValue(e.target.value)}
             onBlur={handleNameSubmit}
@@ -90,10 +90,10 @@ export const ShoppingListItem = ({
             autoFocus
           />
         ) : (
-          <div className="flex items-center justify-between cursor-pointer">
-            <span className="font-medium text-left">{item.name}</span>
+          <div className="flex items-center gap-2">
+            <span className="font-medium text-left flex-1 min-w-0">{item.name}</span>
             {item.meal && (
-              <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded ml-2 flex-shrink-0">
+              <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded flex-shrink-0">
                 {item.meal}
               </span>
             )}
@@ -101,7 +101,7 @@ export const ShoppingListItem = ({
         )}
       </div>
       
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 flex-shrink-0">
         <Input
           className="w-20 h-8 text-sm text-center"
           value={quantityValue}

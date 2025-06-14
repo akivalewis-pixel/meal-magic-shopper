@@ -49,7 +49,7 @@ export const IngredientButton = ({
       variant={isSelected ? "default" : "outline"}
       size="sm"
       className={cn(
-        "w-full h-auto p-2 mb-2 text-left",
+        "w-full h-auto p-2 mb-2 text-left justify-start",
         isMobile ? "cursor-pointer" : "cursor-move",
         isSelected && "ring-2 ring-primary",
         item.checked && "opacity-50 line-through",
@@ -62,16 +62,18 @@ export const IngredientButton = ({
       onDragEnd={handleDragEnd}
       data-item-id={item.id}
     >
-      <div className="w-full">
-        <div className="flex items-center justify-between mb-1">
-          <span className="font-medium text-sm text-left flex-1">{item.name}</span>
+      <div className="w-full text-left">
+        <div className="flex items-start justify-between mb-1">
+          <span className="font-medium text-sm text-left flex-1 pr-2">{item.name}</span>
           {onCategoryChange && (
-            <CategoryDropdown
-              item={item}
-              onCategoryChange={onCategoryChange}
-              customCategories={customCategories}
-              onAddCustomCategory={onAddCustomCategory}
-            />
+            <div className="flex-shrink-0">
+              <CategoryDropdown
+                item={item}
+                onCategoryChange={onCategoryChange}
+                customCategories={customCategories}
+                onAddCustomCategory={onAddCustomCategory}
+              />
+            </div>
           )}
         </div>
         <div className="text-xs text-muted-foreground text-left">
