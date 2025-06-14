@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from "react";
 import { GroceryItem } from "@/types";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -75,7 +76,7 @@ export const ShoppingListItem = ({
       />
       
       <div 
-        className={`flex-1 ml-2 ${item.checked ? "line-through text-gray-400" : ""}`}
+        className={`flex-1 ${item.checked ? "line-through text-gray-400" : ""}`}
         onClick={handleNameClick}
       >
         {isEditingName ? (
@@ -89,7 +90,7 @@ export const ShoppingListItem = ({
             autoFocus
           />
         ) : (
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 justify-start">
             <span className="font-medium">{item.name}</span>
             {item.meal && (
               <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded flex-shrink-0">
