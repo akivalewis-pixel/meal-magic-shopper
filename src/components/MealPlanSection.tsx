@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
@@ -21,6 +20,7 @@ interface MealPlanSectionProps {
   onRateMeal: (meal: Meal, rating: number, notes: string) => void;
   onAddMealToDay: (meal: Meal, day: string) => void;
   onResetMealPlan: () => void;
+  onSaveCurrentPlan?: (name: string) => void;
 }
 
 export const MealPlanSection = ({ 
@@ -29,7 +29,8 @@ export const MealPlanSection = ({
   onUpdateMeal,
   onRateMeal,
   onAddMealToDay,
-  onResetMealPlan
+  onResetMealPlan,
+  onSaveCurrentPlan
 }: MealPlanSectionProps) => {
   const { toast } = useToast();
   const [dietFilter, setDietFilter] = useState<DietaryPreference>("none");
@@ -45,6 +46,8 @@ export const MealPlanSection = ({
   const getMealsForDay = (day: string) => {
     return filteredMeals.filter(meal => meal.day === day);
   };
+
+  const hasMealsPlanned = meals.some(meal => meal.day && meal.day !== "");
 
   const handleOpenRatingDialog = (meal: Meal) => {
     setMealToRate(meal);
@@ -140,6 +143,9 @@ export const MealPlanSection = ({
               setEditingMeal(null);
               setShowAddRecipe(true);
             }}
+            onResetMealPlan={onResetMealPlan}
+            onSaveCurrentPlan={onSaveCurrentPlan}
+            hasMeals={hasMealsPlanned}
           />
 
           <MealRecommendations 

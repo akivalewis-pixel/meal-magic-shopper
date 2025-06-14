@@ -76,6 +76,7 @@ const Index = () => {
           onRateMeal={handleRateMeal}
           onAddMealToDay={handleAddMealToDay}
           onResetMealPlan={handleResetMealPlan}
+          onSaveCurrentPlan={(name) => handleSaveWeeklyPlan(name, getCurrentItems, getAvailableStores)}
         />
         
         <ShoppingListContainer 
