@@ -1,8 +1,22 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Plus, Settings, RefreshCw, LayoutGrid, List, Store } from "lucide-react";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { 
+  Plus, 
+  Settings, 
+  RefreshCw, 
+  LayoutGrid, 
+  List, 
+  Store,
+  Tags
+} from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { CategoryManagementDialog } from "./CategoryManagementDialog";
 
 interface ShoppingListHeaderActionsProps {
   viewMode: "list" | "board";
@@ -19,59 +33,86 @@ export const ShoppingListHeaderActions = ({
   onAddItem,
   onReset
 }: ShoppingListHeaderActionsProps) => {
-  const isMobile = useIsMobile();
-  
+  const [isCategoryDialogOpen, setIsCategoryDialogOpen] = useState(false);
+
   return (
-    <div className="flex flex-wrap items-center gap-2">
-      <div className="flex items-center gap-1">
+    <>
+      <div className="flex flex-wrap items-center gap-2">
         <Button
           variant={viewMode === "list" ? "default" : "outline"}
-          size={isMobile ? "icon" : "sm"}
+          size="sm"
           onClick={() => onViewModeChange("list")}
-          title="List View"
+          className="flex items-center gap-1"
         >
           <List className="h-4 w-4" />
-          {!isMobile && <span className="ml-1">List</span>}
+          <span className="hidden sm:inline">List</span>
         </Button>
+        
         <Button
           variant={viewMode === "board" ? "default" : "outline"}
-          size={isMobile ? "icon" : "sm"}
+          size="sm"
           onClick={() => onViewModeChange("board")}
-          title="Board View"
+          className="flex items-center gap-1"
         >
           <LayoutGrid className="h-4 w-4" />
-          {!isMobile && <span className="ml-1">Board</span>}
+          <span className="hidden sm:inline">Board</span>
+        </Button>
+
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={onManageStores}
+          className="flex items-center gap-1"
+        >
+          <Store className="h-4 w-4" />
+          <span className="hidden sm:inline">Stores</span>
+        </Button>
+
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setIsCategoryDialogOpen(true)}
+          className="flex items-center gap-1"
+        >
+          <Tags className="h-4 w-4" />
+          <span className="hidden sm:inline">Categories</span>
+        </Button>
+
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="sm" className="flex items-center gap-1">
+              <Plus className="h-4 w-4" />
+              <span className="hidden sm:inline">Add</span>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={onAddItem}>
+              Add Item
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={onManageStores}>
+              Manage Stores
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setIsCategoryDialogOpen(true)}>
+              Manage Categories
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        <Button 
+          variant="outline" 
+          size="sm"
+          onClick={onReset}
+          className="flex items-center gap-1 text-red-600 hover:text-red-700"
+        >
+          <RefreshCw className="h-4 w-4" />
+          <span className="hidden sm:inline">Reset</span>
         </Button>
       </div>
-      
-      <Button
-        variant="outline"
-        size={isMobile ? "icon" : "sm"}
-        onClick={onManageStores}
-        title="Manage Stores"
-      >
-        <Store className="h-4 w-4" />
-        {!isMobile && <span className="ml-1">Stores</span>}
-      </Button>
-      <Button
-        variant="outline"
-        size={isMobile ? "icon" : "sm"}
-        onClick={onAddItem}
-        title="Add Item"
-      >
-        <Plus className="h-4 w-4" />
-        {!isMobile && <span className="ml-1">Add</span>}
-      </Button>
-      <Button
-        variant="outline"
-        size={isMobile ? "icon" : "sm"}
-        onClick={onReset}
-        className="text-red-600"
-        title="Reset List"
-      >
-        <RefreshCw className="h-4 w-4" />
-        {!isMobile && <span className="ml-1">Reset</span>}
-      </Button>
-    </div>
+
+      <CategoryManagementDialog
+        open={isCategoryDialogOpen}
+        onOpenChange={setIsCategoryDialogOpen}
+      />
+    </>
   );
 };

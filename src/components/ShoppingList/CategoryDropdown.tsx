@@ -11,20 +11,18 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Plus, ChevronDown } from "lucide-react";
+import { useCustomCategories } from "./useCustomCategories";
 
 interface CategoryDropdownProps {
   item: GroceryItem;
   onCategoryChange: (item: GroceryItem, category: string) => void;
-  customCategories?: string[];
-  onAddCustomCategory?: (categoryName: string) => void;
 }
 
 export const CategoryDropdown = ({
   item,
-  onCategoryChange,
-  customCategories = [],
-  onAddCustomCategory
+  onCategoryChange
 }: CategoryDropdownProps) => {
+  const { customCategories, addCustomCategory } = useCustomCategories();
   const [isAddingNew, setIsAddingNew] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState("");
   const [isOpen, setIsOpen] = useState(false);
@@ -42,9 +40,9 @@ export const CategoryDropdown = ({
   };
 
   const handleAddNewCategory = () => {
-    if (newCategoryName.trim() && onAddCustomCategory) {
+    if (newCategoryName.trim()) {
       console.log("CategoryDropdown: Adding new category:", newCategoryName.trim());
-      onAddCustomCategory(newCategoryName.trim());
+      addCustomCategory(newCategoryName.trim());
       onCategoryChange(item, newCategoryName.trim());
       setNewCategoryName("");
       setIsAddingNew(false);
