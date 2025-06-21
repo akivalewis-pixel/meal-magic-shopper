@@ -49,7 +49,8 @@ export const IngredientButton = ({
       variant={isSelected ? "default" : "outline"}
       size="sm"
       className={cn(
-        "w-full h-auto p-3 mb-2 !justify-start !text-left", // Force left alignment with !important
+        // Override default button centering and force left alignment
+        "w-full h-auto p-3 mb-2 !justify-start !items-start !text-left",
         isMobile ? "cursor-pointer" : "cursor-move",
         isSelected && "ring-2 ring-primary",
         item.checked && "opacity-50 line-through",
@@ -62,9 +63,9 @@ export const IngredientButton = ({
       onDragEnd={handleDragEnd}
       data-item-id={item.id}
     >
-      <div className="w-full flex flex-col items-start">
-        <div className="w-full flex items-start justify-between gap-2 mb-1">
-          <span className="font-medium text-sm text-left flex-1">{item.name}</span>
+      <div className="w-full flex flex-col items-start justify-start text-left">
+        <div className="w-full flex items-start justify-between gap-2 mb-1 text-left">
+          <span className="font-medium text-sm text-left flex-1 text-start">{item.name}</span>
           {onCategoryChange && (
             <div className="flex-shrink-0">
               <CategoryDropdown
@@ -76,9 +77,9 @@ export const IngredientButton = ({
             </div>
           )}
         </div>
-        <div className="w-full text-xs text-muted-foreground text-left flex items-center gap-2">
-          <span>{item.quantity}</span>
-          {item.meal && <span>({item.meal})</span>}
+        <div className="w-full text-xs text-muted-foreground text-left flex items-center justify-start gap-2">
+          <span className="text-left">{item.quantity}</span>
+          {item.meal && <span className="text-left">({item.meal})</span>}
         </div>
       </div>
     </Button>

@@ -109,7 +109,7 @@ export const ShoppingListBoard = ({
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 text-left">
       <MultiSelectActions
         selectedItems={selectedItemObjects}
         onUpdateMultiple={handleUpdateMultiple}
@@ -117,7 +117,7 @@ export const ShoppingListBoard = ({
         availableStores={availableStores}
       />
       
-      <div className="flex gap-4 overflow-x-auto pb-4">
+      <div className="flex gap-4 overflow-x-auto pb-4 text-left">
         {Object.entries(groupedItems).map(([storeName, categories]) => (
           <StoreColumn
             key={storeName}

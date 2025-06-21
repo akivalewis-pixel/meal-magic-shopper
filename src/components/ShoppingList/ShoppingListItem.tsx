@@ -92,9 +92,9 @@ export const ShoppingListItem = ({
           />
         ) : (
           <div className="flex items-center justify-start gap-2 text-left">
-            <span className="font-medium text-left">{item.name}</span>
+            <span className="font-medium text-left text-start">{item.name}</span>
             {item.meal && (
-              <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded flex-shrink-0">
+              <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded flex-shrink-0 text-left">
                 {item.meal}
               </span>
             )}
