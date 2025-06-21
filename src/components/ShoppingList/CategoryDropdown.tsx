@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { GroceryItem, GroceryCategory } from "@/types";
 import { Button } from "@/components/ui/button";
 import {
@@ -37,6 +37,7 @@ export const CategoryDropdown = ({
   const [isAddingNew, setIsAddingNew] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState("");
   const [isOpen, setIsOpen] = useState(false);
+  const [allCategories, setAllCategories] = useState<Array<{name: string, isDefault: boolean, displayName: string}>>([]);
 
   // Use prop values if provided, otherwise use hook values
   const customCategories = propCustomCategories || hookCustomCategories;
@@ -46,6 +47,24 @@ export const CategoryDropdown = ({
   const defaultCategories: GroceryCategory[] = [
     "produce", "dairy", "meat", "grains", "frozen", "pantry", "spices", "other"
   ];
+
+  // Update categories whenever dependencies change
+  useEffect(() => {
+    const updatedCategories = [
+      ...defaultCategories.map(cat => ({ 
+        name: cat, 
+        isDefault: true,
+        displayName: getCategoryDisplayName(cat)
+      })),
+      ...customCategories.map(cat => ({ 
+        name: cat, 
+        isDefault: false,
+        displayName: cat.charAt(0).toUpperCase() + cat.slice(1)
+      }))
+    ];
+    setAllCategories(updatedCategories);
+    console.log("CategoryDropdown: Updated categories list:", updatedCategories);
+  }, [customCategories, defaultCategoryOverrides, getCategoryDisplayName]);
 
   const handleCategorySelect = (category: string) => {
     console.log("CategoryDropdown: Selecting category", category, "for item", item.name);
@@ -73,19 +92,6 @@ export const CategoryDropdown = ({
       setNewCategoryName("");
     }
   };
-
-  const allCategories = [
-    ...defaultCategories.map(cat => ({ 
-      name: cat, 
-      isDefault: true,
-      displayName: getCategoryDisplayName(cat)
-    })),
-    ...customCategories.map(cat => ({ 
-      name: cat, 
-      isDefault: false,
-      displayName: cat.charAt(0).toUpperCase() + cat.slice(1)
-    }))
-  ];
 
   const handleTriggerClick = (e: React.MouseEvent) => {
     console.log("CategoryDropdown: Trigger clicked for item:", item.name);
