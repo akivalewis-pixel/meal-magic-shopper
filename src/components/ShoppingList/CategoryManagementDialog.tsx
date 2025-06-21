@@ -22,13 +22,21 @@ export const CategoryManagementDialog = ({
   open,
   onOpenChange
 }: CategoryManagementDialogProps) => {
-  const { customCategories, addCustomCategory, removeCustomCategory } = useCustomCategories();
+  const { 
+    customCategories, 
+    addCustomCategory, 
+    removeCustomCategory,
+    defaultCategoryOverrides,
+    addDefaultCategoryOverride,
+    removeDefaultCategoryOverride
+  } = useCustomCategories();
+  
   const [newCategoryName, setNewCategoryName] = useState("");
   const [editingCategory, setEditingCategory] = useState<string | null>(null);
   const [editValue, setEditValue] = useState("");
 
-  // Default categories from types
-  const defaultCategories: GroceryCategory[] = [
+  // Base default categories from types
+  const baseDefaultCategories: GroceryCategory[] = [
     "produce", "dairy", "meat", "grains", "frozen", "pantry", "spices", "other"
   ];
 
@@ -39,16 +47,19 @@ export const CategoryManagementDialog = ({
     }
   };
 
-  const handleStartEdit = (category: string) => {
+  const handleStartEdit = (category: string, isDefault: boolean) => {
     setEditingCategory(category);
-    setEditValue(category);
+    setEditValue(isDefault ? (defaultCategoryOverrides[category] || category) : category);
   };
 
-  const handleSaveEdit = () => {
-    if (editValue.trim() && editValue !== editingCategory) {
-      // Remove old category and add new one
-      if (editingCategory) {
-        removeCustomCategory(editingCategory);
+  const handleSaveEdit = (originalCategory: string, isDefault: boolean) => {
+    if (editValue.trim() && editValue !== originalCategory) {
+      if (isDefault) {
+        // For default categories, save as override
+        addDefaultCategoryOverride(originalCategory, editValue.trim());
+      } else {
+        // For custom categories, remove old and add new
+        removeCustomCategory(originalCategory);
         addCustomCategory(editValue.trim());
       }
     }
@@ -56,24 +67,38 @@ export const CategoryManagementDialog = ({
     setEditValue("");
   };
 
+  const handleDeleteCategory = (category: string, isDefault: boolean) => {
+    if (isDefault) {
+      // For default categories, we can't truly delete them but we can hide them
+      // This would require additional logic to track hidden categories
+      // For now, we'll just show a message that default categories can't be deleted
+      return;
+    } else {
+      removeCustomCategory(category);
+    }
+  };
+
   const handleCancelEdit = () => {
     setEditingCategory(null);
     setEditValue("");
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent, action: 'add' | 'edit') => {
+  const handleKeyDown = (e: React.KeyboardEvent, action: 'add' | 'edit', originalCategory?: string, isDefault?: boolean) => {
     if (e.key === 'Enter') {
       if (action === 'add') {
         handleAddCategory();
-      } else {
-        handleSaveEdit();
+      } else if (originalCategory !== undefined && isDefault !== undefined) {
+        handleSaveEdit(originalCategory, isDefault);
       }
     } else if (e.key === 'Escape' && action === 'edit') {
       handleCancelEdit();
     }
   };
 
-  const displayCategoryName = (category: string) => {
+  const getDisplayName = (category: string, isDefault: boolean) => {
+    if (isDefault && defaultCategoryOverrides[category]) {
+      return defaultCategoryOverrides[category];
+    }
     return category.charAt(0).toUpperCase() + category.slice(1);
   };
 
@@ -111,14 +136,57 @@ export const CategoryManagementDialog = ({
           <div className="space-y-2">
             <Label>Default Categories</Label>
             <div className="space-y-1 max-h-32 overflow-y-auto">
-              {defaultCategories.map((category) => (
+              {baseDefaultCategories.map((category) => (
                 <div
                   key={category}
-                  className="flex items-center justify-between p-2 bg-gray-50 rounded text-sm"
+                  className="flex items-center justify-between p-2 bg-gray-50 rounded"
                 >
-                  <span className="text-gray-600">
-                    {displayCategoryName(category)} (default)
-                  </span>
+                  {editingCategory === category ? (
+                    <div className="flex items-center gap-2 flex-1">
+                      <Input
+                        value={editValue}
+                        onChange={(e) => setEditValue(e.target.value)}
+                        onKeyDown={(e) => handleKeyDown(e, 'edit', category, true)}
+                        className="h-8 text-sm flex-1"
+                        autoFocus
+                      />
+                      <Button
+                        onClick={() => handleSaveEdit(category, true)}
+                        size="sm"
+                        variant="ghost"
+                        className="h-8 w-8 p-0 text-green-600"
+                      >
+                        <Check className="h-3 w-3" />
+                      </Button>
+                      <Button
+                        onClick={handleCancelEdit}
+                        size="sm"
+                        variant="ghost"
+                        className="h-8 w-8 p-0 text-gray-500"
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <>
+                      <span className="text-sm text-gray-600">
+                        {getDisplayName(category, true)}
+                        {defaultCategoryOverrides[category] && (
+                          <span className="text-xs text-blue-600 ml-1">(renamed)</span>
+                        )}
+                      </span>
+                      <div className="flex items-center gap-1">
+                        <Button
+                          onClick={() => handleStartEdit(category, true)}
+                          size="sm"
+                          variant="ghost"
+                          className="h-8 w-8 p-0 text-blue-600"
+                        >
+                          <Edit2 className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    </>
+                  )}
                 </div>
               ))}
             </div>
@@ -139,12 +207,12 @@ export const CategoryManagementDialog = ({
                         <Input
                           value={editValue}
                           onChange={(e) => setEditValue(e.target.value)}
-                          onKeyDown={(e) => handleKeyDown(e, 'edit')}
+                          onKeyDown={(e) => handleKeyDown(e, 'edit', category, false)}
                           className="h-8 text-sm flex-1"
                           autoFocus
                         />
                         <Button
-                          onClick={handleSaveEdit}
+                          onClick={() => handleSaveEdit(category, false)}
                           size="sm"
                           variant="ghost"
                           className="h-8 w-8 p-0 text-green-600"
@@ -163,11 +231,11 @@ export const CategoryManagementDialog = ({
                     ) : (
                       <>
                         <span className="text-sm">
-                          {displayCategoryName(category)}
+                          {category.charAt(0).toUpperCase() + category.slice(1)}
                         </span>
                         <div className="flex items-center gap-1">
                           <Button
-                            onClick={() => handleStartEdit(category)}
+                            onClick={() => handleStartEdit(category, false)}
                             size="sm"
                             variant="ghost"
                             className="h-8 w-8 p-0 text-blue-600"
@@ -175,7 +243,7 @@ export const CategoryManagementDialog = ({
                             <Edit2 className="h-3 w-3" />
                           </Button>
                           <Button
-                            onClick={() => removeCustomCategory(category)}
+                            onClick={() => handleDeleteCategory(category, false)}
                             size="sm"
                             variant="ghost"
                             className="h-8 w-8 p-0 text-red-600"

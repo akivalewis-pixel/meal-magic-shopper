@@ -26,7 +26,14 @@ export const CategoryDropdown = ({
   customCategories: propCustomCategories,
   onAddCustomCategory: propOnAddCustomCategory
 }: CategoryDropdownProps) => {
-  const { customCategories: hookCustomCategories, addCustomCategory: hookAddCustomCategory } = useCustomCategories();
+  const { 
+    customCategories: hookCustomCategories, 
+    addCustomCategory: hookAddCustomCategory,
+    defaultCategoryOverrides,
+    getCategoryDisplayName,
+    getAllCategories
+  } = useCustomCategories();
+  
   const [isAddingNew, setIsAddingNew] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState("");
   const [isOpen, setIsOpen] = useState(false);
@@ -68,17 +75,25 @@ export const CategoryDropdown = ({
   };
 
   const allCategories = [
-    ...defaultCategories.map(cat => ({ name: cat, isDefault: true })),
-    ...customCategories.map(cat => ({ name: cat, isDefault: false }))
+    ...defaultCategories.map(cat => ({ 
+      name: cat, 
+      isDefault: true,
+      displayName: getCategoryDisplayName(cat)
+    })),
+    ...customCategories.map(cat => ({ 
+      name: cat, 
+      isDefault: false,
+      displayName: cat.charAt(0).toUpperCase() + cat.slice(1)
+    }))
   ];
-
-  const displayCategoryName = (category: string) => {
-    return category.charAt(0).toUpperCase() + category.slice(1);
-  };
 
   const handleTriggerClick = (e: React.MouseEvent) => {
     console.log("CategoryDropdown: Trigger clicked for item:", item.name);
     e.stopPropagation(); // Prevent parent button click
+  };
+
+  const getCurrentDisplayName = () => {
+    return getCategoryDisplayName(item.category);
   };
 
   return (
@@ -90,19 +105,22 @@ export const CategoryDropdown = ({
           className="h-8 text-xs min-w-20 justify-between"
           onClick={handleTriggerClick}
         >
-          <span className="truncate">{displayCategoryName(item.category)}</span>
+          <span className="truncate">{getCurrentDisplayName()}</span>
           <ChevronDown className="h-3 w-3 ml-1 flex-shrink-0" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-48 bg-white z-50">
-        {allCategories.map(({ name, isDefault }) => (
+        {allCategories.map(({ name, isDefault, displayName }) => (
           <DropdownMenuItem
             key={name}
             onClick={() => handleCategorySelect(name)}
             className={item.category === name ? "bg-accent" : ""}
           >
-            {displayCategoryName(name)}
+            {displayName}
             {!isDefault && <span className="text-xs text-muted-foreground ml-auto">Custom</span>}
+            {isDefault && defaultCategoryOverrides[name] && (
+              <span className="text-xs text-blue-600 ml-auto">Renamed</span>
+            )}
           </DropdownMenuItem>
         ))}
         
