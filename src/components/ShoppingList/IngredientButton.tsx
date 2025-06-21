@@ -13,6 +13,8 @@ interface IngredientButtonProps {
   onDoubleClick: (item: GroceryItem) => void;
   onDragStart: (e: React.DragEvent, item: GroceryItem) => void;
   onCategoryChange?: (item: GroceryItem, category: string) => void;
+  customCategories?: string[];
+  onAddCustomCategory?: (categoryName: string) => void;
 }
 
 export const IngredientButton = ({
@@ -21,7 +23,9 @@ export const IngredientButton = ({
   onSelect,
   onDoubleClick,
   onDragStart,
-  onCategoryChange
+  onCategoryChange,
+  customCategories,
+  onAddCustomCategory
 }: IngredientButtonProps) => {
   const isMobile = useIsMobile();
 
@@ -66,6 +70,8 @@ export const IngredientButton = ({
               <CategoryDropdown
                 item={item}
                 onCategoryChange={onCategoryChange}
+                customCategories={customCategories}
+                onAddCustomCategory={onAddCustomCategory}
               />
             </div>
           )}

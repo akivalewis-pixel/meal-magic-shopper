@@ -16,16 +16,24 @@ import { useCustomCategories } from "./useCustomCategories";
 interface CategoryDropdownProps {
   item: GroceryItem;
   onCategoryChange: (item: GroceryItem, category: string) => void;
+  customCategories?: string[];
+  onAddCustomCategory?: (categoryName: string) => void;
 }
 
 export const CategoryDropdown = ({
   item,
-  onCategoryChange
+  onCategoryChange,
+  customCategories: propCustomCategories,
+  onAddCustomCategory: propOnAddCustomCategory
 }: CategoryDropdownProps) => {
-  const { customCategories, addCustomCategory } = useCustomCategories();
+  const { customCategories: hookCustomCategories, addCustomCategory: hookAddCustomCategory } = useCustomCategories();
   const [isAddingNew, setIsAddingNew] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState("");
   const [isOpen, setIsOpen] = useState(false);
+
+  // Use prop values if provided, otherwise use hook values
+  const customCategories = propCustomCategories || hookCustomCategories;
+  const addCustomCategory = propOnAddCustomCategory || hookAddCustomCategory;
 
   // Default categories from types
   const defaultCategories: GroceryCategory[] = [
