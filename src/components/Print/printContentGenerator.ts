@@ -155,10 +155,17 @@ export const generateFullPrintContent = (meals: Meal[], items: GroceryItem[]): s
     </head>
     <body>
       <div class="container">
-        <h1>Pantry Pilot: Weekly Meal Plan</h1>
-        ${mealPlanContent}
-        <h1>Pantry Pilot: Shopping List</h1>
-        ${shoppingListContent}
+        <h1>Pantry Pilot: Weekly Meal Plan & Shopping List</h1>
+        <div class="main-layout">
+          <div class="meal-plan-section">
+            <h2 class="meal-plan-title">Weekly Meal Plan</h2>
+            ${mealPlanContent}
+          </div>
+          <div class="shopping-list-section">
+            <h2 class="shopping-list-title">Shopping List</h2>
+            ${shoppingListContent}
+          </div>
+        </div>
       </div>
     </body>
     </html>
