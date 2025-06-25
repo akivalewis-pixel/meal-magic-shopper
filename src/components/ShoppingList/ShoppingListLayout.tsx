@@ -68,7 +68,7 @@ export const ShoppingListLayout = ({
             />
 
             <ShoppingListHeaderActions
-              viewMode={state.viewMode}
+              viewMode="list"
               onViewModeChange={actions.setViewMode}
               onManageStores={() => actions.setIsEditingStores(true)}
               onAddItem={() => actions.setIsAddingItem(true)}
@@ -83,7 +83,7 @@ export const ShoppingListLayout = ({
           selectedStore={state.selectedStore}
           onStoreChange={actions.setSelectedStore}
           availableStores={availableStores}
-          viewMode={state.viewMode}
+          viewMode="list"
           groupByStore={state.groupByStore}
           onGroupByStoreChange={actions.setGroupByStore}
         />
@@ -93,7 +93,7 @@ export const ShoppingListLayout = ({
             filteredItems={filteredItems}
             searchTerm={state.searchTerm}
             selectedStore={state.selectedStore}
-            viewMode={state.viewMode}
+            viewMode="list"
             groupByStore={state.groupByStore}
             availableStores={availableStores}
             onUpdateItem={onUpdateItem}

@@ -2,8 +2,6 @@
 import React from "react";
 import { GroceryItem } from "@/types";
 import { SimpleListView } from "./SimpleListView";
-import { ShoppingListBoard } from "./ShoppingListBoard";
-import { useShoppingListGrouping } from "./useShoppingListGrouping";
 import { useCategoryNames } from "./useCategoryNames";
 
 interface ShoppingListContentProps {
@@ -19,44 +17,12 @@ interface ShoppingListContentProps {
 
 export const ShoppingListContent = ({
   filteredItems,
-  searchTerm,
-  selectedStore,
-  viewMode,
   groupByStore,
   availableStores,
   onUpdateItem,
   onRemoveItem
 }: ShoppingListContentProps) => {
   const { customCategoryNames, handleCategoryNameChange } = useCategoryNames();
-  
-  const groupedItems = useShoppingListGrouping(
-    filteredItems,
-    [],
-    false,
-    searchTerm,
-    false,
-    selectedStore,
-    groupByStore,
-    "category"
-  );
-
-  const handleUpdateMultipleItems = (items: GroceryItem[], updates: Partial<GroceryItem>) => {
-    items.forEach(item => {
-      onUpdateItem({ ...item, ...updates });
-    });
-  };
-
-  if (viewMode === "board") {
-    return (
-      <ShoppingListBoard
-        groupedItems={groupedItems}
-        onUpdateItem={onUpdateItem}
-        onUpdateMultiple={handleUpdateMultipleItems}
-        availableStores={availableStores}
-        customCategoryNames={customCategoryNames}
-      />
-    );
-  }
 
   return (
     <SimpleListView

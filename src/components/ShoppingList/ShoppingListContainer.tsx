@@ -1,3 +1,4 @@
+
 import React, { useEffect } from "react";
 import { useUndo } from "@/hooks/useUndo";
 import { useShoppingListState } from "./ShoppingListState";
@@ -8,7 +9,6 @@ import { shoppingListStateRef } from "@/hooks/useShoppingList";
 interface ShoppingListContainerProps {
   meals: any[];
   pantryItems?: string[];
-  // Accept shopping list data from parent instead of creating our own
   groceryItems: GroceryItem[];
   archivedItems: GroceryItem[];
   availableStores: string[];
@@ -22,14 +22,11 @@ interface ShoppingListContainerProps {
 }
 
 export const ShoppingListContainer = ({ 
-  meals, 
-  pantryItems = [],
   groceryItems,
   archivedItems,
   availableStores,
   updateItem,
   toggleItem,
-  archiveItem,
   addItem,
   updateStores,
   resetList,
@@ -95,28 +92,19 @@ export const ShoppingListContainer = ({
     const lastAction = undo();
     if (!lastAction) return;
 
-    console.log("Performing undo for action:", lastAction);
-
     switch (lastAction.type) {
       case 'toggle':
-        // Restore the item back to the main list
         if (lastAction.data.item) {
-          console.log("Undoing toggle for item:", lastAction.data.item.name);
-          // Add the item back with unchecked status
           addItem({ ...lastAction.data.item, checked: false });
         }
         break;
       case 'add':
-        // Remove the item that was added
         if (lastAction.data.item) {
-          console.log("Undoing add for item:", lastAction.data.item.name);
           toggleItem(lastAction.data.item.id);
         }
         break;
       case 'update':
-        // Restore the original item state
         if (lastAction.data.original) {
-          console.log("Undoing update for item:", lastAction.data.original.name);
           updateItem(lastAction.data.original);
         }
         break;
@@ -127,27 +115,19 @@ export const ShoppingListContainer = ({
     const redoAction = redo();
     if (!redoAction) return;
 
-    console.log("Performing redo for action:", redoAction);
-
     switch (redoAction.type) {
       case 'toggle':
-        // Re-toggle the item
         if (redoAction.data.item) {
-          console.log("Redoing toggle for item:", redoAction.data.item.name);
           toggleItem(redoAction.data.item.id);
         }
         break;
       case 'add':
-        // Re-add the item
         if (redoAction.data.item) {
-          console.log("Redoing add for item:", redoAction.data.item.name);
           addItem(redoAction.data.item);
         }
         break;
       case 'update':
-        // Re-apply the update
         if (redoAction.data.updated) {
-          console.log("Redoing update for item:", redoAction.data.updated.name);
           updateItem(redoAction.data.updated);
         }
         break;

@@ -21,10 +21,7 @@ export function useShoppingList(meals: Meal[], pantryItems: string[] = []) {
     setManualItems,
     setArchivedItems,
     setAvailableStores,
-    setItemOverrides,
-    storeAssignments,
-    saveToLocalStorage,
-    isInitialized
+    saveToLocalStorage
   } = useShoppingListSync({ meals, pantryItems });
 
   // Actions
@@ -45,8 +42,6 @@ export function useShoppingList(meals: Meal[], pantryItems: string[] = []) {
     shoppingListStateRef.availableStores = availableStores;
   }, [allItems, availableStores]);
 
-  const getAvailableStores = () => availableStores;
-
   const loadShoppingList = (items: any[], stores: string[]) => {
     setAllItems(items);
     setAvailableStores(stores);
@@ -59,7 +54,7 @@ export function useShoppingList(meals: Meal[], pantryItems: string[] = []) {
     archivedItems,
     availableStores,
     ...actions,
-    getAvailableStores,
+    getAvailableStores: () => availableStores,
     loadShoppingList
   };
 }

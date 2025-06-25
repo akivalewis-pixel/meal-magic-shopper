@@ -17,20 +17,13 @@ export const generateMealPlanContent = (meals: Meal[]): string => {
     
     if (dayMeals.length > 0) {
       dayMeals.forEach(meal => {
-        content += `
-          <p class="meal-title">${meal.title}</p>
-        `;
-        
+        content += `<p class="meal-title">${meal.title}</p>`;
         if (meal.recipeUrl) {
-          content += `
-            <p><a href="${meal.recipeUrl}" target="_blank">${meal.recipeUrl.substring(0, 15)}${meal.recipeUrl.length > 15 ? '...' : ''}</a></p>
-          `;
+          content += `<p><a href="${meal.recipeUrl}" target="_blank">${meal.recipeUrl.substring(0, 15)}${meal.recipeUrl.length > 15 ? '...' : ''}</a></p>`;
         }
       });
     } else {
-      content += `
-        <p>No meal planned</p>
-      `;
+      content += `<p>No meal planned</p>`;
     }
     
     content += `</div>`;
@@ -40,29 +33,17 @@ export const generateMealPlanContent = (meals: Meal[]): string => {
   return content;
 };
 
-export const groupItemsByStoreAndCategory = (items: GroceryItem[]): GroupedItems => {
-  console.log("PrintContentGenerator: Grouping", items.length, "items for print");
-  
-  // Sort items first by store, then by category
-  const sortedItems = [...items].sort((a, b) => {
-    const storeA = a.store || "Unassigned";
-    const storeB = b.store || "Unassigned";
-    
-    // First sort by store
-    if (storeA !== storeB) {
-      // Put "Unassigned" at the end
-      if (storeA === "Unassigned") return 1;
-      if (storeB === "Unassigned") return -1;
-      return storeA.localeCompare(storeB);
-    }
-    
-    // Then sort by category within the same store
-    return a.category.localeCompare(b.category);
-  });
+export const generateShoppingListContent = (items: GroceryItem[]): string => {
+  if (items.length === 0) {
+    return '<p>No active items to print!</p>';
+  }
 
-  const groupedByStore: GroupedItems = {};
+  console.log("PrintContentGenerator: Generating content for", items.length, "items");
   
-  sortedItems.forEach(item => {
+  // Group items by store first, then by category
+  const groupedByStore: Record<string, Record<string, GroceryItem[]>> = {};
+  
+  items.forEach(item => {
     const store = item.store || "Unassigned";
     const category = item.category;
     
@@ -77,27 +58,7 @@ export const groupItemsByStoreAndCategory = (items: GroceryItem[]): GroupedItems
     groupedByStore[store][category].push(item);
   });
 
-  console.log("PrintContentGenerator: Grouped items by store:", 
-    Object.entries(groupedByStore).map(([store, categories]) => ({
-      store,
-      categoryCount: Object.keys(categories).length,
-      totalItems: Object.values(categories).flat().length
-    }))
-  );
-
-  return groupedByStore;
-};
-
-export const generateShoppingListContent = (items: GroceryItem[]): string => {
-  if (items.length === 0) {
-    return '<p>No active items to print!</p>';
-  }
-
-  console.log("PrintContentGenerator: Generating content for", items.length, "items");
-  
-  const groupedByStore = groupItemsByStoreAndCategory(items);
   const storeNames = Object.keys(groupedByStore);
-  
   let content = '<div class="store-columns">';
 
   storeNames.forEach(store => {
@@ -112,9 +73,7 @@ export const generateShoppingListContent = (items: GroceryItem[]): string => {
     Object.entries(categories).forEach(([category, items]) => {
       const displayCategory = category.charAt(0).toUpperCase() + category.slice(1);
       
-      content += `
-        <div class="category-title">${displayCategory}</div>
-      `;
+      content += `<div class="category-title">${displayCategory}</div>`;
       
       items.forEach(item => {
         content += `
@@ -126,15 +85,10 @@ export const generateShoppingListContent = (items: GroceryItem[]): string => {
       });
     });
     
-    content += `
-        </div>
-      </div>
-    `;
+    content += `</div></div>`;
   });
   
   content += '</div>';
-  
-  console.log("PrintContentGenerator: Generated content for stores:", storeNames);
   return content;
 };
 

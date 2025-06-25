@@ -3,10 +3,7 @@ import React, { useState } from "react";
 import { GroceryItem } from "@/types";
 import { ShoppingListActions } from "./ShoppingListActions";
 import { ShoppingListContent } from "./ShoppingListContent";
-import { useShoppingListGrouping } from "./useShoppingListGrouping";
 import { useCategoryNames } from "./useCategoryNames";
-import { Button } from "@/components/ui/button";
-import { LayoutGrid, List } from "lucide-react";
 
 interface ShoppingListSectionProps {
   groceryItems: GroceryItem[];
@@ -25,7 +22,6 @@ export const ShoppingListSection = ({
   groceryItems,
   onToggleItem,
   onUpdateItem,
-  onUpdateMultipleItems,
   onAddItem,
   onArchiveItem,
   availableStores = ["Any Store", "Supermarket", "Farmers Market", "Specialty Store"],
@@ -40,10 +36,6 @@ export const ShoppingListSection = ({
   const [isEditingStores, setIsEditingStores] = useState(false);
   const [sortBy, setSortBy] = useState<"store" | "department" | "category">("store");
   const [isAddingItem, setIsAddingItem] = useState(false);
-  const [searchArchivedItems, setSearchArchivedItems] = useState(false);
-  const [viewMode, setViewMode] = useState<"list" | "board">("list");
-  
-  const { customCategoryNames, handleCategoryNameChange } = useCategoryNames();
 
   const handleToggle = (id: string) => {
     if (onArchiveItem) {
@@ -53,44 +45,14 @@ export const ShoppingListSection = ({
     }
   };
 
-  const handleQuantityChange = (item: GroceryItem, newQuantity: string) => {
-    onUpdateItem({ ...item, quantity: newQuantity });
-  };
-
-  const handleStoreChange = (item: GroceryItem, store: string) => {
-    console.log("Store changed for", item.name, "to", store);
-    const updatedItem = { 
-      ...item, 
-      store: store,
-      __updateTimestamp: Date.now() // Force re-render
-    };
-    onUpdateItem(updatedItem);
-  };
-  
   const handleSaveStores = (updatedStores: string[]) => {
     if (onUpdateStores) {
       onUpdateStores(updatedStores);
     }
   };
-  
-  const handleNameChange = (item: GroceryItem, name: string) => {
-    onUpdateItem({ ...item, name });
-  };
 
-  const handleUpdateMultiple = (items: GroceryItem[], updates: Partial<GroceryItem>) => {
-    if (onUpdateMultipleItems) {
-      onUpdateMultipleItems(items, updates);
-    } else {
-      // Fallback to individual updates if bulk update not available
-      items.forEach(item => {
-        onUpdateItem({ ...item, ...updates });
-      });
-    }
-  };
-
-  // Filter items for the simplified interface
+  // Filter items
   const filteredItems = groceryItems.filter(item => {
-    // Filter out checked items first
     if (item.checked && !showChecked) return false;
     
     const matchesSearch = searchTerm === "" || 
@@ -123,30 +85,13 @@ export const ShoppingListSection = ({
             canAddItem={!!onAddItem}
             onResetList={onResetList}
           />
-          
-          <div className="flex items-center gap-2">
-            <Button
-              variant={viewMode === "list" ? "default" : "outline"}
-              size="sm"
-              onClick={() => setViewMode("list")}
-            >
-              <List className="h-4 w-4" />
-            </Button>
-            <Button
-              variant={viewMode === "board" ? "default" : "outline"}
-              size="sm"
-              onClick={() => setViewMode("board")}
-            >
-              <LayoutGrid className="h-4 w-4" />
-            </Button>
-          </div>
         </div>
 
         <ShoppingListContent
           filteredItems={filteredItems}
           searchTerm={searchTerm}
           selectedStore={selectedStore}
-          viewMode={viewMode}
+          viewMode="list"
           groupByStore={groupByStore}
           availableStores={availableStores}
           onUpdateItem={onUpdateItem}

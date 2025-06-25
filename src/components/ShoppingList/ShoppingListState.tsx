@@ -2,7 +2,7 @@
 import { useState } from "react";
 
 export interface ShoppingListViewState {
-  viewMode: "list" | "board";
+  viewMode: "list";
   groupByStore: boolean;
   searchTerm: string;
   selectedStore: string;
@@ -11,7 +11,6 @@ export interface ShoppingListViewState {
 }
 
 export function useShoppingListState() {
-  const [viewMode, setViewMode] = useState<"list" | "board">("list");
   const [groupByStore, setGroupByStore] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedStore, setSelectedStore] = useState<string>("all");
@@ -20,7 +19,7 @@ export function useShoppingListState() {
 
   return {
     state: {
-      viewMode,
+      viewMode: "list" as const,
       groupByStore,
       searchTerm,
       selectedStore,
@@ -28,7 +27,7 @@ export function useShoppingListState() {
       isAddingItem
     },
     actions: {
-      setViewMode,
+      setViewMode: () => {}, // No-op since we only support list view now
       setGroupByStore,
       setSearchTerm,
       setSelectedStore,
