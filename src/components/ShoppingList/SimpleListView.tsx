@@ -1,3 +1,4 @@
+
 import React, { useMemo, useCallback, useState } from "react";
 import { GroceryItem } from "@/types";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -104,22 +105,23 @@ const ItemRow = ({
       <Checkbox
         checked={false} // Items in this view should never be checked
         onCheckedChange={handleToggle}
+        className="flex-shrink-0"
       />
       
-      <div className="flex-1">
+      <div className="flex-1 min-w-0">
         {isEditingName ? (
           <Input
             value={localName}
             onChange={handleNameInputChange}
             onBlur={handleNameCommit}
             onKeyDown={handleNameKeyDown}
-            className="border-gray-300 p-1 h-8 font-medium"
+            className="border-gray-300 p-1 h-8 font-medium text-left"
             placeholder="Item name"
             autoFocus
           />
         ) : (
-          <div onClick={handleNameClick} className="cursor-pointer">
-            <span className="font-medium">{item.name}</span>
+          <div onClick={handleNameClick} className="cursor-pointer text-left">
+            <span className="font-medium text-left">{item.name}</span>
             {item.meal && (
               <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded ml-2">
                 {item.meal}
@@ -129,25 +131,27 @@ const ItemRow = ({
         )}
       </div>
       
-      <Input
-        value={item.quantity}
-        onChange={handleQuantityChange}
-        className="w-20 h-8 text-center"
-        placeholder="Qty"
-      />
-      
-      <SimpleStoreDropdown
-        item={item}
-        availableStores={availableStores}
-        onStoreChange={handleStoreChange}
-      />
-      
-      <CategoryDropdown
-        item={item}
-        onCategoryChange={handleCategoryChange}
-        customCategories={customCategories}
-        onAddCustomCategory={onAddCustomCategory}
-      />
+      <div className="flex items-center gap-2 flex-shrink-0">
+        <Input
+          value={item.quantity}
+          onChange={handleQuantityChange}
+          className="w-20 h-8 text-center"
+          placeholder="Qty"
+        />
+        
+        <SimpleStoreDropdown
+          item={item}
+          availableStores={availableStores}
+          onStoreChange={handleStoreChange}
+        />
+        
+        <CategoryDropdown
+          item={item}
+          onCategoryChange={handleCategoryChange}
+          customCategories={customCategories}
+          onAddCustomCategory={onAddCustomCategory}
+        />
+      </div>
     </li>
   );
 };
@@ -206,7 +210,7 @@ const CategoryHeader = ({
         onChange={(e) => setEditValue(e.target.value)}
         onBlur={handleSubmit}
         onKeyDown={handleKeyDown}
-        className="font-medium mb-2 h-8"
+        className="font-medium mb-2 h-8 text-left"
         placeholder="Category name"
         autoFocus
       />
@@ -215,7 +219,7 @@ const CategoryHeader = ({
 
   return (
     <h4 
-      className="font-medium mb-2 cursor-pointer hover:text-blue-600 transition-colors text-sm text-gray-600" 
+      className="font-medium mb-2 cursor-pointer hover:text-blue-600 transition-colors text-sm text-gray-600 text-left" 
       onClick={handleClick}
     >
       {categoryName} ({itemCount} items)
@@ -319,7 +323,7 @@ export const SimpleListView = React.memo(({
       {Object.entries(groupedItems).map(([storeName, storeCategories]) => (
         <div key={storeName} className={isMobile ? "pb-2" : ""}>
           {groupByStore && (
-            <h3 className="text-lg font-semibold mb-3 pb-1 border-b border-gray-200">
+            <h3 className="text-lg font-semibold mb-3 pb-1 border-b border-gray-200 text-left">
               {storeName} ({Object.values(storeCategories).flat().length} items)
             </h3>
           )}
