@@ -1,7 +1,6 @@
 
 import React from "react";
 import { GroceryItem } from "@/types";
-import { Button } from "@/components/ui/button";
 import { CategoryDropdown } from "./CategoryDropdown";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -45,12 +44,17 @@ export const IngredientButton = ({
   };
 
   return (
-    <Button
-      variant={isSelected ? "default" : "outline"}
-      size="sm"
+    <div
       className={cn(
-        // Override default button centering and force left alignment
-        "w-full h-auto p-3 mb-2 !justify-start !items-start !text-left",
+        // Base styles matching button appearance
+        "w-full h-auto p-3 mb-2 rounded-md text-sm font-medium transition-colors",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+        "border text-left flex flex-col items-start justify-start",
+        // Variant styles
+        isSelected
+          ? "bg-primary text-primary-foreground hover:bg-primary/90"
+          : "border-input bg-background hover:bg-accent hover:text-accent-foreground",
+        // State styles
         isMobile ? "cursor-pointer" : "cursor-move",
         isSelected && "ring-2 ring-primary",
         item.checked && "opacity-50 line-through",
@@ -65,7 +69,7 @@ export const IngredientButton = ({
     >
       <div className="w-full flex flex-col items-start justify-start text-left">
         <div className="w-full flex items-start justify-between gap-2 mb-1 text-left">
-          <span className="font-medium text-sm text-left flex-1 text-start">{item.name}</span>
+          <span className="font-medium text-sm text-left flex-1">{item.name}</span>
           {onCategoryChange && (
             <div className="flex-shrink-0">
               <CategoryDropdown
@@ -82,6 +86,6 @@ export const IngredientButton = ({
           {item.meal && <span className="text-left">({item.meal})</span>}
         </div>
       </div>
-    </Button>
+    </div>
   );
 };
