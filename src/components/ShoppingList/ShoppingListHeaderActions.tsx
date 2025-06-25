@@ -5,7 +5,6 @@ import {
   Plus, 
   Settings, 
   RefreshCw, 
-  LayoutGrid, 
   List, 
   Store,
   Tags
@@ -27,8 +26,6 @@ interface ShoppingListHeaderActionsProps {
 }
 
 export const ShoppingListHeaderActions = ({
-  viewMode,
-  onViewModeChange,
   onManageStores,
   onAddItem,
   onReset
@@ -38,26 +35,6 @@ export const ShoppingListHeaderActions = ({
   return (
     <>
       <div className="flex flex-wrap items-center gap-2">
-        <Button
-          variant={viewMode === "list" ? "default" : "outline"}
-          size="sm"
-          onClick={() => onViewModeChange("list")}
-          className="flex items-center gap-1"
-        >
-          <List className="h-4 w-4" />
-          <span className="hidden sm:inline">List</span>
-        </Button>
-        
-        <Button
-          variant={viewMode === "board" ? "default" : "outline"}
-          size="sm"
-          onClick={() => onViewModeChange("board")}
-          className="flex items-center gap-1"
-        >
-          <LayoutGrid className="h-4 w-4" />
-          <span className="hidden sm:inline">Board</span>
-        </Button>
-
         <Button
           variant="outline"
           size="sm"
