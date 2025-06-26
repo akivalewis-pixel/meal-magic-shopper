@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
@@ -8,7 +9,6 @@ import { DroppableDay } from "./MealPlan/DroppableDay";
 import { MealPlanHeader } from "./MealPlan/MealPlanHeader";
 import { Meal, DietaryPreference } from "@/types";
 import { daysOfWeek } from "@/utils/constants";
-import { filterMealsByDiet } from "@/utils/mealUtils";
 import { useToast } from "@/hooks/use-toast";
 import { extractIngredientsFromRecipeUrl } from "@/utils/recipeUtils";
 import { v4 as uuidv4 } from 'uuid';
@@ -33,18 +33,13 @@ export const MealPlanSection = ({
   onSaveCurrentPlan
 }: MealPlanSectionProps) => {
   const { toast } = useToast();
-  const [dietFilter, setDietFilter] = useState<DietaryPreference>("none");
   const [mealToRate, setMealToRate] = useState<Meal | null>(null);
   const [showAddRecipe, setShowAddRecipe] = useState(false);
   const [selectedDay, setSelectedDay] = useState("");
   const [editingMeal, setEditingMeal] = useState<Meal | null>(null);
-  
-  const filteredMeals = dietFilter === "none" 
-    ? meals 
-    : filterMealsByDiet(meals, dietFilter);
 
   const getMealsForDay = (day: string) => {
-    return filteredMeals.filter(meal => meal.day === day);
+    return meals.filter(meal => meal.day === day);
   };
 
   const hasMealsPlanned = meals.some(meal => meal.day && meal.day !== "");
@@ -136,8 +131,6 @@ export const MealPlanSection = ({
       <section id="meal-plan" className="py-8">
         <div className="container mx-auto">
           <MealPlanHeader
-            dietFilter={dietFilter}
-            onDietFilterChange={setDietFilter}
             onAddRecipe={() => {
               setSelectedDay(daysOfWeek.find(day => !getMealsForDay(day).length) || 'Sunday');
               setEditingMeal(null);
