@@ -19,13 +19,29 @@ export function useListResetActions({
   const { toast } = useToast();
 
   const resetList = useCallback(() => {
+    console.log("ListResetActions: Resetting list with", allItems.length, "items");
+    
+    if (allItems.length === 0) {
+      toast({
+        title: "List Already Empty",
+        description: "Shopping list is already empty",
+      });
+      return;
+    }
+    
+    // Archive all current items
     const itemsToArchive = allItems.map(item => ({
       ...item,
       checked: true,
-      id: `archived-${Date.now()}-${item.id}`
+      id: item.id.startsWith('archived-') ? item.id : `archived-${Date.now()}-${item.id}`
     }));
     
-    setArchivedItems(prev => [...prev, ...itemsToArchive]);
+    console.log("ListResetActions: Archiving", itemsToArchive.length, "items");
+    
+    // Add to archived items
+    setArchivedItems(prev => [...itemsToArchive, ...prev]);
+    
+    // Clear the main list
     setAllItems([]);
     
     // Save immediately
@@ -33,7 +49,7 @@ export function useListResetActions({
     
     toast({
       title: "List Reset",
-      description: `${itemsToArchive.length} items archived`,
+      description: `${itemsToArchive.length} items moved to archive`,
     });
   }, [allItems, setArchivedItems, setAllItems, saveToLocalStorage, toast]);
 

@@ -4,6 +4,7 @@ import { GroceryItem } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 import { normalizeGroceryItem, findMatchingArchivedItem } from "./utils";
 import { useConsolidatedUpdateActions } from "./useConsolidatedUpdateActions";
+import { useListResetActions } from "./useListResetActions";
 
 interface UseShoppingListActionsProps {
   allItems: GroceryItem[];
@@ -35,6 +36,14 @@ export function useShoppingListActions({
     setAllItems,
     setManualItems,
     storeAssignments,
+    saveToLocalStorage
+  });
+
+  // Use the proper reset actions that archive items
+  const { resetList } = useListResetActions({
+    allItems,
+    setAllItems,
+    setArchivedItems,
     saveToLocalStorage
   });
 
@@ -139,22 +148,6 @@ export function useShoppingListActions({
       description: "Store list has been updated",
     });
   }, [setAvailableStores, setAllItems, saveToLocalStorage, toast]);
-
-  const resetList = useCallback(() => {
-    console.log("ShoppingListActions: Resetting list with", allItems.length, "items");
-    
-    // Clear all items immediately
-    setAllItems([]);
-    setManualItems([]);
-    
-    // Save to localStorage
-    saveToLocalStorage();
-    
-    toast({
-      title: "List Reset",
-      description: "Shopping list has been reset",
-    });
-  }, [setAllItems, setManualItems, saveToLocalStorage, toast, allItems.length]);
 
   const getCurrentItems = useCallback(() => allItems, [allItems]);
 
