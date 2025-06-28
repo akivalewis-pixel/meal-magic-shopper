@@ -28,6 +28,7 @@ export const SimpleStoreDropdown = React.memo(({
       __updateTimestamp: Date.now()
     };
     
+    // Call the update function immediately
     onStoreChange(updatedItem);
     
     // Clear updating state quickly
