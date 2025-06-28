@@ -28,11 +28,20 @@ export function useShoppingListActions({
   const { toast } = useToast();
 
   const updateItem = useCallback((updatedItem: GroceryItem) => {
-    const normalizedItem = normalizeGroceryItem(updatedItem);
+    console.log("useShoppingListActions: Updating item", updatedItem.name, "with store", updatedItem.store);
     
-    setAllItems(prev => prev.map(item => 
-      item.id === normalizedItem.id ? normalizedItem : item
-    ));
+    const normalizedItem = normalizeGroceryItem({
+      ...updatedItem,
+      __updateTimestamp: Date.now()
+    });
+    
+    setAllItems(prev => {
+      const newItems = prev.map(item => 
+        item.id === normalizedItem.id ? normalizedItem : item
+      );
+      console.log("useShoppingListActions: State updated for", normalizedItem.name);
+      return newItems;
+    });
     
     if (normalizedItem.id.startsWith('manual-')) {
       setManualItems(prev => prev.map(item =>
@@ -40,11 +49,14 @@ export function useShoppingListActions({
       ));
     }
     
+    // Save immediately
+    setTimeout(() => saveToLocalStorage(), 0);
+    
     toast({
       title: "Item Updated",
       description: `${normalizedItem.name} updated successfully`,
     });
-  }, [setAllItems, setManualItems, toast]);
+  }, [setAllItems, setManualItems, saveToLocalStorage, toast]);
 
   const toggleItem = useCallback((id: string) => {
     const item = allItems.find(i => i.id === id);

@@ -129,7 +129,7 @@ export const SimpleListView = React.memo(({
               <ul className={`space-y-${isMobile ? "2" : "1"}`}>
                 {categoryItems.map(item => (
                   <ItemRow
-                    key={`${item.id}-${item.__updateTimestamp || 0}`}
+                    key={`${item.id}-${item.__updateTimestamp || 0}-${item.store || 'none'}`}
                     item={item}
                     onUpdateItem={onUpdateItem}
                     onToggleItem={onToggleItem}
