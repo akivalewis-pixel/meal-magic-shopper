@@ -43,6 +43,7 @@ export function useShoppingListActions({
   const { resetList } = useListResetActions({
     allItems,
     setAllItems,
+    setManualItems,
     setArchivedItems,
     saveToLocalStorage
   });

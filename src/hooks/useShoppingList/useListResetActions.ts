@@ -6,6 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 interface UseListResetActionsProps {
   allItems: GroceryItem[];
   setAllItems: React.Dispatch<React.SetStateAction<GroceryItem[]>>;
+  setManualItems: React.Dispatch<React.SetStateAction<GroceryItem[]>>;
   setArchivedItems: React.Dispatch<React.SetStateAction<GroceryItem[]>>;
   saveToLocalStorage: () => void;
 }
@@ -13,6 +14,7 @@ interface UseListResetActionsProps {
 export function useListResetActions({
   allItems,
   setAllItems,
+  setManualItems,
   setArchivedItems,
   saveToLocalStorage
 }: UseListResetActionsProps) {
@@ -41,8 +43,9 @@ export function useListResetActions({
     // Add to archived items
     setArchivedItems(prev => [...itemsToArchive, ...prev]);
     
-    // Clear the main list
+    // Clear the main list AND manual items
     setAllItems([]);
+    setManualItems([]);
     
     // Save immediately
     saveToLocalStorage();
@@ -51,7 +54,7 @@ export function useListResetActions({
       title: "List Reset",
       description: `${itemsToArchive.length} items moved to archive`,
     });
-  }, [allItems, setArchivedItems, setAllItems, saveToLocalStorage, toast]);
+  }, [allItems, setArchivedItems, setAllItems, setManualItems, saveToLocalStorage, toast]);
 
   return { resetList };
 }
