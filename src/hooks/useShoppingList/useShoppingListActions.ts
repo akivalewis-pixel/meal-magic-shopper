@@ -141,15 +141,20 @@ export function useShoppingListActions({
   }, [setAvailableStores, setAllItems, saveToLocalStorage, toast]);
 
   const resetList = useCallback(() => {
+    console.log("ShoppingListActions: Resetting list with", allItems.length, "items");
+    
+    // Clear all items immediately
     setAllItems([]);
     setManualItems([]);
+    
+    // Save to localStorage
     saveToLocalStorage();
     
     toast({
       title: "List Reset",
       description: "Shopping list has been reset",
     });
-  }, [setAllItems, setManualItems, saveToLocalStorage, toast]);
+  }, [setAllItems, setManualItems, saveToLocalStorage, toast, allItems.length]);
 
   const getCurrentItems = useCallback(() => allItems, [allItems]);
 
