@@ -32,16 +32,11 @@ export const ItemRow = ({
   }, [item.name]);
 
   const handleQuantityChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const newQuantity = e.target.value;
-    console.log("ItemRow: Quantity changing for", item.name, "to", newQuantity);
-    
+    console.log("SimpleListView: Quantity changing for", item.name, "to", e.target.value);
     const updatedItem = { 
       ...item, 
-      quantity: newQuantity,
-      __updateTimestamp: Date.now()
+      quantity: e.target.value
     };
-    
-    // Call update immediately
     onUpdateItem(updatedItem);
   }, [item, onUpdateItem]);
 
@@ -51,11 +46,10 @@ export const ItemRow = ({
 
   const handleNameCommit = useCallback(() => {
     if (localName !== item.name) {
-      console.log("ItemRow: Name changing for", item.name, "to", localName);
+      console.log("SimpleListView: Name changing for", item.name, "to", localName);
       const updatedItem = { 
         ...item, 
-        name: localName,
-        __updateTimestamp: Date.now()
+        name: localName
       };
       onUpdateItem(updatedItem);
     }
@@ -76,30 +70,29 @@ export const ItemRow = ({
   }, []);
 
   const handleCategoryChange = useCallback((updatedItem: GroceryItem, category: string) => {
-    console.log("ItemRow: Category changed for", updatedItem.name, "to", category);
+    console.log("SimpleListView: Category changed for", updatedItem.name, "to", category);
     const newItem = { 
       ...updatedItem, 
-      category: category as any,
-      __updateTimestamp: Date.now()
+      category: category as any
     };
     onUpdateItem(newItem);
   }, [onUpdateItem]);
 
   const handleStoreChange = useCallback((updatedItem: GroceryItem) => {
-    console.log("ItemRow: Store changed for", updatedItem.name, "to", updatedItem.store);
-    // The updatedItem already has the timestamp from SimpleStoreDropdown
+    console.log("SimpleListView: Store changed for", updatedItem.name, "to", updatedItem.store);
     onUpdateItem(updatedItem);
   }, [onUpdateItem]);
 
   const handleToggle = useCallback(() => {
-    console.log("ItemRow: Toggling/Checking item:", item.name, "with ID:", item.id);
+    console.log("SimpleListView: Toggling/Checking item:", item.name, "with ID:", item.id);
+    // Use onToggleItem directly - this will remove the item from the UI
     onToggleItem(item.id);
   }, [item.id, item.name, onToggleItem]);
 
   return (
     <li className="flex items-center gap-3 py-2 border-b border-gray-100">
       <Checkbox
-        checked={false}
+        checked={false} // Items in this view should never be checked
         onCheckedChange={handleToggle}
         className="flex-shrink-0"
       />

@@ -13,7 +13,15 @@ import { Input } from "@/components/ui/input";
 import { Form, FormField, FormItem, FormLabel, FormControl } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import { Loader2 } from "lucide-react";
-import { Meal } from "@/types";
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from "@/components/ui/select";
+import { dietaryOptions } from "@/utils/constants";
+import { DietaryPreference, Meal } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 
 interface AddRecipeDialogProps {
@@ -44,7 +52,8 @@ export const AddRecipeDialog = ({
     defaultValues: {
       title: "",
       recipeUrl: "",
-      ingredients: ""
+      ingredients: "",
+      dietaryPreferences: ["none"]
     }
   });
 
@@ -56,14 +65,16 @@ export const AddRecipeDialog = ({
         form.reset({
           title: editingMeal.title || "",
           recipeUrl: editingMeal.recipeUrl || "",
-          ingredients: editingMeal.ingredients ? editingMeal.ingredients.join(', ') : ""
+          ingredients: editingMeal.ingredients ? editingMeal.ingredients.join(', ') : "",
+          dietaryPreferences: editingMeal.dietaryPreferences || ["none"]
         });
       } else {
         // Reset to empty form for new meal
         form.reset({
           title: "",
           recipeUrl: "",
-          ingredients: ""
+          ingredients: "",
+          dietaryPreferences: ["none"]
         });
       }
     }
@@ -120,8 +131,7 @@ export const AddRecipeDialog = ({
     onAddRecipe({
       ...data,
       day: selectedDay,
-      ingredients: data.ingredients ? data.ingredients.split(',').map((item: string) => item.trim()).filter((item: string) => item.length > 0) : [],
-      dietaryPreferences: ["none"] // Default to "none" since we're removing the field
+      ingredients: data.ingredients ? data.ingredients.split(',').map((item: string) => item.trim()).filter((item: string) => item.length > 0) : []
     });
   };
 
@@ -199,6 +209,31 @@ export const AddRecipeDialog = ({
                       {...field}
                     />
                   </FormControl>
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+              control={form.control}
+              name="dietaryPreferences"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Dietary Preferences</FormLabel>
+                  <Select
+                    value={field.value[0] || "none"}
+                    onValueChange={(value) => field.onChange([value])}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select diet" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {dietaryOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </FormItem>
               )}
             />
