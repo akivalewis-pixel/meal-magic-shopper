@@ -21,10 +21,11 @@ export function useShoppingList(meals: Meal[], pantryItems: string[] = []) {
     setManualItems,
     setArchivedItems,
     setAvailableStores,
+    storeAssignments,
     saveToLocalStorage
   } = useShoppingListSync({ meals, pantryItems });
 
-  // Actions
+  // Actions - now includes storeAssignments
   const actions = useShoppingListActions({
     allItems,
     manualItems,
@@ -33,6 +34,7 @@ export function useShoppingList(meals: Meal[], pantryItems: string[] = []) {
     setManualItems,
     setArchivedItems,
     setAvailableStores,
+    storeAssignments,
     saveToLocalStorage
   });
 

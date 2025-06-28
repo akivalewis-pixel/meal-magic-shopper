@@ -32,6 +32,7 @@ export const SimpleStoreSelector = ({
       __updateTimestamp: Date.now()
     };
     
+    // Use the consolidated update function
     onStoreChange(updatedItem, value);
   };
 

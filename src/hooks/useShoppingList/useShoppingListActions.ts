@@ -3,6 +3,7 @@ import { useCallback } from "react";
 import { GroceryItem } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 import { normalizeGroceryItem, findMatchingArchivedItem } from "./utils";
+import { useConsolidatedUpdateActions } from "./useConsolidatedUpdateActions";
 
 interface UseShoppingListActionsProps {
   allItems: GroceryItem[];
@@ -12,6 +13,7 @@ interface UseShoppingListActionsProps {
   setManualItems: React.Dispatch<React.SetStateAction<GroceryItem[]>>;
   setArchivedItems: React.Dispatch<React.SetStateAction<GroceryItem[]>>;
   setAvailableStores: React.Dispatch<React.SetStateAction<string[]>>;
+  storeAssignments: React.MutableRefObject<Map<string, string>>;
   saveToLocalStorage: () => void;
 }
 
@@ -23,28 +25,30 @@ export function useShoppingListActions({
   setManualItems,
   setArchivedItems,
   setAvailableStores,
+  storeAssignments,
   saveToLocalStorage
 }: UseShoppingListActionsProps) {
   const { toast } = useToast();
 
+  // Use the consolidated update actions
+  const { updateItem: consolidatedUpdateItem } = useConsolidatedUpdateActions({
+    setAllItems,
+    setManualItems,
+    storeAssignments,
+    saveToLocalStorage
+  });
+
   const updateItem = useCallback((updatedItem: GroceryItem) => {
     const normalizedItem = normalizeGroceryItem(updatedItem);
     
-    setAllItems(prev => prev.map(item => 
-      item.id === normalizedItem.id ? normalizedItem : item
-    ));
-    
-    if (normalizedItem.id.startsWith('manual-')) {
-      setManualItems(prev => prev.map(item =>
-        item.id === normalizedItem.id ? normalizedItem : item
-      ));
-    }
+    // Use the consolidated update function
+    consolidatedUpdateItem(normalizedItem);
     
     toast({
       title: "Item Updated",
       description: `${normalizedItem.name} updated successfully`,
     });
-  }, [setAllItems, setManualItems, toast]);
+  }, [consolidatedUpdateItem, toast]);
 
   const toggleItem = useCallback((id: string) => {
     const item = allItems.find(i => i.id === id);
@@ -61,11 +65,13 @@ export function useShoppingListActions({
       setManualItems(prev => prev.filter(i => i.id !== id));
     }
     
+    saveToLocalStorage();
+    
     toast({
       title: "Item Completed",
       description: `${item.name} moved to archive`,
     });
-  }, [allItems, setAllItems, setManualItems, setArchivedItems, toast]);
+  }, [allItems, setAllItems, setManualItems, setArchivedItems, saveToLocalStorage, toast]);
 
   const archiveItem = useCallback((id: string) => {
     toggleItem(id);
@@ -111,7 +117,9 @@ export function useShoppingListActions({
     if (finalItem.id.startsWith('manual-')) {
       setManualItems(prev => [...prev, finalItem]);
     }
-  }, [archivedItems, setAllItems, setManualItems, setArchivedItems, toast]);
+
+    saveToLocalStorage();
+  }, [archivedItems, setAllItems, setManualItems, setArchivedItems, saveToLocalStorage, toast]);
 
   const updateStores = useCallback((newStores: string[]) => {
     setAvailableStores(newStores);
@@ -124,11 +132,13 @@ export function useShoppingListActions({
       return item;
     }));
     
+    saveToLocalStorage();
+    
     toast({
       title: "Stores Updated",
       description: "Store list has been updated",
     });
-  }, [setAvailableStores, setAllItems, toast]);
+  }, [setAvailableStores, setAllItems, saveToLocalStorage, toast]);
 
   const resetList = useCallback(() => {
     setAllItems([]);
