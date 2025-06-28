@@ -29,10 +29,12 @@ export const SimpleStoreSelector = ({
     const updatedItem = {
       ...item,
       store: value,
-      __updateTimestamp: Date.now()
+      __updateTimestamp: Date.now() // Force re-render
     };
     
-    // Use the consolidated update function
+    console.log(`SimpleStoreSelector: Updated item:`, updatedItem);
+    
+    // Use the store change handler - this should trigger the consolidated update
     onStoreChange(updatedItem, value);
   };
 

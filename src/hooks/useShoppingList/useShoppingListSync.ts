@@ -1,8 +1,8 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { GroceryItem, Meal } from "@/types";
-import { generateShoppingList } from "@/utils/groceryUtils";
 import { useShoppingListPersistence } from "./useShoppingListPersistence";
+import { useShoppingListGeneration } from "./useShoppingListGeneration";
 
 interface UseShoppingListSyncProps {
   meals: Meal[];
@@ -15,6 +15,10 @@ export function useShoppingListSync({ meals, pantryItems }: UseShoppingListSyncP
   const [manualItems, setManualItems] = useState<GroceryItem[]>([]);
   const [archivedItems, setArchivedItems] = useState<GroceryItem[]>([]);
   const [availableStores, setAvailableStores] = useState<string[]>(["Unassigned"]);
+  
+  // Track initialization
+  const isInitializedRef = useRef(false);
+  const lastMealChangeRef = useRef<string>('');
 
   // Persistence with store assignments
   const { storeAssignments, loadFromStorage, saveToLocalStorage } = useShoppingListPersistence(
@@ -23,67 +27,75 @@ export function useShoppingListSync({ meals, pantryItems }: UseShoppingListSyncP
     allItems
   );
 
+  // Generate items from meals using the existing hook
+  const generatedMealItems = useShoppingListGeneration(meals, pantryItems, storeAssignments);
+
+  // Create meal change detection key
+  const mealChangeKey = meals
+    .filter(meal => meal.day && meal.day !== "")
+    .map(meal => `${meal.id}-${meal.title}-${meal.day}-${meal.ingredients.join(',')}`)
+    .sort()
+    .join('|');
+
   // Load from storage on mount
   useEffect(() => {
-    console.log("useShoppingListSync: Loading from storage on mount");
-    const stored = loadFromStorage();
-    
-    if (stored.stores) {
-      console.log("useShoppingListSync: Setting available stores from storage:", stored.stores);
-      setAvailableStores(stored.stores);
-    }
-    
-    if (stored.archived && Array.isArray(stored.archived)) {
-      console.log("useShoppingListSync: Setting archived items from storage:", stored.archived.length);
-      setArchivedItems(stored.archived);
-    }
-    
-    if (stored.items && Array.isArray(stored.items)) {
-      console.log("useShoppingListSync: Setting all items from storage:", stored.items.length);
-      setAllItems(stored.items);
+    if (!isInitializedRef.current) {
+      console.log("useShoppingListSync: Loading from storage on mount");
+      const stored = loadFromStorage();
       
-      // Filter manual items
-      const manual = stored.items.filter(item => item.id.startsWith('manual-'));
-      setManualItems(manual);
-      console.log("useShoppingListSync: Found manual items:", manual.length);
+      if (stored.stores) {
+        console.log("useShoppingListSync: Setting available stores from storage:", stored.stores);
+        setAvailableStores(stored.stores);
+      }
+      
+      if (stored.archived && Array.isArray(stored.archived)) {
+        console.log("useShoppingListSync: Setting archived items from storage:", stored.archived.length);
+        setArchivedItems(stored.archived);
+      }
+      
+      if (stored.items && Array.isArray(stored.items)) {
+        console.log("useShoppingListSync: Setting saved items from storage:", stored.items.length);
+        
+        // Filter manual items from saved items
+        const savedManualItems = stored.items.filter(item => item.id.startsWith('manual-'));
+        setManualItems(savedManualItems);
+        console.log("useShoppingListSync: Found manual items:", savedManualItems.length);
+      }
+      
+      isInitializedRef.current = true;
     }
   }, [loadFromStorage]);
 
-  // Generate shopping list from meals
+  // Handle meal changes - regenerate when meals change significantly
   useEffect(() => {
-    if (meals.length === 0) {
-      console.log("useShoppingListSync: No meals, skipping generation");
+    if (!isInitializedRef.current) {
+      console.log("useShoppingListSync: Skipping meal update - not initialized");
       return;
     }
 
-    console.log("useShoppingListSync: Generating shopping list from", meals.length, "meals");
+    console.log("useShoppingListSync: Checking meal changes");
+    console.log("Previous meal key:", lastMealChangeRef.current);
+    console.log("Current meal key:", mealChangeKey);
     
-    // Generate new items from meals
-    const generatedItems = generateShoppingList(meals, pantryItems, allItems);
-    
-    // Apply store assignments from persistence
-    const itemsWithStores = generatedItems.map(item => {
-      const storedStore = storeAssignments.current.get(item.name.toLowerCase());
-      if (storedStore) {
-        console.log(`useShoppingListSync: Applying stored store "${storedStore}" to item "${item.name}"`);
-        return { ...item, store: storedStore };
-      }
-      return item;
-    });
-
-    // Filter out items that already exist (preserve manual items and their updates)
-    const existingIds = new Set(allItems.map(item => item.id));
-    const newGeneratedItems = itemsWithStores.filter(item => !existingIds.has(item.id));
-    
-    if (newGeneratedItems.length > 0) {
-      console.log("useShoppingListSync: Adding", newGeneratedItems.length, "new generated items");
-      setAllItems(prev => [...prev.filter(item => !item.id.includes('-')), ...newGeneratedItems, ...manualItems]);
+    if (mealChangeKey !== lastMealChangeRef.current) {
+      console.log("useShoppingListSync: Meals changed, updating shopping list");
+      console.log("Generated meal items:", generatedMealItems.length);
+      
+      // Combine generated items with manual items
+      const combinedItems = [...generatedMealItems, ...manualItems];
+      console.log("useShoppingListSync: Combined items:", combinedItems.length);
+      
+      setAllItems(combinedItems);
+      lastMealChangeRef.current = mealChangeKey;
     }
-  }, [meals, pantryItems, storeAssignments]);
+  }, [mealChangeKey, generatedMealItems, manualItems]);
 
   // Save when state changes
   useEffect(() => {
-    saveToLocalStorage();
+    if (isInitializedRef.current) {
+      console.log("useShoppingListSync: Saving to storage");
+      saveToLocalStorage();
+    }
   }, [allItems, archivedItems, availableStores, saveToLocalStorage]);
 
   return {
