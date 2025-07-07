@@ -49,33 +49,69 @@ export function useShoppingListActions({
   });
 
   const updateItem = useCallback((updatedItem: GroceryItem) => {
+    console.log("ShoppingListActions: updateItem called for", updatedItem.name, "with changes:", {
+      category: updatedItem.category,
+      store: updatedItem.store,
+      quantity: updatedItem.quantity
+    });
+    
     const normalizedItem = normalizeGroceryItem(updatedItem);
     
     // Use the consolidated update function
     consolidatedUpdateItem(normalizedItem);
     
-    toast({
-      title: "Item Updated",
-      description: `${normalizedItem.name} updated successfully`,
-    });
+    // Only show toast for significant updates, not minor field changes
+    const hasSignificantChange = updatedItem.quantity !== undefined || updatedItem.store !== undefined;
+    if (hasSignificantChange) {
+      toast({
+        title: "Item Updated",
+        description: `${normalizedItem.name} updated successfully`,
+      });
+    }
   }, [consolidatedUpdateItem, toast]);
 
   const toggleItem = useCallback((id: string) => {
+    console.log("ShoppingListActions: toggleItem called for id:", id);
     const item = allItems.find(i => i.id === id);
-    if (!item) return;
+    if (!item) {
+      console.log("ShoppingListActions: Item not found for id:", id);
+      return;
+    }
 
-    // Archive the item
-    const archivedItem = { ...item, checked: true };
+    console.log("ShoppingListActions: Found item to archive:", item.name);
+
+    // Archive the item immediately with unique ID to prevent duplicates
+    const archivedItem = { 
+      ...item, 
+      checked: true,
+      id: item.id.startsWith('archived-') ? item.id : `archived-${Date.now()}-${item.id}`,
+      __updateTimestamp: Date.now()
+    };
+    
+    // Update all states in the correct order
+    console.log("ShoppingListActions: Adding to archive and removing from active lists");
+    
+    // Add to archived items first
     setArchivedItems(prev => [archivedItem, ...prev]);
     
-    // Remove from main list
-    setAllItems(prev => prev.filter(i => i.id !== id));
+    // Remove from main list immediately
+    setAllItems(prev => {
+      const filtered = prev.filter(i => i.id !== id);
+      console.log("ShoppingListActions: Filtered allItems from", prev.length, "to", filtered.length);
+      return filtered;
+    });
     
+    // Remove from manual items if applicable
     if (item.id.startsWith('manual-')) {
-      setManualItems(prev => prev.filter(i => i.id !== id));
+      setManualItems(prev => {
+        const filtered = prev.filter(i => i.id !== id);
+        console.log("ShoppingListActions: Filtered manualItems from", prev.length, "to", filtered.length);
+        return filtered;
+      });
     }
     
-    saveToLocalStorage();
+    // Save immediately
+    setTimeout(() => saveToLocalStorage(), 0);
     
     toast({
       title: "Item Completed",

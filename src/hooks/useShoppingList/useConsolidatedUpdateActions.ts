@@ -39,17 +39,20 @@ export function useConsolidatedUpdateActions({
       }
     }
 
-    // Add update timestamp to force re-renders
+    // Add update timestamp to force re-renders and create unique key
     const itemWithTimestamp = {
       ...updatedItem,
       __updateTimestamp: Date.now()
     };
 
-    // Update all items list
+    // Update all items list immediately and synchronously
     setAllItems(prevItems => {
       const newItems = prevItems.map(item => {
         if (item.id === updatedItem.id) {
-          console.log(`ConsolidatedUpdateActions: Found and updating item in allItems: ${item.name}`);
+          console.log(`ConsolidatedUpdateActions: Found and updating item in allItems: ${item.name}`, {
+            old: { category: item.category, store: item.store, quantity: item.quantity },
+            new: { category: itemWithTimestamp.category, store: itemWithTimestamp.store, quantity: itemWithTimestamp.quantity }
+          });
           return itemWithTimestamp;
         }
         return item;
@@ -75,9 +78,10 @@ export function useConsolidatedUpdateActions({
       });
     }
 
-    // Save to localStorage immediately
+    // Save to localStorage immediately - use synchronous approach
     console.log(`ConsolidatedUpdateActions: Saving to localStorage for ${updatedItem.name}`);
-    saveToLocalStorage();
+    // Use setTimeout to ensure state has been updated before saving
+    setTimeout(() => saveToLocalStorage(), 0);
   }, [setAllItems, setManualItems, storeAssignments, saveToLocalStorage]);
 
   return { updateItem };

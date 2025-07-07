@@ -72,12 +72,13 @@ export const ItemRow = ({
   }, []);
 
   const handleCategoryChange = useCallback((updatedItem: GroceryItem, category: string) => {
-    console.log("ItemRow: Category changed for", updatedItem.name, "to", category);
+    console.log("ItemRow: Category changed for", updatedItem.name, "from", updatedItem.category, "to", category);
     const newItem = { 
       ...updatedItem, 
       category: category as any,
       __updateTimestamp: Date.now()
     };
+    console.log("ItemRow: Calling onUpdateItem with category change:", newItem);
     onUpdateItem(newItem);
   }, [onUpdateItem]);
 
