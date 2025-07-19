@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import { GroceryItem, Meal } from "@/types";
 import { useShoppingListPersistence } from "./useShoppingListPersistence";
@@ -66,7 +65,54 @@ export function useShoppingListSync({ meals, pantryItems }: UseShoppingListSyncP
     }
   }, [loadFromStorage]);
 
-  // Handle meal changes - regenerate when meals change significantly
+  // Smart merge function to preserve user assignments
+  const mergeItemsPreservingAssignments = (newGeneratedItems: GroceryItem[], currentItems: GroceryItem[], manualItems: GroceryItem[]) => {
+    console.log("useShoppingListSync: Merging items while preserving assignments");
+    console.log("New generated items:", newGeneratedItems.length);
+    console.log("Current items:", currentItems.length);
+    console.log("Manual items:", manualItems.length);
+    
+    // Create a map of existing items for quick lookup
+    const existingItemsMap = new Map<string, GroceryItem>();
+    currentItems.forEach(item => {
+      // Use normalized name as key to match items even if they come from different sources
+      const key = item.name.toLowerCase().trim();
+      existingItemsMap.set(key, item);
+    });
+    
+    // Process generated items, preserving existing assignments
+    const mergedGeneratedItems = newGeneratedItems.map(newItem => {
+      const key = newItem.name.toLowerCase().trim();
+      const existingItem = existingItemsMap.get(key);
+      
+      if (existingItem) {
+        console.log(`useShoppingListSync: Preserving assignments for ${newItem.name}:`, {
+          store: existingItem.store,
+          category: existingItem.category,
+          quantity: existingItem.quantity
+        });
+        
+        // Preserve user assignments while keeping meal source info
+        return {
+          ...newItem, // Keep meal source and base properties
+          store: existingItem.store || newItem.store, // Preserve store assignment
+          category: existingItem.category || newItem.category, // Preserve category assignment
+          quantity: existingItem.quantity || newItem.quantity, // Preserve quantity if user changed it
+          __updateTimestamp: Date.now() // Force re-render
+        };
+      }
+      
+      return newItem;
+    });
+    
+    // Combine with manual items (they always preserve their assignments)
+    const finalItems = [...mergedGeneratedItems, ...manualItems];
+    
+    console.log("useShoppingListSync: Final merged items:", finalItems.length);
+    return finalItems;
+  };
+
+  // Handle meal changes - intelligently merge while preserving assignments
   useEffect(() => {
     if (!isInitializedRef.current) {
       console.log("useShoppingListSync: Skipping meal update - not initialized");
@@ -78,17 +124,16 @@ export function useShoppingListSync({ meals, pantryItems }: UseShoppingListSyncP
     console.log("Current meal key:", mealChangeKey);
     
     if (mealChangeKey !== lastMealChangeRef.current) {
-      console.log("useShoppingListSync: Meals changed, updating shopping list");
+      console.log("useShoppingListSync: Meals changed, intelligently updating shopping list");
       console.log("Generated meal items:", generatedMealItems.length);
       
-      // Combine generated items with manual items
-      const combinedItems = [...generatedMealItems, ...manualItems];
-      console.log("useShoppingListSync: Combined items:", combinedItems.length);
+      // Use smart merge to preserve user assignments
+      const mergedItems = mergeItemsPreservingAssignments(generatedMealItems, allItems, manualItems);
       
-      setAllItems(combinedItems);
+      setAllItems(mergedItems);
       lastMealChangeRef.current = mealChangeKey;
     }
-  }, [mealChangeKey, generatedMealItems, manualItems]);
+  }, [mealChangeKey, generatedMealItems, manualItems, allItems]);
 
   // Save when state changes
   useEffect(() => {
