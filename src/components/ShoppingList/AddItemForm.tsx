@@ -35,6 +35,7 @@ export const AddItemForm = ({
   const [store, setStore] = useState("Unassigned"); // Default to "Unassigned"
   const [searchTerm, setSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState<"add" | "search">("add");
+  const { getAllCategories, getCategoryDisplayName } = useCustomCategories();
   
   useEffect(() => {
     if (onSearchArchivedItems) {
@@ -125,9 +126,9 @@ export const AddItemForm = ({
                     <SelectValue placeholder="Select category" />
                   </SelectTrigger>
                   <SelectContent>
-                    {groceryCategories.map((cat) => (
-                      <SelectItem key={cat.value} value={cat.value}>
-                        {cat.label}
+                    {getAllCategories().map((cat) => (
+                      <SelectItem key={cat} value={cat}>
+                        {getCategoryDisplayName(cat)}
                       </SelectItem>
                     ))}
                   </SelectContent>
