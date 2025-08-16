@@ -59,11 +59,25 @@ export function useShoppingListSync({ meals, pantryItems }: UseShoppingListSyncP
         const savedManualItems = stored.items.filter(item => item.id.startsWith('manual-'));
         setManualItems(savedManualItems);
         console.log("useShoppingListSync: Found manual items:", savedManualItems.length);
+        
+        // Initial sync with generated meal items to preserve all items
+        if (generatedMealItems.length > 0) {
+          const savedMealItems = stored.items.filter(item => !item.id.startsWith('manual-'));
+          const mergedItems = mergeItemsPreservingAssignments(generatedMealItems, savedMealItems, savedManualItems);
+          setAllItems(mergedItems);
+          console.log("useShoppingListSync: Initial sync completed with", mergedItems.length, "total items");
+        } else {
+          // No meal items yet, just use saved manual items
+          setAllItems(savedManualItems);
+        }
+      } else if (generatedMealItems.length > 0) {
+        // No saved items, just use generated meal items
+        setAllItems(generatedMealItems);
       }
       
       isInitializedRef.current = true;
     }
-  }, [loadFromStorage]);
+  }, [loadFromStorage, generatedMealItems]);
 
   // Smart merge function to preserve user assignments
   const mergeItemsPreservingAssignments = (newGeneratedItems: GroceryItem[], currentItems: GroceryItem[], manualItems: GroceryItem[]) => {
@@ -126,9 +140,13 @@ export function useShoppingListSync({ meals, pantryItems }: UseShoppingListSyncP
     if (mealChangeKey !== lastMealChangeRef.current) {
       console.log("useShoppingListSync: Meals changed, intelligently updating shopping list");
       console.log("Generated meal items:", generatedMealItems.length);
+      console.log("Manual items to preserve:", manualItems.length);
       
-      // Use smart merge to preserve user assignments
-      const mergedItems = mergeItemsPreservingAssignments(generatedMealItems, allItems, manualItems);
+      // Separate meal items from manual items in current allItems
+      const currentMealItems = allItems.filter(item => !item.id.startsWith('manual-'));
+      
+      // Use smart merge to preserve user assignments - pass only meal items as current items
+      const mergedItems = mergeItemsPreservingAssignments(generatedMealItems, currentMealItems, manualItems);
       
       setAllItems(mergedItems);
       lastMealChangeRef.current = mealChangeKey;
