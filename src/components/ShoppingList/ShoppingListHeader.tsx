@@ -1,7 +1,7 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Plus, Settings, RefreshCw } from "lucide-react";
+import { Plus, Settings, RefreshCw, History } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { ShareButton, generateShoppingListContent } from "@/components/Share";
 import { GroceryItem } from "@/types";
+import { FrequentItemsDialog } from "./FrequentItemsDialog";
 
 interface ShoppingListHeaderProps {
   onEditStores: () => void;
@@ -19,6 +20,7 @@ interface ShoppingListHeaderProps {
   canAddItem: boolean;
   onResetList?: () => void;
   groceryItems?: GroceryItem[];
+  onAddItems?: (items: Omit<GroceryItem, 'id' | 'checked'>[]) => void;
 }
 
 export const ShoppingListHeader = ({
@@ -28,8 +30,10 @@ export const ShoppingListHeader = ({
   onAddItem,
   canAddItem,
   onResetList,
-  groceryItems = []
+  groceryItems = [],
+  onAddItems
 }: ShoppingListHeaderProps) => {
+  const [showFrequentItems, setShowFrequentItems] = useState(false);
   return (
     <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between mb-6">
       <h2 className="text-2xl font-bold text-gray-800">Shopping List</h2>
@@ -58,13 +62,21 @@ export const ShoppingListHeader = ({
               Add
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent>
+          <DropdownMenuContent className="bg-white z-50">
             {canAddItem && (
               <DropdownMenuItem onClick={onAddItem}>
+                <Plus className="h-4 w-4 mr-2" />
                 Add Item
               </DropdownMenuItem>
             )}
+            {onAddItems && (
+              <DropdownMenuItem onClick={() => setShowFrequentItems(true)}>
+                <History className="h-4 w-4 mr-2" />
+                Add Frequent Items
+              </DropdownMenuItem>
+            )}
             <DropdownMenuItem onClick={onEditStores}>
+              <Settings className="h-4 w-4 mr-2" />
               Add/Edit Stores
             </DropdownMenuItem>
           </DropdownMenuContent>
@@ -77,7 +89,7 @@ export const ShoppingListHeader = ({
               Sort by {sortBy}
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent>
+          <DropdownMenuContent className="bg-white z-50">
             <DropdownMenuItem onClick={() => onSortChange("store")}>
               Sort by Store
             </DropdownMenuItem>
@@ -101,6 +113,15 @@ export const ShoppingListHeader = ({
           </Button>
         )}
       </div>
+
+      {onAddItems && (
+        <FrequentItemsDialog
+          isOpen={showFrequentItems}
+          onClose={() => setShowFrequentItems(false)}
+          onAddItems={onAddItems}
+          currentItems={groceryItems}
+        />
+      )}
     </div>
   );
 };

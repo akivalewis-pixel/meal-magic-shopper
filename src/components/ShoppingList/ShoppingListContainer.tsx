@@ -78,6 +78,17 @@ export const ShoppingListContainer = ({
     actions.setIsAddingItem(false);
   };
 
+  const handleAddItems = (newItems: Omit<GroceryItem, 'id' | 'checked'>[]) => {
+    newItems.forEach(item => {
+      addAction({
+        id: `add-${Date.now()}-${Math.random()}`,
+        type: 'add',
+        data: { item: { ...item, id: '', checked: false } as GroceryItem }
+      });
+      addItem(item);
+    });
+  };
+
   const handleSaveStores = (stores: string[]) => {
     addAction({
       id: `stores-${Date.now()}`,
@@ -160,6 +171,7 @@ export const ShoppingListContainer = ({
       onRemoveItem={handleRemoveItem}
       onSaveStores={handleSaveStores}
       onAddItem={handleAddItem}
+      onAddItems={handleAddItems}
       onReset={resetList}
       getCurrentItems={getCurrentItems}
     />

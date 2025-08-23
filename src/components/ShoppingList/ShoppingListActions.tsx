@@ -21,6 +21,7 @@ interface ShoppingListActionsProps {
   canAddItem: boolean;
   onResetList?: () => void;
   groceryItems?: GroceryItem[];
+  onAddItems?: (items: Omit<GroceryItem, 'id' | 'checked'>[]) => void;
 }
 
 export const ShoppingListActions = ({
@@ -32,7 +33,8 @@ export const ShoppingListActions = ({
   setIsAddingItem,
   canAddItem,
   onResetList,
-  groceryItems
+  groceryItems,
+  onAddItems
 }: ShoppingListActionsProps) => {
   return (
     <>
@@ -44,6 +46,7 @@ export const ShoppingListActions = ({
         canAddItem={canAddItem}
         onResetList={onResetList}
         groceryItems={groceryItems}
+        onAddItems={onAddItems}
       />
       
       <div className="mb-6">

@@ -11,6 +11,7 @@ interface ShoppingListSectionProps {
   onUpdateItem: (updatedItem: GroceryItem) => void;
   onUpdateMultipleItems?: (items: GroceryItem[], updates: Partial<GroceryItem>) => void;
   onAddItem?: (item: GroceryItem) => void;
+  onAddItems?: (items: Omit<GroceryItem, 'id' | 'checked'>[]) => void;
   onArchiveItem?: (id: string) => void;
   availableStores: string[];
   onUpdateStores?: (stores: string[]) => void;
@@ -23,6 +24,7 @@ export const ShoppingListSection = ({
   onToggleItem,
   onUpdateItem,
   onAddItem,
+  onAddItems,
   onArchiveItem,
   availableStores = ["Any Store", "Supermarket", "Farmers Market", "Specialty Store"],
   onUpdateStores,
@@ -85,6 +87,7 @@ export const ShoppingListSection = ({
             canAddItem={!!onAddItem}
             onResetList={onResetList}
             groceryItems={groceryItems}
+            onAddItems={onAddItems}
           />
         </div>
 

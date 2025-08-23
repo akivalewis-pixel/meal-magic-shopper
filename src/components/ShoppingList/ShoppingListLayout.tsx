@@ -30,6 +30,7 @@ interface ShoppingListLayoutProps {
   onRemoveItem: (id: string) => void;
   onSaveStores: (stores: string[]) => void;
   onAddItem: (item: GroceryItem) => void;
+  onAddItems?: (items: Omit<GroceryItem, 'id' | 'checked'>[]) => void;
   onReset: () => void;
   getCurrentItems: () => GroceryItem[];
 }
@@ -48,6 +49,7 @@ export const ShoppingListLayout = ({
   onRemoveItem,
   onSaveStores,
   onAddItem,
+  onAddItems,
   onReset,
   getCurrentItems
 }: ShoppingListLayoutProps) => {
