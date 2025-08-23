@@ -8,6 +8,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { ShareButton, generateShoppingListContent } from "@/components/Share";
+import { GroceryItem } from "@/types";
 
 interface ShoppingListHeaderProps {
   onEditStores: () => void;
@@ -16,6 +18,7 @@ interface ShoppingListHeaderProps {
   onAddItem: () => void;
   canAddItem: boolean;
   onResetList?: () => void;
+  groceryItems?: GroceryItem[];
 }
 
 export const ShoppingListHeader = ({
@@ -24,7 +27,8 @@ export const ShoppingListHeader = ({
   sortBy,
   onAddItem,
   canAddItem,
-  onResetList
+  onResetList,
+  groceryItems = []
 }: ShoppingListHeaderProps) => {
   return (
     <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between mb-6">
@@ -36,6 +40,15 @@ export const ShoppingListHeader = ({
             <Plus className="h-4 w-4" />
             Add Item
           </Button>
+        )}
+
+        {groceryItems.length > 0 && (
+          <ShareButton
+            title="Shopping List"
+            content={generateShoppingListContent(groceryItems.filter(item => !item.checked))}
+            type="shopping-list"
+            variant="outline"
+          />
         )}
         
         <DropdownMenu>

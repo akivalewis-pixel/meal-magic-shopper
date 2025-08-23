@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { DraggableMeal } from "./DraggableMeal";
 import { Meal } from "@/types";
 import { Plus } from "lucide-react";
+import { ShareButton, generateDailyPlanContent } from "@/components/Share";
 
 // Drag item type
 const ItemTypes = {
@@ -53,7 +54,21 @@ export const DroppableDay = ({
       ref={drop} 
       className={`flex flex-col ${isOver ? 'bg-gray-100' : ''} h-full rounded-lg p-2 transition-colors`}
     >
-      <h3 className="mb-2 text-center font-semibold">{day}</h3>
+      <div className="mb-2 flex items-center justify-between">
+        <h3 className="text-center font-semibold flex-1">{day}</h3>
+        {meals && meals.length > 0 && (
+          <ShareButton
+            title={`${day} Meal Plan`}
+            content={generateDailyPlanContent(day, meals)}
+            type="daily-plan"
+            variant="ghost"
+            size="sm"
+            className="h-6 w-6 p-0"
+          >
+            <span className="sr-only">Share {day}</span>
+          </ShareButton>
+        )}
+      </div>
       <div className="flex-1 flex flex-col">
         {meals && meals.length > 0 ? (
           meals.map(meal => (

@@ -84,6 +84,7 @@ export const ShoppingListSection = ({
             setIsAddingItem={setIsAddingItem}
             canAddItem={!!onAddItem}
             onResetList={onResetList}
+            groceryItems={groceryItems}
           />
         </div>
 

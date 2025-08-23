@@ -6,6 +6,7 @@ import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Star, Edit, ExternalLink, Trash } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { ShareButton, generateRecipeContent } from "@/components/Share";
 
 interface MealCardProps {
   meal: Meal;
@@ -113,6 +114,17 @@ export const MealCard = ({ meal, onEdit, onRate, onRemove, onUpdateMeal, classNa
               <span className="sr-only">Rate</span>
             </Button>
           )}
+
+          <ShareButton
+            title={meal.title}
+            content={generateRecipeContent(meal)}
+            type="recipe"
+            variant="ghost"
+            size="sm"
+            className="h-7 w-7 p-0"
+          >
+            <span className="sr-only">Share</span>
+          </ShareButton>
         </div>
         
         {onRemove && (

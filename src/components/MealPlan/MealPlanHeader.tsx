@@ -3,19 +3,23 @@ import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { MealPlanResetDialog } from "./MealPlanResetDialog";
 import { Plus, RotateCcw } from "lucide-react";
+import { ShareButton, generateWeeklyMealPlanContent } from "@/components/Share";
+import { Meal } from "@/types";
 
 interface MealPlanHeaderProps {
   onAddRecipe: () => void;
   onResetMealPlan?: () => void;
   onSaveCurrentPlan?: (name: string) => void;
   hasMeals?: boolean;
+  meals?: Meal[];
 }
 
 export const MealPlanHeader = ({ 
   onAddRecipe,
   onResetMealPlan,
   onSaveCurrentPlan,
-  hasMeals = false
+  hasMeals = false,
+  meals = []
 }: MealPlanHeaderProps) => {
   const [showResetDialog, setShowResetDialog] = useState(false);
 
@@ -44,6 +48,15 @@ export const MealPlanHeader = ({
             <Plus className="w-4 h-4 mr-2" />
             Add Recipe
           </Button>
+          
+          {hasMeals && (
+            <ShareButton
+              title="Weekly Meal Plan"
+              content={generateWeeklyMealPlanContent(meals)}
+              type="meal-plan"
+              variant="outline"
+            />
+          )}
           
           {onResetMealPlan && (
             <Button 

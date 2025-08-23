@@ -139,6 +139,7 @@ export const MealPlanSection = ({
             onResetMealPlan={onResetMealPlan}
             onSaveCurrentPlan={onSaveCurrentPlan}
             hasMeals={hasMealsPlanned}
+            meals={meals}
           />
 
           <MealRecommendations 

@@ -20,6 +20,7 @@ interface ShoppingListActionsProps {
   setIsAddingItem: (value: boolean) => void;
   canAddItem: boolean;
   onResetList?: () => void;
+  groceryItems?: GroceryItem[];
 }
 
 export const ShoppingListActions = ({
@@ -30,7 +31,8 @@ export const ShoppingListActions = ({
   setIsEditingStores,
   setIsAddingItem,
   canAddItem,
-  onResetList
+  onResetList,
+  groceryItems
 }: ShoppingListActionsProps) => {
   return (
     <>
@@ -41,6 +43,7 @@ export const ShoppingListActions = ({
         onAddItem={() => setIsAddingItem(true)}
         canAddItem={canAddItem}
         onResetList={onResetList}
+        groceryItems={groceryItems}
       />
       
       <div className="mb-6">
