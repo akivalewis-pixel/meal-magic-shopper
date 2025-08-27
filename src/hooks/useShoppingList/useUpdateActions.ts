@@ -21,7 +21,7 @@ export const useUpdateActions = ({
   const { toast } = useToast();
 
   const handleUpdateGroceryItem = (updatedItem: GroceryItem) => {
-    console.log("useUpdateActions - Updating item:", updatedItem.name, "to store:", updatedItem.store);
+    console.log("useUpdateActions - Updating item:", updatedItem.name, "to store:", updatedItem.store, "ID:", updatedItem.id);
     
     const normalizedStore = normalizeStoreValue(updatedItem.store);
     console.log("useUpdateActions - Normalized store:", normalizedStore);
@@ -49,16 +49,22 @@ export const useUpdateActions = ({
       return sortedItems;
     });
     
-    // Update manual items as well
-    setManualItems(prevItems => {
-      const existingIndex = prevItems.findIndex(item => item.id === newItem.id);
-      if (existingIndex >= 0) {
-        const newManualItems = [...prevItems];
-        newManualItems[existingIndex] = newItem;
-        return newManualItems;
-      }
-      return prevItems;
-    });
+    // Update manual items as well if this is a manual item
+    if (newItem.id.startsWith('manual-')) {
+      console.log("useUpdateActions - Updating manual item state for:", newItem.name);
+      setManualItems(prevItems => {
+        const existingIndex = prevItems.findIndex(item => item.id === newItem.id);
+        if (existingIndex >= 0) {
+          const newManualItems = [...prevItems];
+          newManualItems[existingIndex] = newItem;
+          console.log("useUpdateActions - Updated manual item at index:", existingIndex);
+          return newManualItems;
+        } else {
+          console.log("useUpdateActions - Manual item not found in manual items state");
+        }
+        return prevItems;
+      });
+    }
 
     toast({
       title: "Item Updated",
@@ -95,12 +101,14 @@ export const useUpdateActions = ({
       const updatedManualItems = prevItems.map(item => {
         if (itemIdsToUpdate.has(item.id)) {
           const normalizedStore = normalizeStoreValue(updates.store || item.store);
-          return { 
+          const updated = { 
             ...item, 
             ...updates,
             store: normalizedStore,
             __updateTimestamp: updateTimestamp
           };
+          console.log("useUpdateActions - Bulk updating manual item:", item.name, "to store:", normalizedStore);
+          return updated;
         }
         return item;
       });

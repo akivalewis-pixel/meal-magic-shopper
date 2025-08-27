@@ -58,7 +58,7 @@ export function useShoppingListSync({ meals, pantryItems }: UseShoppingListSyncP
         // Filter manual items from saved items
         const savedManualItems = stored.items.filter(item => item.id.startsWith('manual-'));
         setManualItems(savedManualItems);
-        console.log("useShoppingListSync: Found manual items:", savedManualItems.length);
+        console.log("useShoppingListSync: Found manual items:", savedManualItems.length, savedManualItems.map(i => i.name));
         
         // Initial sync with generated meal items to preserve all items
         if (generatedMealItems.length > 0) {
@@ -140,18 +140,21 @@ export function useShoppingListSync({ meals, pantryItems }: UseShoppingListSyncP
     if (mealChangeKey !== lastMealChangeRef.current) {
       console.log("useShoppingListSync: Meals changed, intelligently updating shopping list");
       console.log("Generated meal items:", generatedMealItems.length);
-      console.log("Manual items to preserve:", manualItems.length);
+      console.log("Manual items to preserve:", manualItems.length, manualItems.map(i => i.name));
       
       // Separate meal items from manual items in current allItems
       const currentMealItems = allItems.filter(item => !item.id.startsWith('manual-'));
+      console.log("Current meal items to replace:", currentMealItems.length);
       
       // Use smart merge to preserve user assignments - pass only meal items as current items
       const mergedItems = mergeItemsPreservingAssignments(generatedMealItems, currentMealItems, manualItems);
       
+      console.log("Final merged items:", mergedItems.length, "Manual items in result:", mergedItems.filter(i => i.id.startsWith('manual-')).length);
+      
       setAllItems(mergedItems);
       lastMealChangeRef.current = mealChangeKey;
     }
-  }, [mealChangeKey, generatedMealItems, manualItems, allItems]);
+  }, [mealChangeKey, generatedMealItems, manualItems]); // Removed allItems dependency to prevent circular updates
 
   // Save when state changes
   useEffect(() => {

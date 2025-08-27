@@ -22,7 +22,13 @@ export function useItemAddActions({
       source: 'manual' as const
     };
     
-    setAllItems(prev => [...prev, itemWithId]);
+    console.log("useItemAddActions: Adding manual item:", itemWithId.name, "with ID:", itemWithId.id);
+    
+    setAllItems(prev => {
+      const newItems = [...prev, itemWithId];
+      console.log("useItemAddActions: Total items after add:", newItems.length, "Manual items:", newItems.filter(i => i.id.startsWith('manual-')).length);
+      return newItems;
+    });
     
     // Save immediately
     saveToLocalStorage();
