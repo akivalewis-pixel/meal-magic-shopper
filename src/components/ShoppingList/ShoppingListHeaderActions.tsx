@@ -7,7 +7,8 @@ import {
   RefreshCw, 
   List, 
   Store,
-  Tags
+  Tags,
+  History
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -16,6 +17,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { CategoryManagementDialog } from "./CategoryManagementDialog";
+import { FrequentItemsDialog } from "./FrequentItemsDialog";
+import { GroceryItem } from "@/types";
 
 interface ShoppingListHeaderActionsProps {
   viewMode: "list" | "board";
@@ -23,14 +26,19 @@ interface ShoppingListHeaderActionsProps {
   onManageStores: () => void;
   onAddItem: () => void;
   onReset: () => void;
+  onAddItems?: (items: Omit<GroceryItem, 'id' | 'checked'>[]) => void;
+  groceryItems?: GroceryItem[];
 }
 
 export const ShoppingListHeaderActions = ({
   onManageStores,
   onAddItem,
-  onReset
+  onReset,
+  onAddItems,
+  groceryItems = []
 }: ShoppingListHeaderActionsProps) => {
   const [isCategoryDialogOpen, setIsCategoryDialogOpen] = useState(false);
+  const [showFrequentItems, setShowFrequentItems] = useState(false);
 
   return (
     <>
@@ -66,6 +74,12 @@ export const ShoppingListHeaderActions = ({
             <DropdownMenuItem onClick={onAddItem}>
               Add Item
             </DropdownMenuItem>
+            {onAddItems && (
+              <DropdownMenuItem onClick={() => setShowFrequentItems(true)}>
+                <History className="h-4 w-4 mr-2" />
+                Add Frequent Items
+              </DropdownMenuItem>
+            )}
             <DropdownMenuItem onClick={onManageStores}>
               Manage Stores
             </DropdownMenuItem>
@@ -90,6 +104,15 @@ export const ShoppingListHeaderActions = ({
         open={isCategoryDialogOpen}
         onOpenChange={setIsCategoryDialogOpen}
       />
+
+      {onAddItems && (
+        <FrequentItemsDialog
+          isOpen={showFrequentItems}
+          onClose={() => setShowFrequentItems(false)}
+          onAddItems={onAddItems}
+          currentItems={groceryItems}
+        />
+      )}
     </>
   );
 };

@@ -75,6 +75,8 @@ export const ShoppingListLayout = ({
               onManageStores={() => actions.setIsEditingStores(true)}
               onAddItem={() => actions.setIsAddingItem(true)}
               onReset={onReset}
+              onAddItems={onAddItems}
+              groceryItems={getCurrentItems()}
             />
           </div>
         </div>
