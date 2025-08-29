@@ -6,24 +6,35 @@ export function useCustomCategories() {
   const [customCategories, setCustomCategories] = useState<string[]>([]);
   const [defaultCategoryOverrides, setDefaultCategoryOverrides] = useState<Record<string, string>>({});
 
-  useEffect(() => {
-    // Load custom categories from localStorage
+  // Function to load data from localStorage
+  const loadFromLocalStorage = () => {
+    // Load custom categories
     const savedCategories = localStorage.getItem('mealPlannerCustomCategories');
     console.log("useCustomCategories: Loading custom categories from localStorage:", savedCategories);
     if (savedCategories) {
       const parsed = JSON.parse(savedCategories);
       console.log("useCustomCategories: Parsed custom categories:", parsed);
       setCustomCategories(parsed);
+    } else {
+      console.log("useCustomCategories: No saved custom categories found in localStorage");
+      setCustomCategories([]);
     }
 
-    // Load default category overrides from localStorage
+    // Load default category overrides
     const savedOverrides = localStorage.getItem('mealPlannerDefaultCategoryOverrides');
     console.log("useCustomCategories: Loading default overrides from localStorage:", savedOverrides);
     if (savedOverrides) {
       const parsed = JSON.parse(savedOverrides);
       console.log("useCustomCategories: Parsed default overrides:", parsed);
       setDefaultCategoryOverrides(parsed);
+    } else {
+      setDefaultCategoryOverrides({});
     }
+  };
+
+  useEffect(() => {
+    // Load initial data
+    loadFromLocalStorage();
 
     // MIGRATION: Check for old useCategoryNames data and migrate it
     const oldCategoryNames = localStorage.getItem('mealPlannerCustomCategoryNames');
@@ -38,18 +49,43 @@ export function useCustomCategories() {
         console.error("useCustomCategories: Error migrating old category names:", error);
       }
     }
+
+    // Listen for custom events to sync across components
+    const handleCategorySync = () => {
+      console.log("useCustomCategories: Received sync event, reloading from localStorage");
+      loadFromLocalStorage();
+    };
+
+    window.addEventListener('mealPlannerCategoriesSync', handleCategorySync);
+
+    // Cleanup listener
+    return () => {
+      window.removeEventListener('mealPlannerCategoriesSync', handleCategorySync);
+    };
   }, []);
+
+  // Function to trigger sync event for other components
+  const triggerSync = () => {
+    console.log("useCustomCategories: Triggering sync event");
+    window.dispatchEvent(new CustomEvent('mealPlannerCategoriesSync'));
+  };
 
   // Save custom categories when they change
   useEffect(() => {
-    console.log("useCustomCategories: Saving custom categories to localStorage:", customCategories);
-    localStorage.setItem('mealPlannerCustomCategories', JSON.stringify(customCategories));
+    if (customCategories.length > 0 || localStorage.getItem('mealPlannerCustomCategories')) {
+      console.log("useCustomCategories: Saving custom categories to localStorage:", customCategories);
+      localStorage.setItem('mealPlannerCustomCategories', JSON.stringify(customCategories));
+      triggerSync();
+    }
   }, [customCategories]);
 
   // Save default category overrides when they change
   useEffect(() => {
-    console.log("useCustomCategories: Saving default overrides to localStorage:", defaultCategoryOverrides);
-    localStorage.setItem('mealPlannerDefaultCategoryOverrides', JSON.stringify(defaultCategoryOverrides));
+    if (Object.keys(defaultCategoryOverrides).length > 0 || localStorage.getItem('mealPlannerDefaultCategoryOverrides')) {
+      console.log("useCustomCategories: Saving default overrides to localStorage:", defaultCategoryOverrides);
+      localStorage.setItem('mealPlannerDefaultCategoryOverrides', JSON.stringify(defaultCategoryOverrides));
+      triggerSync();
+    }
   }, [defaultCategoryOverrides]);
 
   const addCustomCategory = (categoryName: string) => {
