@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { GroceryItem, GroceryCategory } from "@/types";
 import { Button } from "@/components/ui/button";
@@ -16,19 +15,15 @@ import { useCustomCategories } from "./useCustomCategories";
 interface CategoryDropdownProps {
   item: GroceryItem;
   onCategoryChange: (item: GroceryItem, category: string) => void;
-  customCategories?: string[];
-  onAddCustomCategory?: (categoryName: string) => void;
 }
 
 export const CategoryDropdown = ({
   item,
-  onCategoryChange,
-  customCategories: propCustomCategories,
-  onAddCustomCategory: propOnAddCustomCategory
+  onCategoryChange
 }: CategoryDropdownProps) => {
   const { 
-    customCategories: hookCustomCategories, 
-    addCustomCategory: hookAddCustomCategory,
+    customCategories, 
+    addCustomCategory,
     defaultCategoryOverrides,
     getCategoryDisplayName,
     getAllCategories
@@ -38,10 +33,6 @@ export const CategoryDropdown = ({
   const [newCategoryName, setNewCategoryName] = useState("");
   const [isOpen, setIsOpen] = useState(false);
   const [allCategories, setAllCategories] = useState<Array<{name: string, isDefault: boolean, displayName: string}>>([]);
-
-  // Use prop values if provided, otherwise use hook values
-  const customCategories = propCustomCategories || hookCustomCategories;
-  const addCustomCategory = propOnAddCustomCategory || hookAddCustomCategory;
 
   // Default categories from types
   const defaultCategories: GroceryCategory[] = [

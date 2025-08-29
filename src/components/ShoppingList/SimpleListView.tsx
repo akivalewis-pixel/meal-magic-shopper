@@ -26,7 +26,7 @@ export const SimpleListView = React.memo(({
   onCategoryNameChange
 }: SimpleListViewProps) => {
   const isMobile = useIsMobile();
-  const { customCategories, addCustomCategory, getCategoryDisplayName } = useCustomCategories();
+  const { getCategoryDisplayName } = useCustomCategories();
   
   // Items should only include unchecked items
   const activeItems = items.filter(item => !item.checked);
@@ -122,15 +122,13 @@ export const SimpleListView = React.memo(({
               />
               <ul className={`space-y-${isMobile ? "2" : "1"}`}>
                 {categoryItems.map(item => (
-                  <ItemRow
-                    key={`${item.id}-${item.category}-${item.store}-${item.__updateTimestamp || 0}`}
-                    item={item}
-                    onUpdateItem={onUpdateItem}
-                    onToggleItem={onToggleItem}
-                    availableStores={availableStores}
-                    customCategories={customCategories}
-                    onAddCustomCategory={addCustomCategory}
-                  />
+                <ItemRow
+                  key={`${item.id}-${item.category}-${item.store}-${item.__updateTimestamp || 0}`}
+                  item={item}
+                  onUpdateItem={onUpdateItem}
+                  onToggleItem={onToggleItem}
+                  availableStores={availableStores}
+                />
                 ))}
               </ul>
             </div>

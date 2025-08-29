@@ -75,8 +75,6 @@ export const IngredientButton = ({
               <CategoryDropdown
                 item={item}
                 onCategoryChange={onCategoryChange}
-                customCategories={customCategories}
-                onAddCustomCategory={onAddCustomCategory}
               />
             </div>
           )}

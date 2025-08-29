@@ -11,17 +11,13 @@ interface ItemRowProps {
   onUpdateItem: (item: GroceryItem) => void;
   onToggleItem: (id: string) => void;
   availableStores: string[];
-  customCategories: string[];
-  onAddCustomCategory: (categoryName: string) => void;
 }
 
 export const ItemRow = ({ 
   item, 
   onUpdateItem, 
   onToggleItem, 
-  availableStores,
-  customCategories,
-  onAddCustomCategory
+  availableStores
 }: ItemRowProps) => {
   const [localName, setLocalName] = useState(item.name);
   const [isEditingName, setIsEditingName] = useState(false);
@@ -142,8 +138,6 @@ export const ItemRow = ({
         <CategoryDropdown
           item={item}
           onCategoryChange={handleCategoryChange}
-          customCategories={customCategories}
-          onAddCustomCategory={onAddCustomCategory}
         />
       </div>
     </li>
