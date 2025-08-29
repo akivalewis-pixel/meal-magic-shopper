@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { GroceryItem } from "@/types";
 import { ShoppingListActions } from "./ShoppingListActions";
 import { ShoppingListContent } from "./ShoppingListContent";
-import { useCategoryNames } from "./useCategoryNames";
+
 
 interface ShoppingListSectionProps {
   groceryItems: GroceryItem[];

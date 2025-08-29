@@ -2,7 +2,7 @@
 import React from "react";
 import { GroceryItem } from "@/types";
 import { SimpleListView } from "./SimpleListView";
-import { useCategoryNames } from "./useCategoryNames";
+import { useCustomCategories } from "./useCustomCategories";
 
 interface ShoppingListContentProps {
   filteredItems: GroceryItem[];
@@ -22,7 +22,11 @@ export const ShoppingListContent = ({
   onUpdateItem,
   onRemoveItem
 }: ShoppingListContentProps) => {
-  const { customCategoryNames, handleCategoryNameChange } = useCategoryNames();
+  const { defaultCategoryOverrides, addDefaultCategoryOverride } = useCustomCategories();
+
+  const handleCategoryNameChange = (oldName: string, newName: string) => {
+    addDefaultCategoryOverride(oldName, newName);
+  };
 
   return (
     <SimpleListView
@@ -31,7 +35,7 @@ export const ShoppingListContent = ({
       onUpdateItem={onUpdateItem}
       onToggleItem={onRemoveItem}
       groupByStore={groupByStore}
-      customCategoryNames={customCategoryNames}
+      customCategoryNames={defaultCategoryOverrides}
       onCategoryNameChange={handleCategoryNameChange}
     />
   );

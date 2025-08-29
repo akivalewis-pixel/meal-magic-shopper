@@ -26,27 +26,21 @@ export const SimpleListView = React.memo(({
   onCategoryNameChange
 }: SimpleListViewProps) => {
   const isMobile = useIsMobile();
-  const { customCategories, addCustomCategory } = useCustomCategories();
+  const { customCategories, addCustomCategory, getCategoryDisplayName } = useCustomCategories();
   
   // Items should only include unchecked items
   const activeItems = items.filter(item => !item.checked);
   console.log("SimpleListView: Displaying", activeItems.length, "active items out of", items.length, "total items");
 
-  // Function to get the display category name (custom or default) - simplified
+  // Function to get the display category name using the unified system
   const getDisplayCategoryName = useCallback((categoryName: string): string => {
     console.log("SimpleListView: Getting display name for category:", categoryName, "Custom names:", customCategoryNames);
     
-    // Try exact match first
-    if (customCategoryNames[categoryName]) {
-      console.log("SimpleListView: Found exact match:", customCategoryNames[categoryName]);
-      return customCategoryNames[categoryName];
-    }
-    
-    // Return capitalized version as default
-    const displayName = categoryName.charAt(0).toUpperCase() + categoryName.slice(1);
-    console.log("SimpleListView: Using default display name:", displayName);
+    // Use the unified getCategoryDisplayName from useCustomCategories
+    const displayName = getCategoryDisplayName(categoryName);
+    console.log("SimpleListView: Using unified display name:", displayName);
     return displayName;
-  }, [customCategoryNames]);
+  }, [customCategoryNames, getCategoryDisplayName]);
 
   // Optimized grouping with stable keys and memoization
   const groupedItems = useMemo(() => {

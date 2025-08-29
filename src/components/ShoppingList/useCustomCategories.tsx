@@ -24,6 +24,20 @@ export function useCustomCategories() {
       console.log("useCustomCategories: Parsed default overrides:", parsed);
       setDefaultCategoryOverrides(parsed);
     }
+
+    // MIGRATION: Check for old useCategoryNames data and migrate it
+    const oldCategoryNames = localStorage.getItem('mealPlannerCustomCategoryNames');
+    if (oldCategoryNames) {
+      try {
+        const parsed = JSON.parse(oldCategoryNames);
+        console.log("useCustomCategories: Migrating old category names:", parsed);
+        setDefaultCategoryOverrides(prev => ({ ...prev, ...parsed }));
+        // Clean up the old data
+        localStorage.removeItem('mealPlannerCustomCategoryNames');
+      } catch (error) {
+        console.error("useCustomCategories: Error migrating old category names:", error);
+      }
+    }
   }, []);
 
   // Save custom categories when they change
