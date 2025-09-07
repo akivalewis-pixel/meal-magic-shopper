@@ -38,77 +38,35 @@ export const FrequentItemsDialog = ({
   const fetchFrequentItems = async () => {
     setLoading(true);
     try {
+      // First, try to get data from localStorage for immediate results
+      const localFrequentItems = getFrequentItemsFromLocalStorage();
+      
+      // Get database data for additional history
       const { data: user } = await supabase.auth.getUser();
-      if (!user.user) return;
-
-      // Get shopping list items from the last 6 months, grouped by name
-      const sixMonthsAgo = new Date();
-      sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
-
-      const { data, error } = await supabase
-        .from('shopping_list_items')
-        .select('name, category, store, created_at')
-        .eq('user_id', user.user.id)
-        .gte('created_at', sixMonthsAgo.toISOString())
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-
-        // Group by name and find most frequent category/store combinations
-        const itemGroups: Record<string, Array<{category: GroceryCategory, store: string, created_at: string}>> = {};
+      let dbFrequentItems: FrequentItem[] = [];
       
-        data?.forEach(item => {
-          const name = item.name.toLowerCase();
-          if (!itemGroups[name]) {
-            itemGroups[name] = [];
-          }
-          itemGroups[name].push({
-            category: (item.category || 'other') as GroceryCategory,
-            store: item.store || 'Unassigned',
-            created_at: item.created_at
-          });
-        });
+      if (user.user) {
+        const sixMonthsAgo = new Date();
+        sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
 
-      // Calculate frequency and most common store/category for each item
-      const frequent: FrequentItem[] = [];
+        const { data, error } = await supabase
+          .from('shopping_list_items')
+          .select('name, category, store, created_at')
+          .eq('user_id', user.user.id)
+          .gte('created_at', sixMonthsAgo.toISOString())
+          .order('created_at', { ascending: false });
+
+        if (!error && data) {
+          dbFrequentItems = processFrequentItemsFromData(data);
+        }
+      }
       
-        Object.entries(itemGroups).forEach(([name, occurrences]) => {
-          if (occurrences.length >= 2) { // Only show items used at least twice
-            // Find most common store and category
-            const storeCounts: Record<string, number> = {};
-            const categoryCounts: Partial<Record<GroceryCategory, number>> = {};
-            
-            occurrences.forEach(occ => {
-              storeCounts[occ.store] = (storeCounts[occ.store] || 0) + 1;
-              categoryCounts[occ.category] = (categoryCounts[occ.category] || 0) + 1;
-            });
-            
-            const mostCommonStore = Object.entries(storeCounts)
-              .sort(([,a], [,b]) => b - a)[0][0];
-            const mostCommonCategory = Object.entries(categoryCounts)
-              .sort(([,a], [,b]) => b - a)[0][0] as GroceryCategory;
-          
-          frequent.push({
-            name: name.charAt(0).toUpperCase() + name.slice(1),
-            category: mostCommonCategory,
-            store: mostCommonStore,
-            frequency: occurrences.length,
-            lastUsed: occurrences[0].created_at
-          });
-        }
-      });
-
-      // Sort by frequency (descending) then by last used (most recent first)
-      frequent.sort((a, b) => {
-        if (b.frequency !== a.frequency) {
-          return b.frequency - a.frequency;
-        }
-        return new Date(b.lastUsed).getTime() - new Date(a.lastUsed).getTime();
-      });
-
+      // Combine and deduplicate localStorage and database results
+      const combinedItems = combineFrequentItems(localFrequentItems, dbFrequentItems);
+      
       // Filter out items that are already in current shopping list
       const currentItemNames = new Set(currentItems.map(item => item.name.toLowerCase()));
-      const filteredFrequent = frequent.filter(item => !currentItemNames.has(item.name.toLowerCase()));
+      const filteredFrequent = combinedItems.filter(item => !currentItemNames.has(item.name.toLowerCase()));
 
       setFrequentItems(filteredFrequent.slice(0, 20)); // Limit to top 20
     } catch (error) {
@@ -121,6 +79,120 @@ export const FrequentItemsDialog = ({
     } finally {
       setLoading(false);
     }
+  };
+
+  const getFrequentItemsFromLocalStorage = (): FrequentItem[] => {
+    try {
+      // Get archived items (completed shopping lists)
+      const archivedData = localStorage.getItem('shoppingList_archived');
+      const archived: GroceryItem[] = archivedData ? JSON.parse(archivedData) : [];
+      
+      // Get current items that might have been used before
+      const allItemsData = localStorage.getItem('shoppingList_allItems');
+      const allItems: GroceryItem[] = allItemsData ? JSON.parse(allItemsData) : [];
+      
+      // Combine all historical data
+      const allHistoricalItems = [...archived, ...allItems];
+      
+      console.log('FrequentItems: Found', allHistoricalItems.length, 'historical items');
+      
+      return processFrequentItemsFromData(allHistoricalItems.map(item => ({
+        name: item.name,
+        category: item.category,
+        store: item.store || 'Unassigned',
+        created_at: item.__updateTimestamp ? new Date(item.__updateTimestamp).toISOString() : new Date().toISOString()
+      })));
+    } catch (error) {
+      console.error('Error reading from localStorage:', error);
+      return [];
+    }
+  };
+
+  const processFrequentItemsFromData = (data: Array<{name: string, category: string, store: string, created_at: string}>): FrequentItem[] => {
+    // Group by name and find most frequent category/store combinations
+    const itemGroups: Record<string, Array<{category: GroceryCategory, store: string, created_at: string}>> = {};
+    
+    data.forEach(item => {
+      const name = item.name.toLowerCase();
+      if (!itemGroups[name]) {
+        itemGroups[name] = [];
+      }
+      itemGroups[name].push({
+        category: (item.category || 'other') as GroceryCategory,
+        store: item.store || 'Unassigned',
+        created_at: item.created_at
+      });
+    });
+
+    // Calculate frequency and most common store/category for each item
+    const frequent: FrequentItem[] = [];
+    
+    Object.entries(itemGroups).forEach(([name, occurrences]) => {
+      if (occurrences.length >= 2) { // Only show items used at least twice
+        // Find most common store and category
+        const storeCounts: Record<string, number> = {};
+        const categoryCounts: Partial<Record<GroceryCategory, number>> = {};
+        
+        occurrences.forEach(occ => {
+          storeCounts[occ.store] = (storeCounts[occ.store] || 0) + 1;
+          categoryCounts[occ.category] = (categoryCounts[occ.category] || 0) + 1;
+        });
+        
+        const mostCommonStore = Object.entries(storeCounts)
+          .sort(([,a], [,b]) => b - a)[0][0];
+        const mostCommonCategory = Object.entries(categoryCounts)
+          .sort(([,a], [,b]) => b - a)[0][0] as GroceryCategory;
+      
+        frequent.push({
+          name: name.charAt(0).toUpperCase() + name.slice(1),
+          category: mostCommonCategory,
+          store: mostCommonStore,
+          frequency: occurrences.length,
+          lastUsed: occurrences.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0].created_at
+        });
+      }
+    });
+
+    return frequent;
+  };
+
+  const combineFrequentItems = (localItems: FrequentItem[], dbItems: FrequentItem[]): FrequentItem[] => {
+    const itemMap = new Map<string, FrequentItem>();
+    
+    // Add database items first
+    dbItems.forEach(item => {
+      itemMap.set(item.name.toLowerCase(), item);
+    });
+    
+    // Add or merge local items
+    localItems.forEach(localItem => {
+      const key = localItem.name.toLowerCase();
+      const existing = itemMap.get(key);
+      
+      if (existing) {
+        // Merge frequencies and use most recent data
+        const combined: FrequentItem = {
+          ...localItem,
+          frequency: existing.frequency + localItem.frequency,
+          lastUsed: new Date(localItem.lastUsed) > new Date(existing.lastUsed) ? localItem.lastUsed : existing.lastUsed
+        };
+        itemMap.set(key, combined);
+      } else {
+        itemMap.set(key, localItem);
+      }
+    });
+    
+    // Convert back to array and sort
+    const combined = Array.from(itemMap.values());
+    combined.sort((a, b) => {
+      if (b.frequency !== a.frequency) {
+        return b.frequency - a.frequency;
+      }
+      return new Date(b.lastUsed).getTime() - new Date(a.lastUsed).getTime();
+    });
+    
+    console.log('FrequentItems: Combined', combined.length, 'frequent items');
+    return combined;
   };
 
   useEffect(() => {
