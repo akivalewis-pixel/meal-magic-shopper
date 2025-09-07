@@ -72,20 +72,16 @@ export function useCustomCategories() {
 
   // Save custom categories when they change
   useEffect(() => {
-    if (customCategories.length > 0 || localStorage.getItem('mealPlannerCustomCategories')) {
-      console.log("useCustomCategories: Saving custom categories to localStorage:", customCategories);
-      localStorage.setItem('mealPlannerCustomCategories', JSON.stringify(customCategories));
-      triggerSync();
-    }
+    console.log("useCustomCategories: Saving custom categories to localStorage:", customCategories);
+    localStorage.setItem('mealPlannerCustomCategories', JSON.stringify(customCategories));
+    triggerSync();
   }, [customCategories]);
 
   // Save default category overrides when they change
   useEffect(() => {
-    if (Object.keys(defaultCategoryOverrides).length > 0 || localStorage.getItem('mealPlannerDefaultCategoryOverrides')) {
-      console.log("useCustomCategories: Saving default overrides to localStorage:", defaultCategoryOverrides);
-      localStorage.setItem('mealPlannerDefaultCategoryOverrides', JSON.stringify(defaultCategoryOverrides));
-      triggerSync();
-    }
+    console.log("useCustomCategories: Saving default overrides to localStorage:", defaultCategoryOverrides);
+    localStorage.setItem('mealPlannerDefaultCategoryOverrides', JSON.stringify(defaultCategoryOverrides));
+    triggerSync();
   }, [defaultCategoryOverrides]);
 
   const addCustomCategory = (categoryName: string) => {
