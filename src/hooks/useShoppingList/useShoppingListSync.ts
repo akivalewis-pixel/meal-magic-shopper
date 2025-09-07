@@ -140,21 +140,27 @@ export function useShoppingListSync({ meals, pantryItems }: UseShoppingListSyncP
     if (mealChangeKey !== lastMealChangeRef.current) {
       console.log("useShoppingListSync: Meals changed, intelligently updating shopping list");
       console.log("Generated meal items:", generatedMealItems.length);
-      console.log("Manual items to preserve:", manualItems.length, manualItems.map(i => i.name));
       
-      // Separate meal items from manual items in current allItems
+      // CRITICAL FIX: Extract manual items from current allItems instead of using potentially stale manualItems state
+      const currentManualItems = allItems.filter(item => item.id.startsWith('manual-'));
       const currentMealItems = allItems.filter(item => !item.id.startsWith('manual-'));
+      
+      console.log("Manual items to preserve:", currentManualItems.length, currentManualItems.map(i => i.name));
       console.log("Current meal items to replace:", currentMealItems.length);
       
       // Use smart merge to preserve user assignments - pass only meal items as current items
-      const mergedItems = mergeItemsPreservingAssignments(generatedMealItems, currentMealItems, manualItems);
+      const mergedItems = mergeItemsPreservingAssignments(generatedMealItems, currentMealItems, currentManualItems);
       
       console.log("Final merged items:", mergedItems.length, "Manual items in result:", mergedItems.filter(i => i.id.startsWith('manual-')).length);
       
       setAllItems(mergedItems);
+      
+      // Update manualItems state to keep it in sync
+      setManualItems(currentManualItems);
+      
       lastMealChangeRef.current = mealChangeKey;
     }
-  }, [mealChangeKey, generatedMealItems, manualItems]); // Removed allItems dependency to prevent circular updates
+  }, [mealChangeKey, generatedMealItems, allItems]); // Include allItems to ensure we have the latest manual items
 
   // Save when state changes
   useEffect(() => {
