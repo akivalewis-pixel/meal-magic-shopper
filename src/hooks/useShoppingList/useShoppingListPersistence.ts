@@ -6,7 +6,9 @@ import { useShoppingListPersistenceActions } from "./useShoppingListPersistenceA
 export function useShoppingListPersistence(
   availableStores: string[],
   archivedItems: GroceryItem[],
-  allItems: GroceryItem[]
+  allItems: GroceryItem[],
+  setAllItems: (items: GroceryItem[]) => void,
+  setArchivedItems: (items: GroceryItem[]) => void
 ) {
   const {
     storeAssignments,
@@ -15,20 +17,23 @@ export function useShoppingListPersistence(
     isProcessingRef
   } = useShoppingListPersistenceState();
 
-  const { loadFromStorage, saveToLocalStorage } = useShoppingListPersistenceActions({
+  const { loadFromStorage, saveToLocalStorage, saveToDatabase } = useShoppingListPersistenceActions({
     storeAssignments,
     lastSavedAssignments,
     isInitializedRef,
     isProcessingRef,
     availableStores,
     archivedItems,
-    allItems
+    allItems,
+    setAllItems,
+    setArchivedItems
   });
 
   return {
     storeAssignments,
     loadFromStorage,
     saveToLocalStorage,
+    saveToDatabase,
     isProcessing: () => isProcessingRef.current
   };
 }

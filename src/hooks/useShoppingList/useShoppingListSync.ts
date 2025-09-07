@@ -20,10 +20,12 @@ export function useShoppingListSync({ meals, pantryItems }: UseShoppingListSyncP
   const lastMealChangeRef = useRef<string>('');
 
   // Persistence with store assignments
-  const { storeAssignments, loadFromStorage, saveToLocalStorage } = useShoppingListPersistence(
+  const { storeAssignments, loadFromStorage, saveToLocalStorage, saveToDatabase } = useShoppingListPersistence(
     availableStores,
     archivedItems,
-    allItems
+    allItems,
+    setAllItems,
+    setArchivedItems
   );
 
   // Generate items from meals using the existing hook
@@ -40,44 +42,59 @@ export function useShoppingListSync({ meals, pantryItems }: UseShoppingListSyncP
   useEffect(() => {
     if (!isInitializedRef.current) {
       console.log("useShoppingListSync: Loading from storage on mount");
-      const stored = loadFromStorage();
       
-      if (stored.stores) {
-        console.log("useShoppingListSync: Setting available stores from storage:", stored.stores);
-        setAvailableStores(stored.stores);
-      }
-      
-      if (stored.archived && Array.isArray(stored.archived)) {
-        console.log("useShoppingListSync: Setting archived items from storage:", stored.archived.length);
-        setArchivedItems(stored.archived);
-      }
-      
-      if (stored.items && Array.isArray(stored.items)) {
-        console.log("useShoppingListSync: Setting saved items from storage:", stored.items.length);
-        
-        // Filter manual items from saved items
-        const savedManualItems = stored.items.filter(item => item.id.startsWith('manual-'));
-        setManualItems(savedManualItems);
-        console.log("useShoppingListSync: Found manual items:", savedManualItems.length, savedManualItems.map(i => i.name));
-        
-        // Initial sync with generated meal items to preserve all items
-        if (generatedMealItems.length > 0) {
-          const savedMealItems = stored.items.filter(item => !item.id.startsWith('manual-'));
-          const mergedItems = mergeItemsPreservingAssignments(generatedMealItems, savedMealItems, savedManualItems);
-          setAllItems(mergedItems);
-          console.log("useShoppingListSync: Initial sync completed with", mergedItems.length, "total items");
-        } else {
-          // No meal items yet, just use saved manual items
-          setAllItems(savedManualItems);
+      // Make async call to load from storage
+      const loadData = async () => {
+        try {
+          const stored = await loadFromStorage();
+          
+          if (stored.stores) {
+            console.log("useShoppingListSync: Setting available stores from storage:", stored.stores);
+            setAvailableStores(stored.stores);
+          }
+          
+          if (stored.archived && Array.isArray(stored.archived)) {
+            console.log("useShoppingListSync: Setting archived items from storage:", stored.archived.length);
+            setArchivedItems(stored.archived);
+          }
+          
+          if (stored.items && Array.isArray(stored.items)) {
+            console.log("useShoppingListSync: Setting saved items from storage:", stored.items.length);
+            
+            // Filter manual items from saved items
+            const savedManualItems = stored.items.filter(item => item.id.startsWith('manual-'));
+            setManualItems(savedManualItems);
+            console.log("useShoppingListSync: Found manual items:", savedManualItems.length, savedManualItems.map(i => i.name));
+            
+            // Initial sync with generated meal items to preserve all items
+            if (generatedMealItems.length > 0) {
+              const savedMealItems = stored.items.filter(item => !item.id.startsWith('manual-'));
+              const mergedItems = mergeItemsPreservingAssignments(generatedMealItems, savedMealItems, savedManualItems);
+              setAllItems(mergedItems);
+              console.log("useShoppingListSync: Initial sync completed with", mergedItems.length, "total items");
+            } else {
+              // No meal items yet, just use saved manual items
+              setAllItems(savedManualItems);
+              console.log("useShoppingListSync: No meal items, using only manual items");
+            }
+          } else if (generatedMealItems.length > 0) {
+            // No saved items, just use generated meal items
+            setAllItems(generatedMealItems);
+            console.log("useShoppingListSync: No saved items, using generated meal items");
+          } else {
+            console.log("useShoppingListSync: No saved items found, starting fresh");
+          }
+          
+          isInitializedRef.current = true;
+        } catch (error) {
+          console.error("useShoppingListSync: Error loading from storage:", error);
+          isInitializedRef.current = true;
         }
-      } else if (generatedMealItems.length > 0) {
-        // No saved items, just use generated meal items
-        setAllItems(generatedMealItems);
-      }
+      };
       
-      isInitializedRef.current = true;
+      loadData();
     }
-  }, [loadFromStorage, generatedMealItems]);
+  }, [loadFromStorage, generatedMealItems, setAvailableStores, setArchivedItems, setAllItems, setManualItems]);
 
   // Smart merge function to preserve user assignments
   const mergeItemsPreservingAssignments = (newGeneratedItems: GroceryItem[], currentItems: GroceryItem[], manualItems: GroceryItem[]) => {
@@ -180,6 +197,7 @@ export function useShoppingListSync({ meals, pantryItems }: UseShoppingListSyncP
     setArchivedItems,
     setAvailableStores,
     storeAssignments,
-    saveToLocalStorage
+    saveToLocalStorage,
+    saveToDatabase
   };
 }

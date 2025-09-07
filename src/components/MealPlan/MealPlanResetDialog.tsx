@@ -53,7 +53,7 @@ export const MealPlanResetDialog = ({
   if (!showSaveForm) {
     return (
       <Dialog open={isOpen} onOpenChange={handleClose}>
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent className="sm:max-w-[500px] w-[95vw]">
           <DialogHeader>
             <DialogTitle>Reset Meal Plan</DialogTitle>
             <DialogDescription>
@@ -63,15 +63,15 @@ export const MealPlanResetDialog = ({
               }
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter className="flex flex-col sm:flex-row gap-2">
-            <Button variant="outline" onClick={handleClose}>
+          <DialogFooter className="flex flex-col gap-3 sm:flex-row sm:gap-2 pt-4">
+            <Button variant="outline" onClick={handleClose} className="order-1 sm:order-1">
               Cancel
             </Button>
             {hasMeals && (
               <Button 
                 variant="outline" 
                 onClick={() => setShowSaveForm(true)}
-                className="bg-blue-50 hover:bg-blue-100 border-blue-300"
+                className="order-2 sm:order-2 bg-blue-50 hover:bg-blue-100 border-blue-300"
               >
                 Save & Reset
               </Button>
@@ -79,6 +79,7 @@ export const MealPlanResetDialog = ({
             <Button 
               variant="destructive" 
               onClick={handleResetWithoutSaving}
+              className="order-3 sm:order-3 whitespace-nowrap"
             >
               {hasMeals ? "Reset Without Saving" : "Reset"}
             </Button>
