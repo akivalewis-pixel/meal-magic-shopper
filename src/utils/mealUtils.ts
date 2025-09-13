@@ -162,3 +162,36 @@ export const countMealUsage = (weeklyPlans: WeeklyMealPlan[], mealTitle: string)
     return count + plan.meals.filter(meal => meal.title === mealTitle).length;
   }, 0);
 };
+
+/**
+ * Get frequently used meals sorted by usage count
+ */
+export const getFrequentlyUsedMeals = (weeklyPlans: WeeklyMealPlan[]): Array<{ meal: Meal; count: number }> => {
+  const mealCounts = new Map<string, { meal: Meal; count: number }>();
+  
+  weeklyPlans.forEach(plan => {
+    plan.meals.forEach(meal => {
+      if (meal.title) {
+        const existing = mealCounts.get(meal.title);
+        if (existing) {
+          existing.count++;
+          // Update with most recent meal data (keep highest rating, most recent notes)
+          if (meal.rating && (!existing.meal.rating || meal.rating > existing.meal.rating)) {
+            existing.meal.rating = meal.rating;
+          }
+          if (meal.notes && meal.notes.trim()) {
+            existing.meal.notes = meal.notes;
+          }
+        } else {
+          mealCounts.set(meal.title, {
+            meal: { ...meal },
+            count: 1
+          });
+        }
+      }
+    });
+  });
+  
+  return Array.from(mealCounts.values())
+    .sort((a, b) => b.count - a.count);
+};

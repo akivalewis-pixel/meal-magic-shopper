@@ -7,7 +7,7 @@ import { MealRecommendations } from "./MealRecommendations";
 import { AddRecipeDialog } from "./MealPlan/AddRecipeDialog";
 import { DroppableDay } from "./MealPlan/DroppableDay";
 import { MealPlanHeader } from "./MealPlan/MealPlanHeader";
-import { Meal, DietaryPreference } from "@/types";
+import { Meal, DietaryPreference, WeeklyMealPlan } from "@/types";
 import { daysOfWeek } from "@/utils/constants";
 import { useToast } from "@/hooks/use-toast";
 import { extractIngredientsFromRecipeUrl } from "@/utils/recipeUtils";
@@ -15,6 +15,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 interface MealPlanSectionProps {
   meals: Meal[];
+  weeklyPlans: WeeklyMealPlan[];
   onEditMeal: (meal: Meal) => void;
   onUpdateMeal: (updatedMeal: Meal) => void;
   onRateMeal: (meal: Meal, rating: number, notes: string) => void;
@@ -25,6 +26,7 @@ interface MealPlanSectionProps {
 
 export const MealPlanSection = ({ 
   meals, 
+  weeklyPlans,
   onEditMeal, 
   onUpdateMeal,
   onRateMeal,
@@ -144,7 +146,9 @@ export const MealPlanSection = ({
 
           <MealRecommendations 
             meals={meals}
+            weeklyPlans={weeklyPlans}
             onSelectMeal={handleSelectRecommendation}
+            onAddMealToCurrentPlan={onAddMealToDay}
           />
 
           <div className="grid grid-cols-1 gap-4 md:grid-cols-3 lg:grid-cols-7">

@@ -1,27 +1,72 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Meal } from "@/types";
-import { Star } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Meal, WeeklyMealPlan } from "@/types";
+import { Star, TrendingUp } from "lucide-react";
+import { FrequentMealsDialog } from "./FrequentMealsDialog";
 
 interface MealRecommendationsProps {
   meals: Meal[];
+  weeklyPlans: WeeklyMealPlan[];
   onSelectMeal: (meal: Meal) => void;
+  onAddMealToCurrentPlan: (meal: Meal, day: string) => void;
 }
 
-export const MealRecommendations = ({ meals, onSelectMeal }: MealRecommendationsProps) => {
+export const MealRecommendations = ({ 
+  meals, 
+  weeklyPlans, 
+  onSelectMeal, 
+  onAddMealToCurrentPlan 
+}: MealRecommendationsProps) => {
+  const [showFrequentMeals, setShowFrequentMeals] = useState(false);
+  
   // Filter to only include rated meals, sorted by rating (highest first)
   const ratedMeals = meals
     .filter(meal => meal.rating && meal.rating > 0)
     .sort((a, b) => ((b.rating || 0) - (a.rating || 0)));
 
   if (ratedMeals.length === 0) {
-    return null;
+    return (
+      <div className="bg-slate-50 p-4 rounded-lg mb-6">
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="font-semibold text-lg">Meal Recommendations</h3>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowFrequentMeals(true)}
+            className="flex items-center gap-2"
+          >
+            <TrendingUp className="h-4 w-4" />
+            Frequent Meals
+          </Button>
+        </div>
+        <p className="text-gray-600 text-sm">No rated meals yet. Rate some meals to see recommendations here!</p>
+        
+        <FrequentMealsDialog
+          open={showFrequentMeals}
+          onOpenChange={setShowFrequentMeals}
+          weeklyPlans={weeklyPlans}
+          onAddMealToCurrentPlan={onAddMealToCurrentPlan}
+        />
+      </div>
+    );
   }
 
   return (
     <div className="bg-slate-50 p-4 rounded-lg mb-6">
-      <h3 className="font-semibold text-lg mb-3">Meal Recommendations</h3>
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="font-semibold text-lg">Meal Recommendations</h3>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setShowFrequentMeals(true)}
+          className="flex items-center gap-2"
+        >
+          <TrendingUp className="h-4 w-4" />
+          Frequent Meals
+        </Button>
+      </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
         {ratedMeals.slice(0, 3).map((meal) => (
           <Card 
@@ -47,6 +92,13 @@ export const MealRecommendations = ({ meals, onSelectMeal }: MealRecommendations
           </Card>
         ))}
       </div>
+      
+      <FrequentMealsDialog
+        open={showFrequentMeals}
+        onOpenChange={setShowFrequentMeals}
+        weeklyPlans={weeklyPlans}
+        onAddMealToCurrentPlan={onAddMealToCurrentPlan}
+      />
     </div>
   );
 };

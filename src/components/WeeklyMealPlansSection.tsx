@@ -90,6 +90,13 @@ export const WeeklyMealPlansSection = ({
   };
 
   const handlePlanClick = (plan: WeeklyMealPlan) => {
+    // Create a query parameter with the plan ID for new tab functionality
+    const currentUrl = new URL(window.location.href);
+    currentUrl.searchParams.set('planId', plan.id);
+    window.open(currentUrl.toString(), '_blank');
+  };
+
+  const handlePlanSelect = (plan: WeeklyMealPlan) => {
     setSelectedPlan(plan);
   };
 
@@ -221,7 +228,7 @@ export const WeeklyMealPlansSection = ({
                       className={`border rounded-lg p-4 cursor-pointer hover:bg-gray-50 transition-colors relative ${
                         selectedPlan?.id === plan.id ? "bg-blue-50 border-blue-300" : ""
                       }`}
-                      onClick={() => handlePlanClick(plan)}
+                      onClick={() => handlePlanSelect(plan)}
                     >
                       <Button
                         variant="ghost"
@@ -236,6 +243,19 @@ export const WeeklyMealPlansSection = ({
                       <p className="text-sm mt-2">
                         {plan.meals.filter(m => m.day).length} meals planned
                       </p>
+                      <div className="flex gap-2 mt-3">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handlePlanClick(plan);
+                          }}
+                          className="text-xs h-7"
+                        >
+                          Open in New Tab
+                        </Button>
+                      </div>
                     </div>
                   ))}
                 </div>

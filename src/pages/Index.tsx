@@ -71,6 +71,7 @@ const Index = () => {
         
         <MealPlanSection 
           meals={meals} 
+          weeklyPlans={weeklyPlans}
           onEditMeal={handleEditMeal}
           onUpdateMeal={handleUpdateMeal}
           onRateMeal={handleRateMeal}
