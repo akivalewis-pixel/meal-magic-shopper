@@ -206,6 +206,59 @@ export type Database = {
         }
         Relationships: []
       }
+      weekly_plan_meals: {
+        Row: {
+          created_at: string
+          day: string
+          dietary_preferences: string[] | null
+          id: string
+          ingredients: string[] | null
+          meal_id: string | null
+          notes: string | null
+          plan_id: string
+          rating: number | null
+          recipe_url: string | null
+          title: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          day: string
+          dietary_preferences?: string[] | null
+          id?: string
+          ingredients?: string[] | null
+          meal_id?: string | null
+          notes?: string | null
+          plan_id: string
+          rating?: number | null
+          recipe_url?: string | null
+          title: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          day?: string
+          dietary_preferences?: string[] | null
+          id?: string
+          ingredients?: string[] | null
+          meal_id?: string | null
+          notes?: string | null
+          plan_id?: string
+          rating?: number | null
+          recipe_url?: string | null
+          title?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "weekly_plan_meals_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "weekly_meal_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
