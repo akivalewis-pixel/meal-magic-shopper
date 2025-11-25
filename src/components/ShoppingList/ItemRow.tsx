@@ -30,12 +30,13 @@ export const ItemRow = ({
   const handleQuantityChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     console.log("ItemRow: Quantity changing for", item.name, "to", e.target.value);
     const updatedItem = { 
-      ...item, 
+      ...item,
+      name: localName, // Preserve any name edits in progress
       quantity: e.target.value,
       __updateTimestamp: Date.now()
     };
     onUpdateItem(updatedItem);
-  }, [item, onUpdateItem]);
+  }, [item, localName, onUpdateItem]);
 
   const handleNameInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setLocalName(e.target.value);
@@ -70,19 +71,21 @@ export const ItemRow = ({
   const handleCategoryChange = useCallback((updatedItem: GroceryItem, category: string) => {
     console.log("ItemRow: Category changed for", updatedItem.name, "from", updatedItem.category, "to", category);
     const newItem = { 
-      ...updatedItem, 
+      ...updatedItem,
+      name: localName, // Preserve any name edits in progress
       category: category as any,
       __updateTimestamp: Date.now()
     };
     console.log("ItemRow: Calling onUpdateItem with category change:", newItem);
     onUpdateItem(newItem);
-  }, [onUpdateItem]);
+  }, [localName, onUpdateItem]);
 
   const handleStoreChange = useCallback((updatedItem: GroceryItem) => {
     console.log("ItemRow: Store changed for", updatedItem.name, "to", updatedItem.store);
-    // The updatedItem already has the __updateTimestamp from the dropdown
-    onUpdateItem(updatedItem);
-  }, [onUpdateItem]);
+    // Preserve any name edits in progress
+    const newItem = { ...updatedItem, name: localName };
+    onUpdateItem(newItem);
+  }, [localName, onUpdateItem]);
 
   const handleToggle = useCallback(() => {
     console.log("ItemRow: Toggling/Checking item:", item.name, "with ID:", item.id);
