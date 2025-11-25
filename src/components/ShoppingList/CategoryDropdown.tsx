@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Plus, ChevronDown } from "lucide-react";
-import { useCustomCategories } from "./useCustomCategories";
+import { useCustomCategories } from "@/contexts/CustomCategoriesContext";
 
 interface CategoryDropdownProps {
   item: GroceryItem;
