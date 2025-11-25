@@ -2,7 +2,7 @@
 import React from "react";
 import { GroceryItem } from "@/types";
 import { SimpleListView } from "./SimpleListView";
-import { useCustomCategories } from "./useCustomCategories";
+import { useCustomCategories } from "@/contexts/CustomCategoriesContext";
 
 interface ShoppingListContentProps {
   filteredItems: GroceryItem[];

@@ -10,7 +10,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Plus, Trash2, Edit2, Check, X } from "lucide-react";
-import { useCustomCategories } from "./useCustomCategories";
+import { useCustomCategories } from "@/contexts/CustomCategoriesContext";
 import { GroceryCategory } from "@/types";
 
 interface CategoryManagementDialogProps {

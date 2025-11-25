@@ -3,7 +3,7 @@ import React, { useMemo, useCallback } from "react";
 import { GroceryItem } from "@/types";
 import { ItemRow } from "./ItemRow";
 import { CategoryHeader } from "./CategoryHeader";
-import { useCustomCategories } from "./useCustomCategories";
+import { useCustomCategories } from "@/contexts/CustomCategoriesContext";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 interface SimpleListViewProps {

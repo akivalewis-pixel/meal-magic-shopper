@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useCustomCategories } from "./useCustomCategories";
+import { useCustomCategories } from "@/contexts/CustomCategoriesContext";
 import { GroceryItem } from "@/types";
 import { v4 as uuidv4 } from "uuid";
 
