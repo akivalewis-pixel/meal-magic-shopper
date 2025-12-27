@@ -110,47 +110,56 @@ export function useShoppingListDatabaseSync({
       }
 
       // Prepare items for database insertion
-      // Always generate a valid UUID - either use existing valid one or create new
-      const isValidUuid = (value: string) =>
-        /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
+      // Always generate a valid UUID and ensure there are no duplicates within the batch
+      const uuidRegex =
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+      const isValidUuid = (value: string | undefined | null) =>
+        !!value && uuidRegex.test(value);
+
+      const extractPreferredDbId = (item: GroceryItem) => {
+        // Manual items are stored in DB without the "manual-" prefix
+        if (item.id.startsWith("manual-")) return item.id.slice("manual-".length);
+
+        // Some legacy IDs might contain a UUID within a prefixed string (e.g. archived-...-<uuid>)
+        const match = item.id.match(
+          /[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}/i
+        );
+        return match?.[0] ?? item.id;
+      };
+
+      const usedIds = new Set<string>();
+      const getUniqueDbId = (preferred?: string) => {
+        let id = isValidUuid(preferred) ? preferred! : uuidv4();
+        while (usedIds.has(id)) id = uuidv4();
+        usedIds.add(id);
+        return id;
+      };
+
+      const toDbRow = (item: GroceryItem, checked: boolean) => {
+        const preferredId = extractPreferredDbId(item);
+        const dbId = getUniqueDbId(preferredId);
+
+        return {
+          id: dbId,
+          user_id: user.user.id,
+          name: item.name,
+          quantity: item.quantity || null,
+          category: item.category,
+          store: item.store,
+          department: item.department || null,
+          meal: item.meal || null,
+          checked,
+          is_manual: item.id.startsWith("manual-"),
+          created_at: item.__updateTimestamp
+            ? new Date(item.__updateTimestamp).toISOString()
+            : new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        };
+      };
 
       const itemsToInsert = [
-        ...currentAllItems.map(item => {
-          const rawId = item.id.startsWith('manual-') ? '' : item.id;
-          const finalId = isValidUuid(rawId) ? rawId : uuidv4();
-          return {
-            id: finalId,
-            user_id: user.user.id,
-            name: item.name,
-            quantity: item.quantity || null,
-            category: item.category,
-            store: item.store,
-            department: item.department || null,
-            meal: item.meal || null,
-            checked: false,
-            is_manual: item.id.startsWith('manual-'),
-            created_at: item.__updateTimestamp ? new Date(item.__updateTimestamp).toISOString() : new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          };
-        }),
-        ...currentArchivedItems.map(item => {
-          const rawId = item.id.startsWith('manual-') ? '' : item.id;
-          const finalId = isValidUuid(rawId) ? rawId : uuidv4();
-          return {
-            id: finalId,
-            user_id: user.user.id,
-            name: item.name,
-            quantity: item.quantity || null,
-            category: item.category,
-            store: item.store,
-            department: item.department || null,
-            meal: item.meal || null,
-            checked: true,
-            is_manual: item.id.startsWith('manual-'),
-            created_at: item.__updateTimestamp ? new Date(item.__updateTimestamp).toISOString() : new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          };
-        })
+        ...currentAllItems.map((item) => toDbRow(item, false)),
+        ...currentArchivedItems.map((item) => toDbRow(item, true)),
       ];
 
       if (itemsToInsert.length > 0) {
