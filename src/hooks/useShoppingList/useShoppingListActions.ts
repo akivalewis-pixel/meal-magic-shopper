@@ -5,6 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 import { normalizeGroceryItem, findMatchingArchivedItem } from "./utils";
 import { useConsolidatedUpdateActions } from "./useConsolidatedUpdateActions";
 import { useListResetActions } from "./useListResetActions";
+import { v4 as uuidv4 } from 'uuid';
 
 interface UseShoppingListActionsProps {
   allItems: GroceryItem[];
@@ -145,10 +146,10 @@ export function useShoppingListActions({
         description: `${finalItem.name} restored from archive`,
       });
     } else {
-      // Create new manual item
+      // Create new manual item with stable UUID
       finalItem = normalizeGroceryItem({
         ...newItem,
-        id: `manual-${Date.now()}`,
+        id: `manual-${uuidv4()}`,
         checked: false
       });
       
