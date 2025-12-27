@@ -20,23 +20,34 @@ export const ItemRow = ({
   availableStores
 }: ItemRowProps) => {
   const [localName, setLocalName] = useState(item.name);
+  const [localQuantity, setLocalQuantity] = useState(item.quantity);
   const [isEditingName, setIsEditingName] = useState(false);
 
-  // Update local name when item name changes externally
+  // Update local states when item changes externally
   React.useEffect(() => {
     setLocalName(item.name);
   }, [item.name]);
 
-  const handleQuantityChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    console.log("ItemRow: Quantity changing for", item.name, "to", e.target.value);
-    const updatedItem = { 
-      ...item,
-      name: localName, // Preserve any name edits in progress
-      quantity: e.target.value,
-      __updateTimestamp: Date.now()
-    };
-    onUpdateItem(updatedItem);
-  }, [item, localName, onUpdateItem]);
+  React.useEffect(() => {
+    setLocalQuantity(item.quantity);
+  }, [item.quantity]);
+
+  const handleQuantityInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setLocalQuantity(e.target.value);
+  }, []);
+
+  const handleQuantityCommit = useCallback(() => {
+    if (localQuantity !== item.quantity) {
+      console.log("ItemRow: Quantity committing for", item.name, "to", localQuantity);
+      const updatedItem = { 
+        ...item,
+        name: localName,
+        quantity: localQuantity,
+        __updateTimestamp: Date.now()
+      };
+      onUpdateItem(updatedItem);
+    }
+  }, [item, localName, localQuantity, onUpdateItem]);
 
   const handleNameInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setLocalName(e.target.value);
@@ -126,8 +137,9 @@ export const ItemRow = ({
       
       <div className="flex items-center gap-2 flex-shrink-0">
         <Input
-          value={item.quantity}
-          onChange={handleQuantityChange}
+          value={localQuantity}
+          onChange={handleQuantityInputChange}
+          onBlur={handleQuantityCommit}
           className="w-20 h-8 text-center"
           placeholder="Qty"
         />
