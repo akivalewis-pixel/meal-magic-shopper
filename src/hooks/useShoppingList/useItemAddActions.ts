@@ -1,8 +1,7 @@
-
 import { useCallback } from "react";
 import { GroceryItem } from "@/types";
 import { useToast } from "@/hooks/use-toast";
-
+import { v4 as uuidv4 } from 'uuid';
 interface UseItemAddActionsProps {
   setAllItems: React.Dispatch<React.SetStateAction<GroceryItem[]>>;
   saveToLocalStorage: () => void;
@@ -17,7 +16,7 @@ export function useItemAddActions({
   const addItem = useCallback((newItem: GroceryItem) => {
     const itemWithId = {
       ...newItem,
-      id: `manual-${newItem.name.toLowerCase().replace(/\s+/g, '-')}-${Date.now()}`,
+      id: `manual-${uuidv4()}`,
       store: newItem.store || "Unassigned",
       source: 'manual' as const
     };

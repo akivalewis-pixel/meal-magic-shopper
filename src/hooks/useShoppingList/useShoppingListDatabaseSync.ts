@@ -118,18 +118,19 @@ export function useShoppingListDatabaseSync({
 
       const extractPreferredDbId = (item: GroceryItem) => {
         // Manual items are stored in DB without the "manual-" prefix
-        if (item.id.startsWith("manual-")) return item.id.slice("manual-".length);
+        if (item.id.startsWith("manual-")) return item.id.slice("manual-".length).toLowerCase();
 
         // Some legacy IDs might contain a UUID within a prefixed string (e.g. archived-...-<uuid>)
         const match = item.id.match(
           /[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}/i
         );
-        return match?.[0] ?? item.id;
+        return match?.[0]?.toLowerCase() ?? item.id.toLowerCase();
       };
 
       const usedIds = new Set<string>();
       const getUniqueDbId = (preferred?: string) => {
-        let id = isValidUuid(preferred) ? preferred! : uuidv4();
+        const normalizedPreferred = preferred?.toLowerCase();
+        let id = isValidUuid(normalizedPreferred) ? normalizedPreferred! : uuidv4();
         while (usedIds.has(id)) id = uuidv4();
         usedIds.add(id);
         return id;
@@ -163,12 +164,22 @@ export function useShoppingListDatabaseSync({
       ];
 
       if (itemsToInsert.length > 0) {
-        const { error: insertError } = await supabase
-          .from('shopping_list_items')
-          .insert(itemsToInsert);
+        // Dedupe by id (case-insensitive) to prevent duplicates in the same batch
+        const seenIds = new Set<string>();
+        const dedupedItems = itemsToInsert.filter(item => {
+          const lowerId = item.id.toLowerCase();
+          if (seenIds.has(lowerId)) return false;
+          seenIds.add(lowerId);
+          return true;
+        });
 
-        if (insertError) {
-          console.error('Error inserting items:', insertError);
+        // Use upsert to handle conflicts gracefully (multi-tab/multi-device scenarios)
+        const { error: upsertError } = await supabase
+          .from('shopping_list_items')
+          .upsert(dedupedItems, { onConflict: 'id' });
+
+        if (upsertError) {
+          console.error('Error upserting items:', upsertError.code, upsertError.message, upsertError);
           toast({
             title: "Sync Error",
             description: "Failed to sync shopping list to cloud",
@@ -177,7 +188,7 @@ export function useShoppingListDatabaseSync({
           return;
         }
 
-        console.log(`Successfully synced ${itemsToInsert.length} items to database`);
+        console.log(`Successfully synced ${dedupedItems.length} items to database`);
       }
 
       lastSyncRef.current = Date.now();
