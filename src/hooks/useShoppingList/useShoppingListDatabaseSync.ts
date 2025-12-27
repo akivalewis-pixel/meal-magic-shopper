@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef } from "react";
 import { GroceryItem, GroceryCategory } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
+import { v4 as uuidv4 } from 'uuid';
 import { useToast } from "@/hooks/use-toast";
 
 interface UseShoppingListDatabaseSyncProps {
@@ -109,15 +110,16 @@ export function useShoppingListDatabaseSync({
       }
 
       // Prepare items for database insertion
-      // Ensure we only provide a valid UUID for id; otherwise let the DB generate it
+      // Always generate a valid UUID - either use existing valid one or create new
       const isValidUuid = (value: string) =>
         /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
 
       const itemsToInsert = [
         ...currentAllItems.map(item => {
           const rawId = item.id.startsWith('manual-') ? '' : item.id;
-          const includeId = rawId && isValidUuid(rawId);
-          const base = {
+          const finalId = isValidUuid(rawId) ? rawId : uuidv4();
+          return {
+            id: finalId,
             user_id: user.user.id,
             name: item.name,
             quantity: item.quantity || null,
@@ -130,12 +132,12 @@ export function useShoppingListDatabaseSync({
             created_at: item.__updateTimestamp ? new Date(item.__updateTimestamp).toISOString() : new Date().toISOString(),
             updated_at: new Date().toISOString()
           };
-          return includeId ? { id: rawId, ...base } : base;
         }),
         ...currentArchivedItems.map(item => {
           const rawId = item.id.startsWith('manual-') ? '' : item.id;
-          const includeId = rawId && isValidUuid(rawId);
-          const base = {
+          const finalId = isValidUuid(rawId) ? rawId : uuidv4();
+          return {
+            id: finalId,
             user_id: user.user.id,
             name: item.name,
             quantity: item.quantity || null,
@@ -148,7 +150,6 @@ export function useShoppingListDatabaseSync({
             created_at: item.__updateTimestamp ? new Date(item.__updateTimestamp).toISOString() : new Date().toISOString(),
             updated_at: new Date().toISOString()
           };
-          return includeId ? { id: rawId, ...base } : base;
         })
       ];
 
