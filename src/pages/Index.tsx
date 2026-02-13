@@ -38,6 +38,7 @@ const Index = () => {
     updateItem,
     toggleItem,
     archiveItem,
+    deleteItem,
     addItem,
     updateStores,
     resetList,
@@ -89,6 +90,7 @@ const Index = () => {
           updateItem={updateItem}
           toggleItem={toggleItem}
           archiveItem={archiveItem}
+          deleteItem={deleteItem}
           addItem={addItem}
           updateStores={updateStores}
           resetList={resetList}

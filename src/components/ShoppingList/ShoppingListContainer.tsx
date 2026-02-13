@@ -15,6 +15,7 @@ interface ShoppingListContainerProps {
   updateItem: (item: GroceryItem) => void;
   toggleItem: (id: string) => void;
   archiveItem: (id: string) => void;
+  deleteItem: (id: string) => void;
   addItem: (item: Omit<GroceryItem, 'id' | 'checked'>) => void;
   updateStores: (stores: string[]) => void;
   resetList: () => void;
@@ -27,6 +28,7 @@ export const ShoppingListContainer = ({
   availableStores,
   updateItem,
   toggleItem,
+  deleteItem,
   addItem,
   updateStores,
   resetList,
@@ -169,6 +171,7 @@ export const ShoppingListContainer = ({
       onRedo={handleRedo}
       onUpdateItem={handleUpdateItem}
       onRemoveItem={handleRemoveItem}
+      onDeleteItem={deleteItem}
       onSaveStores={handleSaveStores}
       onAddItem={handleAddItem}
       onAddItems={handleAddItems}

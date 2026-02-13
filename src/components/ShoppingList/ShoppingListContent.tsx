@@ -13,6 +13,7 @@ interface ShoppingListContentProps {
   availableStores: string[];
   onUpdateItem: (item: GroceryItem) => void;
   onRemoveItem: (id: string) => void;
+  onDeleteItem: (id: string) => void;
 }
 
 export const ShoppingListContent = ({
@@ -20,7 +21,8 @@ export const ShoppingListContent = ({
   groupByStore,
   availableStores,
   onUpdateItem,
-  onRemoveItem
+  onRemoveItem,
+  onDeleteItem
 }: ShoppingListContentProps) => {
   const { defaultCategoryOverrides, addDefaultCategoryOverride } = useCustomCategories();
 
@@ -34,6 +36,7 @@ export const ShoppingListContent = ({
       availableStores={availableStores}
       onUpdateItem={onUpdateItem}
       onToggleItem={onRemoveItem}
+      onDeleteItem={onDeleteItem}
       groupByStore={groupByStore}
       customCategoryNames={defaultCategoryOverrides}
       onCategoryNameChange={handleCategoryNameChange}

@@ -100,6 +100,7 @@ export const ShoppingListSection = ({
           availableStores={availableStores}
           onUpdateItem={onUpdateItem}
           onRemoveItem={handleToggle}
+          onDeleteItem={handleToggle}
         />
       </div>
     </section>
