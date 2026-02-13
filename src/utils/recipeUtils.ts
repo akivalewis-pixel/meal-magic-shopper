@@ -61,11 +61,20 @@ const extractTitleFromUrl = (url: string): string => {
  * Clean and normalize ingredient names
  */
 export const cleanIngredientName = (ingredient: string): string => {
-  // Remove quantities and units
   const cleanedName = ingredient
-    .replace(/^[\d\s\/½¼¾⅓⅔⅛.,]+\s*/, '') // Remove leading numbers/fractions
-    .replace(/^(?:cups?|tbsp|tsp|tablespoons?|teaspoons?|oz|ounces?|lbs?|pounds?|g|grams?|ml|liters?|cloves?|cans?|heads?|bunche?s?|stalks?|pieces?|slices?|pinch(?:es)?|dash(?:es)?|large|medium|small)\s+/i, '')
+    .replace(/^[\d\s\/½¼¾⅓⅔⅛⅜⅝⅞.,]+\s*/, '') // Remove leading numbers/fractions
+    // Remove units (possibly repeated, e.g. "14.5 oz can")
+    .replace(/^(?:cups?|tbsp|tsp|tablespoons?|teaspoons?|oz|ounces?|lbs?|pounds?|g|grams?|kg|ml|liters?|l|fl\.?\s*oz|cloves?|cans?|heads?|bunche?s?|bundles?|stalks?|pieces?|slices?|pinch(?:es)?|dash(?:es)?|large|medium|small|packages?|pkgs?|bags?|boxes?|jars?|bottles?|containers?|sticks?|sprigs?|handful(?:s)?)\b[\s.,of]*/gi, '')
+    // Run unit removal again to catch chained units like "14.5 oz can diced tomatoes"
+    .replace(/^[\d\s\/½¼¾⅓⅔⅛.,]+\s*/, '')
+    .replace(/^(?:cups?|tbsp|tsp|tablespoons?|teaspoons?|oz|ounces?|lbs?|pounds?|g|grams?|kg|ml|liters?|l|fl\.?\s*oz|cloves?|cans?|heads?|bunche?s?|bundles?|stalks?|pieces?|slices?|pinch(?:es)?|dash(?:es)?|large|medium|small|packages?|pkgs?|bags?|boxes?|jars?|bottles?|containers?|sticks?|sprigs?|handful(?:s)?)\b[\s.,of]*/gi, '')
     .replace(/\(.*?\)/g, '')           // Remove parenthetical text
+    // Remove preparation descriptors
+    .replace(/\b(?:diced|chopped|minced|sliced|crushed|ground|shredded|grated|melted|softened|divided|to taste|optional|freshly|fresh|dried|frozen|cooked|uncooked|raw|boneless|skinless|trimmed|peeled|seeded|deveined|rinsed|drained|packed|loosely|thinly|finely|roughly|coarsely)\b/gi, '')
+    .replace(/,\s*,/g, ',')           // Clean up double commas
+    .replace(/^\s*,\s*/, '')           // Remove leading commas
+    .replace(/\s*,\s*$/, '')           // Remove trailing commas
+    .replace(/\s{2,}/g, ' ')          // Collapse whitespace
     .trim();
   
   return cleanedName;
