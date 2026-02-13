@@ -1,7 +1,9 @@
 
 // Functions for recipe parsing and extraction
+import { supabase } from "@/integrations/supabase/client";
+
 /**
- * Extract ingredients from a recipe URL
+ * Extract ingredients from a recipe URL via the fetch-recipe edge function
  */
 export const extractIngredientsFromRecipeUrl = async (recipeUrl: string): Promise<{
   title?: string;
@@ -9,140 +11,50 @@ export const extractIngredientsFromRecipeUrl = async (recipeUrl: string): Promis
   quantities?: Record<string, string>;
 }> => {
   try {
-    console.log('Fetching recipe from URL:', recipeUrl);
+    console.log('Fetching recipe from URL via edge function:', recipeUrl);
     
-    // Simple heuristic-based extraction for common recipe formats
-    const lowerUrl = recipeUrl.toLowerCase();
-    let title = "";
-    let ingredients: string[] = [];
-    let quantities: Record<string, string> = {};
-    
-    // Extract recipe title from URL
-    const urlParts = recipeUrl.split('/');
-    const lastPart = urlParts[urlParts.length - 1] || urlParts[urlParts.length - 2] || '';
-    title = lastPart
-      .replace(/-/g, ' ')
-      .replace(/\.(html|php|aspx)$/i, '')
-      .split('?')[0]
-      .trim();
-    
-    // Capitalize each word
-    title = title
-      .split(' ')
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(' ');
-      
-    // For demo purposes, let's return different ingredient sets based on URL keywords
-    if (lowerUrl.includes('pasta') || lowerUrl.includes('spaghetti')) {
-      ingredients = ['pasta', 'tomatoes', 'garlic', 'onion', 'olive oil', 'basil'];
-      quantities = {
-        'pasta': '1 lb',
-        'tomatoes': '3',
-        'garlic': '2 cloves',
-        'onion': '1 medium',
-        'olive oil': '2 tbsp',
-        'basil': '1/4 cup'
+    const { data, error } = await supabase.functions.invoke('fetch-recipe', {
+      body: { url: recipeUrl },
+    });
+
+    if (error) {
+      console.error('Edge function error:', error);
+      return { ingredients: ['Failed to extract ingredients. Please add them manually.'] };
+    }
+
+    if (!data?.success) {
+      console.warn('Recipe fetch unsuccessful:', data?.error);
+      return { 
+        title: extractTitleFromUrl(recipeUrl),
+        ingredients: ['Could not extract ingredients from this URL. Please add them manually.'] 
       };
     }
-    else if (lowerUrl.includes('chicken')) {
-      ingredients = ['chicken breast', 'salt', 'pepper', 'olive oil', 'garlic powder', 'herbs'];
-      quantities = {
-        'chicken breast': '2 lbs',
-        'salt': '1 tsp',
-        'pepper': '1/2 tsp',
-        'olive oil': '3 tbsp',
-        'garlic powder': '1 tsp',
-        'herbs': '2 tbsp'
-      };
-    }
-    else if (lowerUrl.includes('salad')) {
-      ingredients = ['lettuce', 'cucumber', 'tomatoes', 'bell pepper', 'olive oil', 'vinegar'];
-      quantities = {
-        'lettuce': '1 head',
-        'cucumber': '1',
-        'tomatoes': '2',
-        'bell pepper': '1',
-        'olive oil': '2 tbsp',
-        'vinegar': '1 tbsp'
-      };
-    } 
-    else if (lowerUrl.includes('soup')) {
-      ingredients = ['broth', 'onion', 'carrots', 'celery', 'salt', 'pepper', 'herbs'];
-      quantities = {
-        'broth': '4 cups',
-        'onion': '1',
-        'carrots': '2',
-        'celery': '2 stalks',
-        'salt': '1 tsp',
-        'pepper': '1/2 tsp',
-        'herbs': '1 tbsp'
-      };
-    }
-    else if (lowerUrl.includes('pizza')) {
-      ingredients = ['pizza dough', 'tomato sauce', 'mozzarella cheese', 'olive oil', 'basil'];
-      quantities = {
-        'pizza dough': '1 lb',
-        'tomato sauce': '1 cup',
-        'mozzarella cheese': '2 cups',
-        'olive oil': '1 tbsp',
-        'basil': '8 leaves'
-      };
-    }
-    else {
-      // Fallback to extract from URL parts
-      const possibleKeywords = ['beef', 'vegetarian', 'fish', 'pork', 'breakfast', 'dinner', 'lunch', 'dessert', 'cake'];
-      const foundKeyword = possibleKeywords.find(keyword => lowerUrl.includes(keyword));
-      
-      if (foundKeyword) {
-        switch(foundKeyword) {
-          case 'beef':
-            ingredients = ['ground beef', 'onion', 'garlic', 'tomatoes', 'spices'];
-            quantities = {
-              'ground beef': '1 lb',
-              'onion': '1 medium',
-              'garlic': '2 cloves',
-              'tomatoes': '2 cups',
-              'spices': '2 tbsp'
-            };
-            break;
-          case 'vegetarian':
-            ingredients = ['tofu', 'vegetables', 'olive oil', 'salt', 'herbs'];
-            quantities = {
-              'tofu': '1 lb',
-              'vegetables': '4 cups',
-              'olive oil': '2 tbsp',
-              'salt': '1 tsp',
-              'herbs': '1 tbsp'
-            };
-            break;
-          case 'cake':
-            ingredients = ['flour', 'sugar', 'butter', 'eggs', 'baking powder', 'vanilla'];
-            quantities = {
-              'flour': '2 cups',
-              'sugar': '1 cup',
-              'butter': '1/2 cup',
-              'eggs': '2',
-              'baking powder': '2 tsp',
-              'vanilla': '1 tsp'
-            };
-            break;
-          default:
-            ingredients = ['Please add ingredients manually for this recipe'];
-        }
-      } else {
-        ingredients = ['Please add ingredients manually for this recipe'];
-      }
-    }
-    
+
     return {
-      title: title || undefined,
-      ingredients,
-      quantities: Object.keys(quantities).length > 0 ? quantities : undefined
+      title: data.title || extractTitleFromUrl(recipeUrl),
+      ingredients: data.ingredients || [],
+      quantities: data.quantities || undefined,
     };
   } catch (error) {
     console.error('Error extracting ingredients:', error);
-    return { ingredients: ['Failed to extract ingredients'] };
+    return { ingredients: ['Failed to extract ingredients. Please add them manually.'] };
   }
+};
+
+/**
+ * Extract a human-readable title from a URL as fallback
+ */
+const extractTitleFromUrl = (url: string): string => {
+  const urlParts = url.split('/');
+  const lastPart = urlParts[urlParts.length - 1] || urlParts[urlParts.length - 2] || '';
+  return lastPart
+    .replace(/-/g, ' ')
+    .replace(/\.(html|php|aspx)$/i, '')
+    .split('?')[0]
+    .trim()
+    .split(' ')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
 };
 
 /**
@@ -151,10 +63,8 @@ export const extractIngredientsFromRecipeUrl = async (recipeUrl: string): Promis
 export const cleanIngredientName = (ingredient: string): string => {
   // Remove quantities and units
   const cleanedName = ingredient
-    .replace(/^\d+\s*\/\s*\d+\s+/, '') // Remove fractions like "1/2 "
-    .replace(/^\d+\s+/, '')            // Remove leading numbers like "2 "
-    .replace(/^a\s+/i, '')             // Remove leading "a "
-    .replace(/^an\s+/i, '')            // Remove leading "an "
+    .replace(/^[\d\s\/½¼¾⅓⅔⅛.,]+\s*/, '') // Remove leading numbers/fractions
+    .replace(/^(?:cups?|tbsp|tsp|tablespoons?|teaspoons?|oz|ounces?|lbs?|pounds?|g|grams?|ml|liters?|cloves?|cans?|heads?|bunche?s?|stalks?|pieces?|slices?|pinch(?:es)?|dash(?:es)?|large|medium|small)\s+/i, '')
     .replace(/\(.*?\)/g, '')           // Remove parenthetical text
     .trim();
   

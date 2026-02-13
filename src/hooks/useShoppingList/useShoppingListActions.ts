@@ -81,11 +81,10 @@ export function useShoppingListActions({
 
     console.log("ShoppingListActions: Found item to archive:", item.name);
 
-    // Archive the item immediately with unique ID to prevent duplicates
+    // Archive the item — keep original ID for stable DB identity
     const archivedItem = { 
       ...item, 
       checked: true,
-      id: item.id.startsWith('archived-') ? item.id : `archived-${Date.now()}-${item.id}`,
       __updateTimestamp: Date.now()
     };
     

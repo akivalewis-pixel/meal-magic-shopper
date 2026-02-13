@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Meal, WeeklyMealPlan, GroceryItem } from '@/types';
+import { Meal, WeeklyMealPlan, GroceryItem, DietaryPreference } from '@/types';
 import { getCurrentWeekStart } from '@/utils';
 
 export function useSupabaseMealPlan() {
@@ -67,46 +67,49 @@ export function useSupabaseMealPlan() {
         return;
       }
 
-      // For each plan, load the meals that were active during that week
-      const formattedPlans: WeeklyMealPlan[] = [];
-      
-      for (const plan of plansData) {
-        // Get meals that were created/updated around the time of this plan
-        // We'll use a simple approach: get meals that have a day assigned
-        // In a more sophisticated system, we'd have a meal_plan_meals junction table
-        const { data: planMeals, error: mealsError } = await supabase
-          .from('meals')
-          .select('*')
-          .eq('user_id', user.id)
-          .not('day', 'is', null)
-          .not('day', 'eq', '');
+      // Load all plan meals in a single query (no N+1)
+      const planIds = plansData.map(p => p.id);
+      const { data: allPlanMeals, error: planMealsError } = await supabase
+        .from('weekly_plan_meals')
+        .select('*')
+        .in('plan_id', planIds);
 
-        if (mealsError) {
-          console.error('Error loading plan meals:', mealsError);
-          continue;
-        }
+      if (planMealsError) {
+        console.error('Error loading plan meals:', planMealsError);
+        return;
+      }
 
+      // Group plan meals by plan_id
+      const mealsByPlan = new Map<string, typeof allPlanMeals>();
+      allPlanMeals?.forEach(meal => {
+        const existing = mealsByPlan.get(meal.plan_id) || [];
+        existing.push(meal);
+        mealsByPlan.set(meal.plan_id, existing);
+      });
+
+      const formattedPlans: WeeklyMealPlan[] = plansData.map(plan => {
+        const planMeals = mealsByPlan.get(plan.id) || [];
         const formattedPlanMeals: Meal[] = planMeals.map(meal => ({
-          id: meal.id,
+          id: meal.meal_id || meal.id,
           day: meal.day || '',
           title: meal.title,
           recipeUrl: meal.recipe_url || '',
-          ingredients: Array.isArray(meal.ingredients) ? meal.ingredients.filter((item): item is string => typeof item === 'string') : [],
-          dietaryPreferences: Array.isArray(meal.dietary_preferences) ? meal.dietary_preferences.filter((item): item is any => typeof item === 'string') : [],
+          ingredients: Array.isArray(meal.ingredients) ? meal.ingredients : [],
+          dietaryPreferences: (Array.isArray(meal.dietary_preferences) ? meal.dietary_preferences : []) as DietaryPreference[],
           notes: meal.notes || '',
           rating: meal.rating || undefined,
-          lastUsed: meal.last_used ? new Date(meal.last_used) : undefined
+          lastUsed: undefined
         }));
 
-        formattedPlans.push({
+        return {
           id: plan.id,
           name: plan.name,
           weekStartDate: plan.week_start_date,
           meals: formattedPlanMeals,
           shoppingList: [],
           stores: []
-        });
-      }
+        };
+      });
 
       setWeeklyPlans(formattedPlans);
     } catch (error) {
@@ -244,12 +247,35 @@ export function useSupabaseMealPlan() {
         return;
       }
 
-      // Create a snapshot of the current meal plan
+      // Snapshot current meals into weekly_plan_meals
       const currentMealsWithDays = meals.filter(meal => meal.day && meal.day !== '');
+      
+      if (currentMealsWithDays.length > 0) {
+        const planMealRows = currentMealsWithDays.map(meal => ({
+          user_id: user.id,
+          plan_id: planData.id,
+          meal_id: meal.id,
+          title: meal.title,
+          day: meal.day,
+          recipe_url: meal.recipeUrl || null,
+          ingredients: meal.ingredients || [],
+          dietary_preferences: meal.dietaryPreferences || [],
+          notes: meal.notes || null,
+          rating: meal.rating || null,
+        }));
+
+        const { error: mealsError } = await supabase
+          .from('weekly_plan_meals')
+          .insert(planMealRows);
+
+        if (mealsError) {
+          console.error('Error saving plan meals snapshot:', mealsError);
+        }
+      }
+
       const currentShoppingList = getCurrentItems ? getCurrentItems() : [];
       const currentStores = getAvailableStores ? getAvailableStores() : [];
 
-      // Add the new plan to local state immediately
       const newPlan: WeeklyMealPlan = {
         id: planData.id,
         name,
