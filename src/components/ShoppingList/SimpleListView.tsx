@@ -11,6 +11,7 @@ interface SimpleListViewProps {
   availableStores: string[];
   onUpdateItem: (item: GroceryItem) => void;
   onToggleItem: (id: string) => void;
+  onDeleteItem: (id: string) => void;
   groupByStore: boolean;
   customCategoryNames?: Record<string, string>;
   onCategoryNameChange?: (oldName: string, newName: string) => void;
@@ -21,6 +22,7 @@ export const SimpleListView = React.memo(({
   availableStores,
   onUpdateItem,
   onToggleItem,
+  onDeleteItem,
   groupByStore,
   customCategoryNames = {},
   onCategoryNameChange
@@ -127,6 +129,7 @@ export const SimpleListView = React.memo(({
                   item={item}
                   onUpdateItem={onUpdateItem}
                   onToggleItem={onToggleItem}
+                  onDeleteItem={onDeleteItem}
                   availableStores={availableStores}
                 />
                 ))}

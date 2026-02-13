@@ -186,6 +186,17 @@ export function useShoppingListActions({
     });
   }, [setAvailableStores, setAllItems, saveToLocalStorage, toast]);
 
+  const deleteItem = useCallback((id: string) => {
+    console.log("ShoppingListActions: deleteItem (permanent) called for id:", id);
+    setAllItems(prev => prev.filter(i => i.id !== id));
+    setManualItems(prev => prev.filter(i => i.id !== id));
+    saveToLocalStorage();
+    toast({
+      title: "Item Deleted",
+      description: "Item has been permanently removed from the list",
+    });
+  }, [setAllItems, setManualItems, saveToLocalStorage, toast]);
+
   const getCurrentItems = useCallback(() => allItems, [allItems]);
 
   return {
@@ -193,6 +204,7 @@ export function useShoppingListActions({
     toggleItem,
     archiveItem,
     addItem,
+    deleteItem,
     updateStores,
     resetList,
     getCurrentItems

@@ -3,6 +3,8 @@ import React, { useState, useCallback } from "react";
 import { GroceryItem } from "@/types";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Trash2 } from "lucide-react";
 import { SimpleStoreDropdown } from "./SimpleStoreDropdown";
 import { CategoryDropdown } from "./CategoryDropdown";
 
@@ -10,13 +12,15 @@ interface ItemRowProps {
   item: GroceryItem;
   onUpdateItem: (item: GroceryItem) => void;
   onToggleItem: (id: string) => void;
+  onDeleteItem?: (id: string) => void;
   availableStores: string[];
 }
 
 export const ItemRow = ({ 
   item, 
   onUpdateItem, 
-  onToggleItem, 
+  onToggleItem,
+  onDeleteItem,
   availableStores
 }: ItemRowProps) => {
   const [localName, setLocalName] = useState(item.name);
@@ -154,6 +158,18 @@ export const ItemRow = ({
           item={item}
           onCategoryChange={handleCategoryChange}
         />
+
+        {onDeleteItem && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 flex-shrink-0 text-muted-foreground hover:text-destructive"
+            onClick={() => onDeleteItem(item.id)}
+            title="Delete item permanently"
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        )}
       </div>
     </li>
   );

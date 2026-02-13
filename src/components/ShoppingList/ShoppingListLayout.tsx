@@ -28,6 +28,7 @@ interface ShoppingListLayoutProps {
   onRedo: () => void;
   onUpdateItem: (item: GroceryItem) => void;
   onRemoveItem: (id: string) => void;
+  onDeleteItem: (id: string) => void;
   onSaveStores: (stores: string[]) => void;
   onAddItem: (item: GroceryItem) => void;
   onAddItems?: (items: Omit<GroceryItem, 'id' | 'checked'>[]) => void;
@@ -47,6 +48,7 @@ export const ShoppingListLayout = ({
   onRedo,
   onUpdateItem,
   onRemoveItem,
+  onDeleteItem,
   onSaveStores,
   onAddItem,
   onAddItems,
@@ -102,6 +104,7 @@ export const ShoppingListLayout = ({
             availableStores={availableStores}
             onUpdateItem={onUpdateItem}
             onRemoveItem={onRemoveItem}
+            onDeleteItem={onDeleteItem}
           />
         </div>
 
