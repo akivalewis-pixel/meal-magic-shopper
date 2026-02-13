@@ -82,6 +82,10 @@ export const cleanIngredientName = (ingredient: string): string => {
   s = s
     // Remove preparation descriptors
     .replace(/\b(?:diced|chopped|minced|sliced|crushed|ground|shredded|grated|melted|softened|divided|to taste|optional|freshly|fresh|dried|frozen|cooked|uncooked|raw|boneless|skinless|trimmed|peeled|seeded|deveined|rinsed|drained|packed|loosely|thinly|finely|roughly|coarsely|sifted|room temperature|at room temperature|cold|warm|hot|whole|halved|quartered)\b/gi, '')
+    // Remove alternative suggestions: "like X", "or X", "such as X"
+    .replace(/[,;]?\s*\b(?:like|such as|or)\b\s+.+$/gi, '')
+    // Remove leading "or" (e.g. "or matzo cake meal")
+    .replace(/^\s*\bor\b\s+/i, '')
     .replace(/,\s*,/g, ',')
     .replace(/^\s*[,\s]+/, '')
     .replace(/\s*,\s*$/, '')
