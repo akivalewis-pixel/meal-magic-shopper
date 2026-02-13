@@ -61,21 +61,32 @@ const extractTitleFromUrl = (url: string): string => {
  * Clean and normalize ingredient names
  */
 export const cleanIngredientName = (ingredient: string): string => {
-  const cleanedName = ingredient
-    .replace(/^[\d\s\/½¼¾⅓⅔⅛⅜⅝⅞.,]+\s*/, '') // Remove leading numbers/fractions
-    // Remove units (possibly repeated, e.g. "14.5 oz can")
-    .replace(/^(?:cups?|tbsp|tsp|tablespoons?|teaspoons?|oz|ounces?|lbs?|pounds?|g|grams?|kg|ml|liters?|l|fl\.?\s*oz|cloves?|cans?|heads?|bunche?s?|bundles?|stalks?|pieces?|slices?|pinch(?:es)?|dash(?:es)?|large|medium|small|packages?|pkgs?|bags?|boxes?|jars?|bottles?|containers?|sticks?|sprigs?|handful(?:s)?)\b[\s.,of]*/gi, '')
-    // Run unit removal again to catch chained units like "14.5 oz can diced tomatoes"
-    .replace(/^[\d\s\/½¼¾⅓⅔⅛.,]+\s*/, '')
-    .replace(/^(?:cups?|tbsp|tsp|tablespoons?|teaspoons?|oz|ounces?|lbs?|pounds?|g|grams?|kg|ml|liters?|l|fl\.?\s*oz|cloves?|cans?|heads?|bunche?s?|bundles?|stalks?|pieces?|slices?|pinch(?:es)?|dash(?:es)?|large|medium|small|packages?|pkgs?|bags?|boxes?|jars?|bottles?|containers?|sticks?|sprigs?|handful(?:s)?)\b[\s.,of]*/gi, '')
-    .replace(/\(.*?\)/g, '')           // Remove parenthetical text
+  const units = '(?:cups?|tbsp|tsp|tablespoons?|teaspoons?|oz|ounces?|lbs?|pounds?|g|grams?|kg|ml|liters?|l|fl\\.?\\s*oz|cloves?|cans?|heads?|bunche?s?|bundles?|stalks?|pieces?|slices?|pinch(?:es)?|dash(?:es)?|large|medium|small|packages?|pkgs?|bags?|boxes?|jars?|bottles?|containers?|sticks?|sprigs?|handful(?:s)?)';
+  const num = '[\\d\\s\\/½¼¾⅓⅔⅛⅜⅝⅞.,]+';
+
+  let s = ingredient
+    // Remove parenthetical text
+    .replace(/\(.*?\)/g, '')
+    // Remove "plus X unit" segments (e.g. "plus 2 tablespoons")
+    .replace(/\bplus\s+[\d\s\/½¼¾⅓⅔⅛.,]+\s*\w+/gi, '')
+    // Remove slash-separated alternate measurements (e.g. "/150 grams")
+    .replace(/\/[\d.,]+\s*\w+/g, '');
+
+  // Repeatedly strip leading number + unit combos
+  for (let i = 0; i < 3; i++) {
+    s = s
+      .replace(new RegExp(`^${num}\\s*`, 'i'), '')
+      .replace(new RegExp(`^${units}\\b[\\s.,of]*`, 'gi'), '');
+  }
+
+  s = s
     // Remove preparation descriptors
-    .replace(/\b(?:diced|chopped|minced|sliced|crushed|ground|shredded|grated|melted|softened|divided|to taste|optional|freshly|fresh|dried|frozen|cooked|uncooked|raw|boneless|skinless|trimmed|peeled|seeded|deveined|rinsed|drained|packed|loosely|thinly|finely|roughly|coarsely)\b/gi, '')
-    .replace(/,\s*,/g, ',')           // Clean up double commas
-    .replace(/^\s*,\s*/, '')           // Remove leading commas
-    .replace(/\s*,\s*$/, '')           // Remove trailing commas
-    .replace(/\s{2,}/g, ' ')          // Collapse whitespace
+    .replace(/\b(?:diced|chopped|minced|sliced|crushed|ground|shredded|grated|melted|softened|divided|to taste|optional|freshly|fresh|dried|frozen|cooked|uncooked|raw|boneless|skinless|trimmed|peeled|seeded|deveined|rinsed|drained|packed|loosely|thinly|finely|roughly|coarsely|sifted|room temperature|at room temperature|cold|warm|hot|whole|halved|quartered)\b/gi, '')
+    .replace(/,\s*,/g, ',')
+    .replace(/^\s*[,\s]+/, '')
+    .replace(/\s*,\s*$/, '')
+    .replace(/\s{2,}/g, ' ')
     .trim();
-  
-  return cleanedName;
+
+  return s;
 };
