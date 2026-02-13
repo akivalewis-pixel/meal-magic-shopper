@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Form, FormField, FormItem, FormLabel, FormControl } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import { Loader2 } from "lucide-react";
@@ -131,7 +132,7 @@ export const AddRecipeDialog = ({
     onAddRecipe({
       ...data,
       day: selectedDay,
-      ingredients: data.ingredients ? data.ingredients.split(',').map((item: string) => item.trim()).filter((item: string) => item.length > 0) : []
+      ingredients: data.ingredients ? data.ingredients.split(/[,\n]/).map((item: string) => item.trim()).filter((item: string) => item.length > 0) : []
     });
   };
 
@@ -202,10 +203,11 @@ export const AddRecipeDialog = ({
               name="ingredients"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Ingredients (optional, comma separated)</FormLabel>
+                  <FormLabel>Ingredients (optional, one per line or comma separated)</FormLabel>
                   <FormControl>
-                    <Input 
-                      placeholder="1 lb onions, 2 cloves garlic, 3 tomatoes..." 
+                    <Textarea 
+                      placeholder={"1 lb onions\n2 cloves garlic\n3 tomatoes\n1/2 cup olive oil"}
+                      rows={5}
                       {...field}
                     />
                   </FormControl>

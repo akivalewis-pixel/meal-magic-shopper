@@ -13,9 +13,11 @@ export const generateShoppingList = (meals: Meal[], pantryItems: string[], previ
       // Clean the ingredient name to improve matching
       const cleanedName = cleanIngredientName(ingredient);
       
-      // Try to extract quantity from the ingredient string
-      let quantity = "1"; // Default quantity
-      const quantityMatch = ingredient.match(/^(\d+(\.\d+)?\/?\d*\s*(oz|ounce|cup|tbsp|tsp|teaspoon|tablespoon|lb|pound|g|gram|ml|l|liter)\b)/i);
+      // Extract quantity from the ingredient string — handles fractions, mixed numbers, and many units
+      let quantity = "1";
+      const quantityMatch = ingredient.match(
+        /^((?:\d+\s+)?\d+\/\d+|\d+(?:\.\d+)?)\s*(oz|ounces?|cups?|tbsp|tsp|teaspoons?|tablespoons?|lbs?|pounds?|g|grams?|ml|liters?|l|cloves?|cans?|heads?|bunche?s?|stalks?|pieces?|slices?|pinche?s?|dashe?s?|large|medium|small)?\b/i
+      );
       if (quantityMatch) {
         quantity = quantityMatch[0].trim();
       }

@@ -98,16 +98,8 @@ export function useShoppingListDatabaseSync({
       syncInProgressRef.current = true;
       console.log("Saving shopping list items to database...");
 
-      // Delete all existing items for this user to start fresh
-      const { error: deleteError } = await supabase
-        .from('shopping_list_items')
-        .delete()
-        .eq('user_id', user.user.id);
-
-      if (deleteError) {
-        console.error('Error deleting existing items:', deleteError);
-        return;
-      }
+      // We no longer delete-all first. Instead we upsert current items,
+      // then selectively delete items that are no longer in the set.
 
       // Prepare items for database insertion
       // Always generate a valid UUID and ensure there are no duplicates within the batch
@@ -188,7 +180,27 @@ export function useShoppingListDatabaseSync({
           return;
         }
 
-        console.log(`Successfully synced ${dedupedItems.length} items to database`);
+        console.log(`Successfully upserted ${dedupedItems.length} items to database`);
+
+        // Now delete items that are no longer in the current set
+        const currentIds = dedupedItems.map(item => item.id);
+        if (currentIds.length > 0) {
+          const { error: deleteError } = await supabase
+            .from('shopping_list_items')
+            .delete()
+            .eq('user_id', user.user.id)
+            .not('id', 'in', `(${currentIds.join(',')})`);
+
+          if (deleteError) {
+            console.error('Error cleaning up old items:', deleteError);
+          }
+        }
+      } else {
+        // No items at all — delete everything
+        await supabase
+          .from('shopping_list_items')
+          .delete()
+          .eq('user_id', user.user.id);
       }
 
       lastSyncRef.current = Date.now();
@@ -204,16 +216,13 @@ export function useShoppingListDatabaseSync({
     }
   }, [toast]);
 
-  // Auto-sync to database when items change (debounced)
+  // Auto-sync to database when items change (proper debounce — always fires after last change)
   useEffect(() => {
     if (!isInitializedRef.current) return;
 
-    const now = Date.now();
-    if (now - lastSyncRef.current < 5000) return; // Debounce 5 seconds
-
     const timeoutId = setTimeout(() => {
       saveToDatabase(allItems, archivedItems);
-    }, 2000); // Wait 2 seconds after last change
+    }, 3000); // 3 second debounce after last change
 
     return () => clearTimeout(timeoutId);
   }, [allItems, archivedItems, saveToDatabase, isInitializedRef]);
