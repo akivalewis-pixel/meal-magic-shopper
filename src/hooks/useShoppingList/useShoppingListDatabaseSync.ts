@@ -3,6 +3,7 @@ import { GroceryItem, GroceryCategory } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
 import { v4 as uuidv4 } from 'uuid';
 import { useToast } from "@/hooks/use-toast";
+import { logger } from "@/utils/logger";
 
 interface UseShoppingListDatabaseSyncProps {
   allItems: GroceryItem[];
@@ -28,11 +29,11 @@ export function useShoppingListDatabaseSync({
     try {
       const { data: user } = await supabase.auth.getUser();
       if (!user.user) {
-        console.log("No authenticated user, skipping database load");
+        logger.log("No authenticated user, skipping database load");
         return { allItems: [], archivedItems: [] };
       }
 
-      console.log("Loading shopping list items from database...");
+      logger.log("Loading shopping list items from database...");
 
       const { data: dbItems, error } = await supabase
         .from('shopping_list_items')
@@ -41,7 +42,7 @@ export function useShoppingListDatabaseSync({
         .order('created_at', { ascending: false });
 
       if (error) {
-        console.error('Error loading from database:', error);
+        logger.error('Error loading from database:', error);
         return { allItems: [], archivedItems: [] };
       }
 
@@ -69,14 +70,14 @@ export function useShoppingListDatabaseSync({
         }
       });
 
-      console.log(`Loaded ${activeItems.length} active items and ${checkedItems.length} archived items from database`);
+      logger.log(`Loaded ${activeItems.length} active items and ${checkedItems.length} archived items from database`);
       
       return { 
         allItems: activeItems, 
         archivedItems: checkedItems 
       };
     } catch (error) {
-      console.error('Error loading from database:', error);
+      logger.error('Error loading from database:', error);
       return { allItems: [], archivedItems: [] };
     }
   }, []);
@@ -84,19 +85,19 @@ export function useShoppingListDatabaseSync({
   // Save items to database
   const saveToDatabase = useCallback(async (currentAllItems: GroceryItem[], currentArchivedItems: GroceryItem[]) => {
     if (syncInProgressRef.current) {
-      console.log("Sync already in progress, skipping");
+      logger.log("Sync already in progress, skipping");
       return;
     }
 
     try {
       const { data: user } = await supabase.auth.getUser();
       if (!user.user) {
-        console.log("No authenticated user, skipping database save");
+        logger.log("No authenticated user, skipping database save");
         return;
       }
 
       syncInProgressRef.current = true;
-      console.log("Saving shopping list items to database...");
+      logger.log("Saving shopping list items to database...");
 
       // We no longer delete-all first. Instead we upsert current items,
       // then selectively delete items that are no longer in the set.
@@ -171,7 +172,7 @@ export function useShoppingListDatabaseSync({
           .upsert(dedupedItems, { onConflict: 'id' });
 
         if (upsertError) {
-          console.error('Error upserting items:', upsertError.code, upsertError.message, upsertError);
+          logger.error('Error upserting items:', upsertError.code, upsertError.message);
           toast({
             title: "Sync Error",
             description: "Failed to sync shopping list to cloud",
@@ -180,7 +181,7 @@ export function useShoppingListDatabaseSync({
           return;
         }
 
-        console.log(`Successfully upserted ${dedupedItems.length} items to database`);
+        logger.log(`Successfully upserted ${dedupedItems.length} items to database`);
 
         // Now delete items that are no longer in the current set
         const currentIds = dedupedItems.map(item => item.id);
@@ -192,7 +193,7 @@ export function useShoppingListDatabaseSync({
             .not('id', 'in', `(${currentIds.join(',')})`);
 
           if (deleteError) {
-            console.error('Error cleaning up old items:', deleteError);
+            logger.error('Error cleaning up old items:', deleteError);
           }
         }
       } else {
@@ -205,7 +206,7 @@ export function useShoppingListDatabaseSync({
 
       lastSyncRef.current = Date.now();
     } catch (error) {
-      console.error('Error saving to database:', error);
+      logger.error('Error saving to database:', error);
       toast({
         title: "Sync Error", 
         description: "Failed to sync shopping list to cloud",

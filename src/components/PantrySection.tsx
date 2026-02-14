@@ -31,7 +31,7 @@ export const PantrySection = ({
         setNewItem("");
       } else {
         // Item already exists - could add toast notification here
-        console.log("Item already exists in pantry");
+        // Item already exists in pantry
       }
     }
   };

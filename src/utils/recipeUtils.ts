@@ -1,6 +1,7 @@
 
 // Functions for recipe parsing and extraction
 import { supabase } from "@/integrations/supabase/client";
+import { logger } from "@/utils/logger";
 
 /**
  * Extract ingredients from a recipe URL via the fetch-recipe edge function
@@ -11,19 +12,19 @@ export const extractIngredientsFromRecipeUrl = async (recipeUrl: string): Promis
   quantities?: Record<string, string>;
 }> => {
   try {
-    console.log('Fetching recipe from URL via edge function:', recipeUrl);
+    logger.log('Fetching recipe from URL via edge function:', recipeUrl);
     
     const { data, error } = await supabase.functions.invoke('fetch-recipe', {
       body: { url: recipeUrl },
     });
 
     if (error) {
-      console.error('Edge function error:', error);
+      logger.error('Edge function error:', error);
       return { ingredients: ['Failed to extract ingredients. Please add them manually.'] };
     }
 
     if (!data?.success) {
-      console.warn('Recipe fetch unsuccessful:', data?.error);
+      logger.warn('Recipe fetch unsuccessful:', data?.error);
       return { 
         title: extractTitleFromUrl(recipeUrl),
         ingredients: ['Could not extract ingredients from this URL. Please add them manually.'] 
@@ -36,7 +37,7 @@ export const extractIngredientsFromRecipeUrl = async (recipeUrl: string): Promis
       quantities: data.quantities || undefined,
     };
   } catch (error) {
-    console.error('Error extracting ingredients:', error);
+    logger.error('Error extracting ingredients:', error);
     return { ingredients: ['Failed to extract ingredients. Please add them manually.'] };
   }
 };

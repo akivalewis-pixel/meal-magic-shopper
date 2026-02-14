@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Meal, WeeklyMealPlan, GroceryItem, DietaryPreference } from '@/types';
 import { getCurrentWeekStart } from '@/utils';
+import { logger } from '@/utils/logger';
 
 export function useSupabaseMealPlan() {
   const { user } = useAuth();
@@ -24,7 +25,7 @@ export function useSupabaseMealPlan() {
         .order('created_at', { ascending: false });
 
       if (error) {
-        console.error('Error loading meals:', error);
+        logger.error('Error loading meals:', error);
         toast({
           title: "Error",
           description: "Failed to load meals",
@@ -47,7 +48,7 @@ export function useSupabaseMealPlan() {
 
       setMeals(formattedMeals);
     } catch (error) {
-      console.error('Error loading meals:', error);
+      logger.error('Error loading meals:', error);
     }
   };
 
@@ -63,7 +64,7 @@ export function useSupabaseMealPlan() {
         .order('created_at', { ascending: false });
 
       if (plansError) {
-        console.error('Error loading weekly plans:', plansError);
+        logger.error('Error loading weekly plans:', plansError);
         return;
       }
 
@@ -75,7 +76,7 @@ export function useSupabaseMealPlan() {
         .in('plan_id', planIds);
 
       if (planMealsError) {
-        console.error('Error loading plan meals:', planMealsError);
+        logger.error('Error loading plan meals:', planMealsError);
         return;
       }
 
@@ -113,7 +114,7 @@ export function useSupabaseMealPlan() {
 
       setWeeklyPlans(formattedPlans);
     } catch (error) {
-      console.error('Error loading weekly plans:', error);
+      logger.error('Error loading weekly plans:', error);
     }
   };
 
@@ -148,7 +149,7 @@ export function useSupabaseMealPlan() {
         .upsert({ id: meal.id, ...mealData });
 
       if (error) {
-        console.error('Error saving meal:', error);
+        logger.error('Error saving meal:', error);
         toast({
           title: "Error",
           description: "Failed to save meal",
@@ -161,12 +162,10 @@ export function useSupabaseMealPlan() {
       setMeals(prevMeals => {
         const existingIndex = prevMeals.findIndex(m => m.id === meal.id);
         if (existingIndex >= 0) {
-          // Update existing meal
           const updatedMeals = [...prevMeals];
           updatedMeals[existingIndex] = meal;
           return updatedMeals;
         } else {
-          // Add new meal
           return [...prevMeals, meal];
         }
       });
@@ -176,7 +175,7 @@ export function useSupabaseMealPlan() {
         description: `${meal.title} has been saved successfully`,
       });
     } catch (error) {
-      console.error('Error updating meal:', error);
+      logger.error('Error updating meal:', error);
       toast({
         title: "Error",
         description: "Failed to save meal",
@@ -226,7 +225,6 @@ export function useSupabaseMealPlan() {
     try {
       const currentWeekStart = getCurrentWeekStart();
       
-      // Save the weekly plan metadata
       const { data: planData, error: planError } = await supabase
         .from('weekly_meal_plans')
         .insert({
@@ -238,7 +236,7 @@ export function useSupabaseMealPlan() {
         .single();
 
       if (planError) {
-        console.error('Error saving weekly plan:', planError);
+        logger.error('Error saving weekly plan:', planError);
         toast({
           title: "Error",
           description: "Failed to save weekly plan",
@@ -247,7 +245,6 @@ export function useSupabaseMealPlan() {
         return;
       }
 
-      // Snapshot current meals into weekly_plan_meals
       const currentMealsWithDays = meals.filter(meal => meal.day && meal.day !== '');
       
       if (currentMealsWithDays.length > 0) {
@@ -269,7 +266,7 @@ export function useSupabaseMealPlan() {
           .insert(planMealRows);
 
         if (mealsError) {
-          console.error('Error saving plan meals snapshot:', mealsError);
+          logger.error('Error saving plan meals snapshot:', mealsError);
         }
       }
 
@@ -292,7 +289,7 @@ export function useSupabaseMealPlan() {
         description: `"${name}" has been saved with ${currentMealsWithDays.length} meals.`,
       });
     } catch (error) {
-      console.error('Error saving weekly plan:', error);
+      logger.error('Error saving weekly plan:', error);
     }
   };
 
@@ -301,15 +298,12 @@ export function useSupabaseMealPlan() {
     if (!user) return;
 
     try {
-      // First, clear current meal days
       const currentMeals = meals.map(meal => ({ ...meal, day: '' }));
       
-      // Update all meals to clear their days first
       for (const meal of currentMeals) {
         await handleUpdateMeal(meal);
       }
 
-      // Then load the meals from the plan
       for (const planMeal of plan.meals) {
         await handleUpdateMeal({
           ...planMeal,
@@ -317,7 +311,6 @@ export function useSupabaseMealPlan() {
         });
       }
 
-      // Reload meals to get the updated state
       await loadMeals();
       
       toast({
@@ -325,7 +318,7 @@ export function useSupabaseMealPlan() {
         description: `"${plan.name}" has been loaded with ${plan.meals.length} meals.`,
       });
     } catch (error) {
-      console.error('Error loading weekly plan:', error);
+      logger.error('Error loading weekly plan:', error);
       toast({
         title: "Error",
         description: "Failed to load weekly plan",
@@ -345,7 +338,7 @@ export function useSupabaseMealPlan() {
         .eq('id', planId);
 
       if (error) {
-        console.error('Error deleting weekly plan:', error);
+        logger.error('Error deleting weekly plan:', error);
         toast({
           title: "Error",
           description: "Failed to delete weekly plan",
@@ -354,7 +347,6 @@ export function useSupabaseMealPlan() {
         return;
       }
 
-      // Remove from local state
       setWeeklyPlans(prev => prev.filter(plan => plan.id !== planId));
       
       toast({
@@ -362,7 +354,7 @@ export function useSupabaseMealPlan() {
         description: "The weekly plan has been deleted.",
       });
     } catch (error) {
-      console.error('Error deleting weekly plan:', error);
+      logger.error('Error deleting weekly plan:', error);
     }
   };
 
@@ -377,7 +369,7 @@ export function useSupabaseMealPlan() {
         .eq('user_id', user.id);
 
       if (error) {
-        console.error('Error resetting meal plan:', error);
+        logger.error('Error resetting meal plan:', error);
         toast({
           title: "Error",
           description: "Failed to reset meal plan",
@@ -393,7 +385,7 @@ export function useSupabaseMealPlan() {
         description: "Your meal plan has been reset. Start fresh!",
       });
     } catch (error) {
-      console.error('Error resetting meal plan:', error);
+      logger.error('Error resetting meal plan:', error);
     }
   };
 
@@ -408,7 +400,6 @@ export function useSupabaseMealPlan() {
     handleDeleteWeeklyPlan,
     handleResetMealPlan,
     handleLoadWeeklyPlan,
-    // Keep these for backward compatibility
     handleEditMeal: (meal: Meal) => {
       toast({
         title: "Edit Meal",
