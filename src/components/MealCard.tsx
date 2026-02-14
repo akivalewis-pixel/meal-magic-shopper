@@ -82,10 +82,17 @@ export const MealCard = ({ meal, onEdit, onRate, onRemove, onUpdateMeal, classNa
             href={meal.recipeUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-xs text-blue-600 line-clamp-1 flex items-center group"
+            className="text-xs text-primary line-clamp-1 flex items-center group min-h-[44px] py-2 touch-manipulation"
+            onClick={(e) => {
+              // Ensure external links always open in a new window/tab
+              e.stopPropagation();
+              window.open(meal.recipeUrl, '_blank', 'noopener,noreferrer');
+              e.preventDefault();
+            }}
           >
-            <ExternalLink className="h-3 w-3 mr-1 inline" />
-            <span className="group-hover:underline">Recipe</span>
+            <ExternalLink className="h-4 w-4 mr-1.5 inline flex-shrink-0" />
+            <span className="group-hover:underline">Open Recipe</span>
+            <ExternalLink className="h-3 w-3 ml-1 inline opacity-50 flex-shrink-0" />
           </a>
         )}
       </CardContent>

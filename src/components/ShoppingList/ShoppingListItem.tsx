@@ -67,7 +67,7 @@ export const ShoppingListItem = ({
   };
 
   return (
-    <li className="flex items-center justify-start gap-3 py-2 border-b border-gray-100 text-left">
+    <li className={`flex items-center justify-start gap-3 py-3 md:py-2 border-b border-border text-left touch-manipulation ${item.checked ? "bg-muted/50" : ""}`}>
       <Checkbox
         id={item.id}
         checked={item.checked}
@@ -77,7 +77,7 @@ export const ShoppingListItem = ({
       />
       
       <div 
-        className={`flex-1 min-w-0 text-left ${item.checked ? "line-through text-gray-400" : ""}`}
+        className={`flex-1 min-w-0 text-left transition-colors ${item.checked ? "line-through text-muted-foreground opacity-60" : ""}`}
         onClick={handleNameClick}
       >
         {isEditingName ? (

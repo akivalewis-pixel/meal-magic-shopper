@@ -3,6 +3,7 @@ import { logger } from "@/utils/logger";
 import { GroceryItem, Meal } from "@/types";
 import { useShoppingListPersistence } from "./useShoppingListPersistence";
 import { useShoppingListGeneration } from "./useShoppingListGeneration";
+import { useShoppingListRealtime } from "./useShoppingListRealtime";
 
 interface UseShoppingListSyncProps {
   meals: Meal[];
@@ -28,6 +29,9 @@ export function useShoppingListSync({ meals, pantryItems }: UseShoppingListSyncP
     setAllItems,
     setArchivedItems
   );
+
+  // Real-time sync for cross-device updates
+  useShoppingListRealtime({ setAllItems, isInitializedRef });
 
   // Generate items from meals using the existing hook
   const generatedMealItems = useShoppingListGeneration(meals, pantryItems, storeAssignments);

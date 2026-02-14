@@ -72,52 +72,27 @@ export function useShoppingListActions({
   }, [consolidatedUpdateItem, toast]);
 
   const toggleItem = useCallback((id: string) => {
-    console.log("ShoppingListActions: toggleItem called for id:", id);
     const item = allItems.find(i => i.id === id);
-    if (!item) {
-      console.log("ShoppingListActions: Item not found for id:", id);
-      return;
-    }
+    if (!item) return;
 
-    console.log("ShoppingListActions: Found item to archive:", item.name);
-
-    // Archive the item — keep original ID for stable DB identity
-    const archivedItem = { 
-      ...item, 
-      checked: true,
-      __updateTimestamp: Date.now()
-    };
+    // Toggle purchased state in-place — item stays visible with strikethrough
+    setAllItems(prev => prev.map(i => 
+      i.id === id 
+        ? { ...i, checked: !i.checked, __updateTimestamp: Date.now() }
+        : i
+    ));
     
-    // Update all states in the correct order
-    console.log("ShoppingListActions: Adding to archive and removing from active lists");
-    
-    // Add to archived items first
-    setArchivedItems(prev => [archivedItem, ...prev]);
-    
-    // Remove from main list immediately
-    setAllItems(prev => {
-      const filtered = prev.filter(i => i.id !== id);
-      console.log("ShoppingListActions: Filtered allItems from", prev.length, "to", filtered.length);
-      return filtered;
-    });
-    
-    // Remove from manual items if applicable
-    if (item.id.startsWith('manual-')) {
-      setManualItems(prev => {
-        const filtered = prev.filter(i => i.id !== id);
-        console.log("ShoppingListActions: Filtered manualItems from", prev.length, "to", filtered.length);
-        return filtered;
-      });
+    // Also update manual items state if applicable
+    if (id.startsWith('manual-')) {
+      setManualItems(prev => prev.map(i =>
+        i.id === id
+          ? { ...i, checked: !i.checked, __updateTimestamp: Date.now() }
+          : i
+      ));
     }
     
-    // Save immediately
     setTimeout(() => saveToLocalStorage(), 0);
-    
-    toast({
-      title: "Item Completed",
-      description: `${item.name} moved to archive`,
-    });
-  }, [allItems, setAllItems, setManualItems, setArchivedItems, saveToLocalStorage, toast]);
+  }, [allItems, setAllItems, setManualItems, saveToLocalStorage]);
 
   const archiveItem = useCallback((id: string) => {
     toggleItem(id);
