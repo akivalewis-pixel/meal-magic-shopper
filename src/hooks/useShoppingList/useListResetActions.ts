@@ -36,7 +36,6 @@ export function useListResetActions({
     const itemsToArchive = allItems.map(item => ({
       ...item,
       checked: true,
-      id: item.id.startsWith('archived-') ? item.id : `archived-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
     }));
     
     console.log("ListResetActions: Archiving", itemsToArchive.length, "items");

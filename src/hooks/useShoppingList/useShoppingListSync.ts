@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { logger } from "@/utils/logger";
 import { GroceryItem, Meal } from "@/types";
 import { useShoppingListPersistence } from "./useShoppingListPersistence";
 import { useShoppingListGeneration } from "./useShoppingListGeneration";
@@ -136,8 +137,19 @@ export function useShoppingListSync({ meals, pantryItems }: UseShoppingListSyncP
       return newItem;
     });
     
-    // Combine with manual items (they always preserve their assignments)
-    const finalItems = [...mergedGeneratedItems, ...manualItems];
+    // Find orphaned non-manual items (exist in current but not in generated set)
+    const generatedNames = new Set(newGeneratedItems.map(i => i.name.toLowerCase().trim()));
+    const orphanedItems = currentItems.filter(item => {
+      const key = item.name.toLowerCase().trim();
+      return !generatedNames.has(key);
+    });
+    
+    if (orphanedItems.length > 0) {
+      logger.log("useShoppingListSync: Preserving", orphanedItems.length, "orphaned items:", orphanedItems.map(i => i.name));
+    }
+
+    // Combine: generated (with preserved assignments) + orphaned non-manual items + manual items
+    const finalItems = [...mergedGeneratedItems, ...orphanedItems, ...manualItems];
     
     console.log("useShoppingListSync: Final merged items:", finalItems.length);
     return finalItems;
