@@ -18,7 +18,7 @@ export const SimpleStoreDropdown = React.memo(({
   const handleChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
     const newStore = e.target.value;
     
-    console.log(`SimpleStoreDropdown: Changing ${item.name} from '${item.store}' to '${newStore}'`);
+    
     
     setIsUpdating(true);
     

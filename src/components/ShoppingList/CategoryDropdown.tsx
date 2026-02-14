@@ -54,19 +54,18 @@ export const CategoryDropdown = ({
       }))
     ];
     setAllCategories(updatedCategories);
-    console.log("CategoryDropdown: Updated categories list:", updatedCategories);
+    // categories updated
   }, [customCategories, defaultCategoryOverrides, getCategoryDisplayName]);
 
   const handleCategorySelect = (category: string) => {
-    console.log("CategoryDropdown: Selecting category", category, "for item", item.name);
-    console.log("CategoryDropdown: Current item category:", item.category);
+    onCategoryChange(item, category);
     onCategoryChange(item, category);
     setIsOpen(false);
   };
 
   const handleAddNewCategory = () => {
     if (newCategoryName.trim()) {
-      console.log("CategoryDropdown: Adding new category:", newCategoryName.trim());
+      addCustomCategory(newCategoryName.trim());
       addCustomCategory(newCategoryName.trim());
       onCategoryChange(item, newCategoryName.trim());
       setNewCategoryName("");
@@ -85,7 +84,7 @@ export const CategoryDropdown = ({
   };
 
   const handleTriggerClick = (e: React.MouseEvent) => {
-    console.log("CategoryDropdown: Trigger clicked for item:", item.name);
+    e.stopPropagation();
     e.stopPropagation(); // Prevent parent button click
   };
 

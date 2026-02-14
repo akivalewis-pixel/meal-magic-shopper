@@ -55,7 +55,7 @@ const Index = () => {
     );
   }
 
-  console.log("Index.tsx: Shopping list has", groceryItems.length, "items");
+  
 
   return (
     <div className="min-h-screen flex flex-col">
