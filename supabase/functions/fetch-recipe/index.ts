@@ -1,7 +1,53 @@
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
+
+/** Block internal/private IPs and cloud metadata endpoints */
+function isBlockedHostname(hostname: string): boolean {
+  const lower = hostname.toLowerCase();
+  if (
+    lower === 'localhost' ||
+    lower === '0.0.0.0' ||
+    lower === '[::1]' ||
+    lower.endsWith('.internal') ||
+    lower.endsWith('.local')
+  ) return true;
+
+  // Block private IP ranges and cloud metadata
+  const blocked = [
+    /^127\./, /^10\./, /^192\.168\./, /^172\.(1[6-9]|2\d|3[01])\./,
+    /^169\.254\./, /^0\./, /^100\.(6[4-9]|[7-9]\d|1[0-2]\d)\./, 
+    /^198\.18\./, /^198\.19\./,
+  ];
+  return blocked.some(r => r.test(lower));
+}
+
+function validateRecipeUrl(raw: string): string | null {
+  let formatted = raw.trim();
+  if (!formatted.startsWith('http://') && !formatted.startsWith('https://')) {
+    formatted = `https://${formatted}`;
+  }
+
+  let parsed: URL;
+  try {
+    parsed = new URL(formatted);
+  } catch {
+    return null;
+  }
+
+  // Only allow http(s)
+  if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return null;
+
+  if (isBlockedHostname(parsed.hostname)) return null;
+
+  // Max URL length
+  if (formatted.length > 2048) return null;
+
+  return formatted;
+}
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -9,29 +55,72 @@ Deno.serve(async (req) => {
   }
 
   try {
+    // --- Authentication ---
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader?.startsWith('Bearer ')) {
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_ANON_KEY')!,
+      { global: { headers: { Authorization: authHeader } } }
+    );
+
+    const token = authHeader.replace('Bearer ', '');
+    const { data: claimsData, error: claimsError } = await supabase.auth.getClaims(token);
+    if (claimsError || !claimsData?.claims) {
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // --- Input validation ---
     const { url } = await req.json();
 
-    if (!url) {
+    if (!url || typeof url !== 'string') {
       return new Response(
         JSON.stringify({ success: false, error: 'URL is required' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    let formattedUrl = url.trim();
-    if (!formattedUrl.startsWith('http://') && !formattedUrl.startsWith('https://')) {
-      formattedUrl = `https://${formattedUrl}`;
+    const formattedUrl = validateRecipeUrl(url);
+    if (!formattedUrl) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'Invalid or blocked URL' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     console.log('Fetching recipe from:', formattedUrl);
 
-    // Fetch the page HTML
-    const response = await fetch(formattedUrl, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (compatible; MealPlannerBot/1.0)',
-        'Accept': 'text/html,application/xhtml+xml',
-      },
-    });
+    // Fetch the page HTML with timeout and redirect limits
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 10000);
+
+    let response: Response;
+    try {
+      response = await fetch(formattedUrl, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (compatible; MealPlannerBot/1.0)',
+          'Accept': 'text/html,application/xhtml+xml',
+        },
+        signal: controller.signal,
+        redirect: 'follow',
+      });
+    } catch (fetchError) {
+      clearTimeout(timeout);
+      return new Response(
+        JSON.stringify({ success: false, error: 'Failed to fetch the URL' }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    clearTimeout(timeout);
 
     if (!response.ok) {
       return new Response(
@@ -54,12 +143,10 @@ Deno.serve(async (req) => {
       try {
         let jsonData = JSON.parse(match[1].trim());
         
-        // Handle @graph arrays
         if (jsonData['@graph']) {
           jsonData = jsonData['@graph'];
         }
         
-        // Normalize to array
         const items = Array.isArray(jsonData) ? jsonData : [jsonData];
         
         for (const item of items) {
@@ -82,7 +169,7 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Fallback: try microdata (itemprop="recipeIngredient")
+    // Fallback: try microdata
     if (ingredients.length === 0) {
       const microdataRegex = /itemprop=["']recipeIngredient["'][^>]*>([^<]+)</gi;
       let mdMatch;
@@ -94,14 +181,12 @@ Deno.serve(async (req) => {
 
     // Fallback: try common ingredient list patterns
     if (ingredients.length === 0) {
-      // Look for ingredient lists in common class names
       const ingredientSectionRegex = /class=["'][^"']*ingredient[^"']*["'][^>]*>([\s\S]*?)<\/(?:ul|ol|div|section)>/gi;
       let sectionMatch;
       while ((sectionMatch = ingredientSectionRegex.exec(html)) !== null) {
         const listItemRegex = /<li[^>]*>([\s\S]*?)<\/li>/gi;
         let liMatch;
         while ((liMatch = listItemRegex.exec(sectionMatch[1])) !== null) {
-          // Strip HTML tags from list items
           const cleanText = liMatch[1].replace(/<[^>]+>/g, '').trim();
           if (cleanText && cleanText.length > 1 && cleanText.length < 200) {
             ingredients.push(cleanText);
@@ -149,7 +234,7 @@ Deno.serve(async (req) => {
   } catch (error) {
     console.error('Error fetching recipe:', error);
     return new Response(
-      JSON.stringify({ success: false, error: error instanceof Error ? error.message : 'Failed to fetch recipe' }),
+      JSON.stringify({ success: false, error: 'Failed to fetch recipe' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
