@@ -70,9 +70,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
     });
 
     if (error) {
+      logger.error('Sign up error:', error.message);
       toast({
         title: "Sign Up Error",
-        description: error.message,
+        description: "Unable to create account. Please try again.",
         variant: "destructive",
       });
     } else {
@@ -92,9 +93,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
     });
 
     if (error) {
+      logger.error('Sign in error:', error.message);
       toast({
         title: "Sign In Error",
-        description: error.message,
+        description: "Unable to sign in. Please check your credentials and try again.",
         variant: "destructive",
       });
     } else {
@@ -110,9 +112,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const signOut = async () => {
     const { error } = await supabase.auth.signOut();
     if (error) {
+      logger.error('Sign out error:', error.message);
       toast({
         title: "Sign Out Error",
-        description: error.message,
+        description: "Unable to sign out. Please try again.",
         variant: "destructive",
       });
     } else {
