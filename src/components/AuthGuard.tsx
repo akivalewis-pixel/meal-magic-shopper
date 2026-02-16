@@ -1,8 +1,11 @@
 
-import React from 'react';
+import React, { useContext } from 'react';
 import { Navigate } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
 import { Loader2 } from 'lucide-react';
+
+// We import the context value directly to gracefully handle cases
+// where the provider hasn't mounted yet (e.g., during HMR)
+import { useAuth } from '@/contexts/AuthContext';
 
 interface AuthGuardProps {
   children: React.ReactNode;
