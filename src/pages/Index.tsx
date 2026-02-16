@@ -1,5 +1,5 @@
 
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useCallback, useMemo } from "react";
 import { Header } from "@/components/Header";
 import { MealPlanSection } from "@/components/MealPlanSection";
 import { ShoppingListContainer } from "@/components/ShoppingList/ShoppingListContainer";
@@ -7,10 +7,12 @@ import { WeeklyMealPlansSection } from "@/components/WeeklyMealPlansSection";
 import { Footer } from "@/components/Footer";
 import { PrintButton } from "@/components/PrintButton";
 import { MobileBottomNav, MobileSection } from "@/components/MobileBottomNav";
+import { LoadingState } from "@/components/LoadingState";
+import { ErrorState } from "@/components/ErrorState";
+import { DashboardView } from "@/components/DashboardView";
 import { useSupabaseMealPlan } from "@/hooks/useSupabaseMealPlan";
 import { useShoppingList } from "@/hooks/useShoppingList";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { Loader2 } from "lucide-react";
 
 const Index = () => {
   const isMobile = useIsMobile();
@@ -25,6 +27,8 @@ const Index = () => {
     meals,
     weeklyPlans,
     loading,
+    error,
+    retry,
     handleEditMeal,
     handleUpdateMeal,
     handleRateMeal,
@@ -53,24 +57,40 @@ const Index = () => {
     loadShoppingList 
   } = shoppingList;
 
+  // Memoized handlers
+  const handleSaveWeeklyPlanMemo = useCallback((name: string) => {
+    handleSaveWeeklyPlan(name, getCurrentItems, getAvailableStores);
+  }, [handleSaveWeeklyPlan, getCurrentItems, getAvailableStores]);
+
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin" />
-      </div>
-    );
+    return <LoadingState />;
   }
 
-  // Mobile: show only the active section
-  const showMealPlan = !isMobile || mobileSection === "home" || mobileSection === "meals";
+  if (error) {
+    return <ErrorState error={error} onRetry={retry} />;
+  }
+
+  // Determine what to show based on mobile section
+  const showDashboard = isMobile && mobileSection === "home";
+  const showMealPlan = !isMobile || mobileSection === "meals";
   const showShopping = !isMobile || mobileSection === "shopping";
   const showWeeklyPlans = !isMobile || mobileSection === "meals";
 
+  const mealsWithDays = meals.filter(m => m.day && m.day !== "").length;
+
   return (
     <div className="min-h-screen flex flex-col">
+      {/* Skip to main content for accessibility */}
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-primary focus:text-primary-foreground focus:rounded-md"
+      >
+        Skip to main content
+      </a>
+
       <Header />
       
-      <main className={`flex-1 ${isMobile ? "pb-20" : ""}`}>
+      <main id="main-content" className={`flex-1 ${isMobile ? "pb-20" : ""}`} role="main" aria-label="Meal planning content">
         <div className="container mx-auto px-4 py-2 sm:py-4 flex justify-end">
           <PrintButton 
             meals={meals} 
@@ -78,8 +98,18 @@ const Index = () => {
             getCurrentItems={getCurrentItems}
           />
         </div>
+
+        {/* Dashboard View - Mobile Home Tab Only */}
+        {showDashboard && (
+          <DashboardView
+            mealsCount={mealsWithDays}
+            groceryCount={groceryItems?.filter(i => !i.checked)?.length || 0}
+            weeklyPlansCount={weeklyPlans?.length || 0}
+            onNavigate={(section) => setMobileSection(section as MobileSection)}
+          />
+        )}
         
-        {/* Meal Plan Section — shown on Home & Meals tabs */}
+        {/* Meal Plan Section */}
         {showMealPlan && (
           <div ref={mealsRef}>
             <MealPlanSection 
@@ -90,12 +120,12 @@ const Index = () => {
               onRateMeal={handleRateMeal}
               onAddMealToDay={handleAddMealToDay}
               onResetMealPlan={handleResetMealPlan}
-              onSaveCurrentPlan={(name) => handleSaveWeeklyPlan(name, getCurrentItems, getAvailableStores)}
+              onSaveCurrentPlan={handleSaveWeeklyPlanMemo}
             />
           </div>
         )}
         
-        {/* Shopping List — shown on Home & Shopping tabs */}
+        {/* Shopping List */}
         {showShopping && (
           <div ref={shoppingRef}>
             <ShoppingListContainer 
@@ -116,12 +146,12 @@ const Index = () => {
           </div>
         )}
         
-        {/* Weekly Plans — shown on Home & Meals tabs */}
+        {/* Weekly Plans */}
         {showWeeklyPlans && (
           <WeeklyMealPlansSection
             weeklyPlans={weeklyPlans}
             currentMeals={meals}
-            onSaveCurrentPlan={(name) => handleSaveWeeklyPlan(name, getCurrentItems, getAvailableStores)}
+            onSaveCurrentPlan={handleSaveWeeklyPlanMemo}
             onLoadPlan={handleLoadWeeklyPlan}
             onDeletePlan={handleDeleteWeeklyPlan}
           />
