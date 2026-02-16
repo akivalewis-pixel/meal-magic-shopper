@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { AlertCircle, RefreshCw, Home, ChevronDown, ChevronUp } from "lucide-react";
+import React from "react";
+import { AlertCircle, RefreshCw, Home } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface ErrorStateProps {
@@ -13,7 +13,6 @@ export const ErrorState: React.FC<ErrorStateProps> = ({
   onRetry,
   onGoHome
 }) => {
-  const [showDetails, setShowDetails] = useState(false);
   const errorMessage = typeof error === "string" ? error : error.message;
   const isNetworkError =
     errorMessage.toLowerCase().includes("network") ||
@@ -41,21 +40,7 @@ export const ErrorState: React.FC<ErrorStateProps> = ({
               : "We encountered an error loading your meal plan. Don't worry, your data is safe."}
           </p>
 
-          {/* Technical Error Details */}
-          <button
-            onClick={() => setShowDetails(!showDetails)}
-            className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
-          >
-            Technical details
-            {showDetails ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
-          </button>
-          {showDetails && (
-            <div className="mt-2 p-3 bg-muted rounded-lg">
-              <code className="text-xs text-muted-foreground break-all">
-                {errorMessage}
-              </code>
-            </div>
-          )}
+          {/* Generic guidance - no technical details exposed */}
         </div>
 
         {/* Action Buttons */}
