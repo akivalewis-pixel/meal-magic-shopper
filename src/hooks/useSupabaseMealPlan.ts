@@ -12,27 +12,21 @@ export function useSupabaseMealPlan() {
   const [meals, setMeals] = useState<Meal[]>([]);
   const [weeklyPlans, setWeeklyPlans] = useState<WeeklyMealPlan[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
 
   // Load meals from Supabase
   const loadMeals = async () => {
     if (!user) return;
 
     try {
-      const { data, error } = await supabase
+      setError(null);
+      const { data, error: queryError } = await supabase
         .from('meals')
         .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
-      if (error) {
-        logger.error('Error loading meals:', error);
-        toast({
-          title: "Error",
-          description: "Failed to load meals",
-          variant: "destructive",
-        });
-        return;
-      }
+      if (queryError) throw queryError;
 
       const formattedMeals: Meal[] = data.map(meal => ({
         id: meal.id,
@@ -47,8 +41,14 @@ export function useSupabaseMealPlan() {
       }));
 
       setMeals(formattedMeals);
-    } catch (error) {
-      logger.error('Error loading meals:', error);
+    } catch (err) {
+      setError(err as Error);
+      logger.error('Error loading meals:', err);
+      toast({
+        title: "Error",
+        description: "Failed to load meals. Click retry to try again.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -116,6 +116,15 @@ export function useSupabaseMealPlan() {
     } catch (error) {
       logger.error('Error loading weekly plans:', error);
     }
+  };
+
+  // Retry function
+  const retry = () => {
+    setError(null);
+    setLoading(true);
+    Promise.all([loadMeals(), loadWeeklyPlans()]).finally(() => {
+      setLoading(false);
+    });
   };
 
   // Initial load
@@ -393,6 +402,8 @@ export function useSupabaseMealPlan() {
     meals,
     weeklyPlans,
     loading,
+    error,
+    retry,
     handleUpdateMeal,
     handleAddMealToDay,
     handleRateMeal,
