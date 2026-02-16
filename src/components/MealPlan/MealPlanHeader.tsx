@@ -40,13 +40,13 @@ export const MealPlanHeader = ({
 
   return (
     <>
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6">
-        <h2 className="text-2xl font-bold text-carrot-dark mb-4 sm:mb-0">Weekly Meal Plan</h2>
+      <div className="flex items-center justify-between mb-4 gap-2">
+        <h2 className="text-xl sm:text-2xl font-bold text-foreground truncate">Meal Plan</h2>
         
-        <div className="flex gap-2">
-          <Button onClick={onAddRecipe}>
-            <Plus className="w-4 h-4 mr-2" />
-            Add Recipe
+        <div className="flex items-center gap-1.5 flex-shrink-0">
+          <Button size="sm" onClick={onAddRecipe} className="gap-1">
+            <Plus className="w-4 h-4" />
+            <span className="hidden sm:inline">Add Recipe</span>
           </Button>
           
           {hasMeals && (
@@ -55,16 +55,19 @@ export const MealPlanHeader = ({
               content={generateWeeklyMealPlanContent(meals)}
               type="meal-plan"
               variant="outline"
+              size="sm"
             />
           )}
           
           {onResetMealPlan && (
             <Button 
-              variant="outline" 
+              variant="outline"
+              size="sm"
               onClick={() => setShowResetDialog(true)}
+              className="gap-1"
             >
-              <RotateCcw className="w-4 h-4 mr-2" />
-              Reset Plan
+              <RotateCcw className="w-4 h-4" />
+              <span className="hidden sm:inline">Reset</span>
             </Button>
           )}
         </div>

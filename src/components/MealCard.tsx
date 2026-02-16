@@ -7,6 +7,13 @@ import { Input } from "@/components/ui/input";
 import { Star, Edit, ExternalLink, Trash } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ShareButton, generateRecipeContent } from "@/components/Share";
+import { useIsMobile } from "@/hooks/use-mobile";
+
+const truncateTitle = (title: string, wordCount: number) => {
+  const words = title.trim().split(/\s+/);
+  if (words.length <= wordCount) return title;
+  return words.slice(0, wordCount).join(" ") + "…";
+};
 
 interface MealCardProps {
   meal: Meal;
@@ -18,6 +25,7 @@ interface MealCardProps {
 }
 
 export const MealCard = ({ meal, onEdit, onRate, onRemove, onUpdateMeal, className }: MealCardProps) => {
+  const isMobile = useIsMobile();
   const [localTitle, setLocalTitle] = useState(meal.title);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
 
@@ -65,16 +73,17 @@ export const MealCard = ({ meal, onEdit, onRate, onRemove, onUpdateMeal, classNa
             onChange={handleTitleInputChange}
             onBlur={handleTitleCommit}
             onKeyDown={handleTitleKeyDown}
-            className="border-gray-300 p-1 h-8 font-medium text-sm mb-1"
+            className="border-border p-1 h-8 font-medium text-sm mb-1"
             placeholder="Meal name"
             autoFocus
           />
         ) : (
           <h4 
-            className={`font-medium text-sm mb-1 line-clamp-2 ${onUpdateMeal ? 'cursor-pointer hover:bg-gray-50 rounded px-1 py-0.5' : ''}`}
+            className={`font-medium text-sm mb-1 line-clamp-1 ${onUpdateMeal ? 'cursor-pointer hover:bg-muted rounded px-1 py-0.5' : ''}`}
             onClick={handleTitleClick}
+            title={meal.title}
           >
-            {meal.title}
+            {isMobile ? truncateTitle(meal.title, 2) : meal.title}
           </h4>
         )}
         {meal.recipeUrl && (
@@ -138,7 +147,7 @@ export const MealCard = ({ meal, onEdit, onRate, onRemove, onUpdateMeal, classNa
           <Button 
             variant="ghost" 
             size="sm" 
-            className="h-7 w-7 p-0 text-red-500 hover:text-red-700 hover:bg-red-50" 
+            className="h-7 w-7 p-0 text-destructive hover:text-destructive hover:bg-destructive/10" 
             onClick={onRemove}
           >
             <Trash className="h-3 w-3" />

@@ -60,8 +60,8 @@ export const ShoppingListLayout = ({
   return (
     <section className="py-4 sm:py-8 bg-gray-50">
       <div className="container mx-auto px-2 sm:px-4">
-        <div className={`flex ${isMobile ? 'flex-col gap-3' : 'items-center justify-between'} mb-4`}>
-          <h2 className="text-xl sm:text-2xl font-bold text-gray-800">Shopping List</h2>
+        <div className={`flex ${isMobile ? 'flex-col gap-2' : 'items-center justify-between'} mb-3`}>
+          <h2 className="text-xl sm:text-2xl font-bold text-foreground">Shopping List</h2>
           
           <div className="flex flex-wrap items-center gap-2">
             <ShoppingListUndoActions
