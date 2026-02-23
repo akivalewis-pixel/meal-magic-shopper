@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useCallback } from "react";
 import { GroceryItem } from "@/types";
 import { ShoppingListHeaderActions } from "./ShoppingListHeaderActions";
 import { ShoppingListSearchAndFilters } from "./ShoppingListSearchAndFilters";
@@ -56,7 +56,12 @@ export const ShoppingListLayout = ({
   getCurrentItems
 }: ShoppingListLayoutProps) => {
   const isMobile = useIsMobile();
-  
+
+  const handleAddStore = useCallback((newStore: string) => {
+    if (!availableStores.includes(newStore)) {
+      onSaveStores([...availableStores, newStore]);
+    }
+  }, [availableStores, onSaveStores]);
   return (
     <section className="py-4 sm:py-8 bg-gray-50">
       <div className="container mx-auto px-2 sm:px-4">
@@ -105,6 +110,7 @@ export const ShoppingListLayout = ({
             onUpdateItem={onUpdateItem}
             onRemoveItem={onRemoveItem}
             onDeleteItem={onDeleteItem}
+            onAddStore={handleAddStore}
           />
         </div>
 
