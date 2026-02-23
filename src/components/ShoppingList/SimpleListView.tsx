@@ -15,6 +15,7 @@ interface SimpleListViewProps {
   groupByStore: boolean;
   customCategoryNames?: Record<string, string>;
   onCategoryNameChange?: (oldName: string, newName: string) => void;
+  onAddStore?: (store: string) => void;
 }
 
 export const SimpleListView = React.memo(({
@@ -25,7 +26,8 @@ export const SimpleListView = React.memo(({
   onDeleteItem,
   groupByStore,
   customCategoryNames = {},
-  onCategoryNameChange
+  onCategoryNameChange,
+  onAddStore
 }: SimpleListViewProps) => {
   const isMobile = useIsMobile();
   const { getCategoryDisplayName } = useCustomCategories();
@@ -131,6 +133,7 @@ export const SimpleListView = React.memo(({
                   onToggleItem={onToggleItem}
                   onDeleteItem={onDeleteItem}
                   availableStores={availableStores}
+                  onAddStore={onAddStore}
                 />
                 ))}
               </ul>

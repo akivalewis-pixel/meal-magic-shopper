@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Trash2 } from "lucide-react";
 import { SimpleStoreDropdown } from "./SimpleStoreDropdown";
 import { CategoryDropdown } from "./CategoryDropdown";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface ItemRowProps {
   item: GroceryItem;
@@ -14,6 +15,7 @@ interface ItemRowProps {
   onToggleItem: (id: string) => void;
   onDeleteItem?: (id: string) => void;
   availableStores: string[];
+  onAddStore?: (store: string) => void;
 }
 
 export const ItemRow = ({ 
@@ -21,7 +23,8 @@ export const ItemRow = ({
   onUpdateItem, 
   onToggleItem,
   onDeleteItem,
-  availableStores
+  availableStores,
+  onAddStore
 }: ItemRowProps) => {
   const [localName, setLocalName] = useState(item.name);
   const [localQuantity, setLocalQuantity] = useState(item.quantity);
@@ -108,38 +111,54 @@ export const ItemRow = ({
     onToggleItem(item.id);
   }, [item.id, item.name, onToggleItem]);
 
+  const isMobile = useIsMobile();
+
   return (
-    <li className="flex items-center gap-3 py-2 border-b border-gray-100">
-      <Checkbox
-        checked={false} // Items in this view should never be checked
-        onCheckedChange={handleToggle}
-        className="flex-shrink-0"
-      />
-      
-      <div className="flex-1 min-w-0">
-        {isEditingName ? (
-          <Input
-            value={localName}
-            onChange={handleNameInputChange}
-            onBlur={handleNameCommit}
-            onKeyDown={handleNameKeyDown}
-            className="border-gray-300 p-1 h-8 font-medium text-left"
-            placeholder="Item name"
-            autoFocus
-          />
-        ) : (
-          <div onClick={handleNameClick} className="cursor-pointer text-left">
-            <span className="font-medium text-left">{item.name}</span>
-            {item.meal && (
-              <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded ml-2">
-                {item.meal}
-              </span>
-            )}
-          </div>
+    <li className={`flex ${isMobile ? 'flex-col gap-1' : 'items-center gap-3'} py-2 border-b border-border`}>
+      <div className="flex items-center gap-3">
+        <Checkbox
+          checked={false}
+          onCheckedChange={handleToggle}
+          className="flex-shrink-0"
+        />
+        
+        <div className="flex-1 min-w-0">
+          {isEditingName ? (
+            <Input
+              value={localName}
+              onChange={handleNameInputChange}
+              onBlur={handleNameCommit}
+              onKeyDown={handleNameKeyDown}
+              className="border-border p-1 h-8 font-medium text-left"
+              placeholder="Item name"
+              autoFocus
+            />
+          ) : (
+            <div onClick={handleNameClick} className="cursor-pointer text-left">
+              <span className="font-medium text-left">{item.name}</span>
+              {item.meal && (
+                <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded ml-2">
+                  {item.meal}
+                </span>
+              )}
+            </div>
+          )}
+        </div>
+
+        {!isMobile && onDeleteItem && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 flex-shrink-0 text-muted-foreground hover:text-destructive"
+            onClick={() => onDeleteItem(item.id)}
+            title="Delete item permanently"
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
         )}
       </div>
       
-      <div className="flex items-center gap-2 flex-shrink-0">
+      <div className={`flex items-center gap-2 ${isMobile ? 'pl-9' : ''} flex-shrink-0`}>
         <Input
           value={localQuantity}
           onChange={handleQuantityInputChange}
@@ -152,6 +171,7 @@ export const ItemRow = ({
           item={item}
           availableStores={availableStores}
           onStoreChange={handleStoreChange}
+          onAddStore={onAddStore}
         />
         
         <CategoryDropdown
@@ -159,7 +179,7 @@ export const ItemRow = ({
           onCategoryChange={handleCategoryChange}
         />
 
-        {onDeleteItem && (
+        {isMobile && onDeleteItem && (
           <Button
             variant="ghost"
             size="icon"
