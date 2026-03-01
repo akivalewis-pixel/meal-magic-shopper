@@ -6,14 +6,12 @@ interface UseConsolidatedUpdateActionsProps {
   setAllItems: React.Dispatch<React.SetStateAction<GroceryItem[]>>;
   setManualItems: React.Dispatch<React.SetStateAction<GroceryItem[]>>;
   storeAssignments: React.MutableRefObject<Map<string, string>>;
-  saveToLocalStorage: () => void;
 }
 
 export function useConsolidatedUpdateActions({
   setAllItems,
   setManualItems,
   storeAssignments,
-  saveToLocalStorage
 }: UseConsolidatedUpdateActionsProps) {
   
   // Single consolidated update function that handles all item updates
@@ -78,11 +76,7 @@ export function useConsolidatedUpdateActions({
       });
     }
 
-    // Save to localStorage immediately - use synchronous approach
-    console.log(`ConsolidatedUpdateActions: Saving to localStorage for ${updatedItem.name}`);
-    // Use setTimeout to ensure state has been updated before saving
-    setTimeout(() => saveToLocalStorage(), 0);
-  }, [setAllItems, setManualItems, storeAssignments, saveToLocalStorage]);
+  }, [setAllItems, setManualItems, storeAssignments]);
 
   return { updateItem };
 }

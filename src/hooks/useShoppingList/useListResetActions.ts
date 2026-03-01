@@ -8,7 +8,6 @@ interface UseListResetActionsProps {
   setAllItems: React.Dispatch<React.SetStateAction<GroceryItem[]>>;
   setManualItems: React.Dispatch<React.SetStateAction<GroceryItem[]>>;
   setArchivedItems: React.Dispatch<React.SetStateAction<GroceryItem[]>>;
-  saveToLocalStorage: () => void;
 }
 
 export function useListResetActions({
@@ -16,7 +15,6 @@ export function useListResetActions({
   setAllItems,
   setManualItems,
   setArchivedItems,
-  saveToLocalStorage
 }: UseListResetActionsProps) {
   const { toast } = useToast();
 
@@ -48,15 +46,11 @@ export function useListResetActions({
     setAllItems([]);
     setManualItems([]);
     
-    // Save immediately to persist changes
-    console.log("ListResetActions: Saving to localStorage");
-    setTimeout(() => saveToLocalStorage(), 0); // Ensure state has updated first
-    
     toast({
       title: "List Reset",
       description: `${itemsToArchive.length} items moved to archive`,
     });
-  }, [allItems, setArchivedItems, setAllItems, setManualItems, saveToLocalStorage, toast]);
+  }, [allItems, setArchivedItems, setAllItems, setManualItems, toast]);
 
   return { resetList };
 }
