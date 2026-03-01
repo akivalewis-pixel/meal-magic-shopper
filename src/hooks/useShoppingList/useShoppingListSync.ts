@@ -19,7 +19,9 @@ export function useShoppingListSync({ meals, pantryItems }: UseShoppingListSyncP
   
   // Track initialization
   const isInitializedRef = useRef(false);
+  const loadingRef = useRef(false);
   const lastMealChangeRef = useRef<string>('');
+  const allItemsRef = useRef<GroceryItem[]>([]);
 
   // Persistence with store assignments
   const { storeAssignments, loadFromStorage, saveToLocalStorage, saveToDatabase } = useShoppingListPersistence(
@@ -43,63 +45,64 @@ export function useShoppingListSync({ meals, pantryItems }: UseShoppingListSyncP
     .sort()
     .join('|');
 
+  // Keep allItemsRef in sync
+  useEffect(() => {
+    allItemsRef.current = allItems;
+  }, [allItems]);
+
   // Load from storage on mount
   useEffect(() => {
-    if (!isInitializedRef.current) {
-      console.log("useShoppingListSync: Loading from storage on mount");
-      
-      // Make async call to load from storage
-      const loadData = async () => {
-        try {
-          const stored = await loadFromStorage();
-          
-          if (stored.stores) {
-            console.log("useShoppingListSync: Setting available stores from storage:", stored.stores);
-            setAvailableStores(stored.stores);
-          }
-          
-          if (stored.archived && Array.isArray(stored.archived)) {
-            console.log("useShoppingListSync: Setting archived items from storage:", stored.archived.length);
-            setArchivedItems(stored.archived);
-          }
-          
-          if (stored.items && Array.isArray(stored.items)) {
-            console.log("useShoppingListSync: Setting saved items from storage:", stored.items.length);
-            
-            // Filter manual items from saved items
-            const savedManualItems = stored.items.filter(item => item.id.startsWith('manual-'));
-            setManualItems(savedManualItems);
-            console.log("useShoppingListSync: Found manual items:", savedManualItems.length, savedManualItems.map(i => i.name));
-            
-            // Initial sync with generated meal items to preserve all items
-            if (generatedMealItems.length > 0) {
-              const savedMealItems = stored.items.filter(item => !item.id.startsWith('manual-'));
-              const mergedItems = mergeItemsPreservingAssignments(generatedMealItems, savedMealItems, savedManualItems);
-              setAllItems(mergedItems);
-              console.log("useShoppingListSync: Initial sync completed with", mergedItems.length, "total items");
-            } else {
-              // No meal items yet, just use saved manual items
-              setAllItems(savedManualItems);
-              console.log("useShoppingListSync: No meal items, using only manual items");
-            }
-          } else if (generatedMealItems.length > 0) {
-            // No saved items, just use generated meal items
-            setAllItems(generatedMealItems);
-            console.log("useShoppingListSync: No saved items, using generated meal items");
-          } else {
-            console.log("useShoppingListSync: No saved items found, starting fresh");
-          }
-          
-          isInitializedRef.current = true;
-        } catch (error) {
-          console.error("useShoppingListSync: Error loading from storage:", error);
-          isInitializedRef.current = true;
+    if (isInitializedRef.current || loadingRef.current) return;
+    loadingRef.current = true;
+    
+    console.log("useShoppingListSync: Loading from storage on mount");
+    
+    const loadData = async () => {
+      try {
+        const stored = await loadFromStorage();
+        
+        if (stored.stores) {
+          console.log("useShoppingListSync: Setting available stores from storage:", stored.stores);
+          setAvailableStores(stored.stores);
         }
-      };
-      
-      loadData();
-    }
-  }, [loadFromStorage, generatedMealItems, setAvailableStores, setArchivedItems, setAllItems, setManualItems]);
+        
+        if (stored.archived && Array.isArray(stored.archived)) {
+          console.log("useShoppingListSync: Setting archived items from storage:", stored.archived.length);
+          setArchivedItems(stored.archived);
+        }
+        
+        if (stored.items && Array.isArray(stored.items)) {
+          console.log("useShoppingListSync: Setting saved items from storage:", stored.items.length);
+          
+          const savedManualItems = stored.items.filter(item => item.id.startsWith('manual-'));
+          setManualItems(savedManualItems);
+          console.log("useShoppingListSync: Found manual items:", savedManualItems.length);
+          
+          if (generatedMealItems.length > 0) {
+            const savedMealItems = stored.items.filter(item => !item.id.startsWith('manual-'));
+            const mergedItems = mergeItemsPreservingAssignments(generatedMealItems, savedMealItems, savedManualItems);
+            setAllItems(mergedItems);
+          } else {
+            setAllItems(savedManualItems);
+          }
+        } else if (generatedMealItems.length > 0) {
+          setAllItems(generatedMealItems);
+        }
+        
+        // Set the meal change key so the meal effect doesn't re-run immediately
+        lastMealChangeRef.current = mealChangeKey;
+        isInitializedRef.current = true;
+        loadingRef.current = false;
+      } catch (error) {
+        console.error("useShoppingListSync: Error loading from storage:", error);
+        isInitializedRef.current = true;
+        loadingRef.current = false;
+      }
+    };
+    
+    loadData();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Smart merge function to preserve user assignments
   const mergeItemsPreservingAssignments = (newGeneratedItems: GroceryItem[], currentItems: GroceryItem[], manualItems: GroceryItem[]) => {
@@ -159,41 +162,24 @@ export function useShoppingListSync({ meals, pantryItems }: UseShoppingListSyncP
     return finalItems;
   };
 
-  // Handle meal changes - intelligently merge while preserving assignments
+  // Handle meal changes - use ref to avoid re-running when manual items change
   useEffect(() => {
-    if (!isInitializedRef.current) {
-      console.log("useShoppingListSync: Skipping meal update - not initialized");
-      return;
-    }
+    if (!isInitializedRef.current) return;
 
-    console.log("useShoppingListSync: Checking meal changes");
-    console.log("Previous meal key:", lastMealChangeRef.current);
-    console.log("Current meal key:", mealChangeKey);
-    
     if (mealChangeKey !== lastMealChangeRef.current) {
-      console.log("useShoppingListSync: Meals changed, intelligently updating shopping list");
-      console.log("Generated meal items:", generatedMealItems.length);
+      console.log("useShoppingListSync: Meals changed, updating shopping list");
       
-      // CRITICAL FIX: Extract manual items from current allItems instead of using potentially stale manualItems state
-      const currentManualItems = allItems.filter(item => item.id.startsWith('manual-'));
-      const currentMealItems = allItems.filter(item => !item.id.startsWith('manual-'));
+      const currentItems = allItemsRef.current;
+      const currentManualItems = currentItems.filter(item => item.id.startsWith('manual-'));
+      const currentMealItems = currentItems.filter(item => !item.id.startsWith('manual-'));
       
-      console.log("Manual items to preserve:", currentManualItems.length, currentManualItems.map(i => i.name));
-      console.log("Current meal items to replace:", currentMealItems.length);
-      
-      // Use smart merge to preserve user assignments - pass only meal items as current items
       const mergedItems = mergeItemsPreservingAssignments(generatedMealItems, currentMealItems, currentManualItems);
       
-      console.log("Final merged items:", mergedItems.length, "Manual items in result:", mergedItems.filter(i => i.id.startsWith('manual-')).length);
-      
       setAllItems(mergedItems);
-      
-      // Update manualItems state to keep it in sync
       setManualItems(currentManualItems);
-      
       lastMealChangeRef.current = mealChangeKey;
     }
-  }, [mealChangeKey, generatedMealItems, allItems]); // Include allItems to ensure we have the latest manual items
+  }, [mealChangeKey, generatedMealItems]);
 
   // Save when state changes
   useEffect(() => {

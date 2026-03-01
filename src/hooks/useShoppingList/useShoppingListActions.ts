@@ -16,7 +16,6 @@ interface UseShoppingListActionsProps {
   setArchivedItems: React.Dispatch<React.SetStateAction<GroceryItem[]>>;
   setAvailableStores: React.Dispatch<React.SetStateAction<string[]>>;
   storeAssignments: React.MutableRefObject<Map<string, string>>;
-  saveToLocalStorage: () => void;
 }
 
 export function useShoppingListActions({
@@ -28,7 +27,6 @@ export function useShoppingListActions({
   setArchivedItems,
   setAvailableStores,
   storeAssignments,
-  saveToLocalStorage
 }: UseShoppingListActionsProps) {
   const { toast } = useToast();
 
@@ -37,7 +35,6 @@ export function useShoppingListActions({
     setAllItems,
     setManualItems,
     storeAssignments,
-    saveToLocalStorage
   });
 
   // Use the proper reset actions that archive items
@@ -46,7 +43,6 @@ export function useShoppingListActions({
     setAllItems,
     setManualItems,
     setArchivedItems,
-    saveToLocalStorage
   });
 
   const updateItem = useCallback((updatedItem: GroceryItem) => {
@@ -91,8 +87,8 @@ export function useShoppingListActions({
       ));
     }
     
-    setTimeout(() => saveToLocalStorage(), 0);
-  }, [allItems, setAllItems, setManualItems, saveToLocalStorage]);
+    setTimeout(() => {}, 0); // State updates handled by sync effect
+  }, [allItems, setAllItems, setManualItems]);
 
   const archiveItem = useCallback((id: string) => {
     toggleItem(id);
@@ -139,8 +135,7 @@ export function useShoppingListActions({
       setManualItems(prev => [...prev, finalItem]);
     }
 
-    saveToLocalStorage();
-  }, [archivedItems, setAllItems, setManualItems, setArchivedItems, saveToLocalStorage, toast]);
+  }, [archivedItems, setAllItems, setManualItems, setArchivedItems, toast]);
 
   const updateStores = useCallback((newStores: string[]) => {
     setAvailableStores(newStores);
@@ -153,24 +148,22 @@ export function useShoppingListActions({
       return item;
     }));
     
-    saveToLocalStorage();
-    
     toast({
       title: "Stores Updated",
       description: "Store list has been updated",
     });
-  }, [setAvailableStores, setAllItems, saveToLocalStorage, toast]);
+  }, [setAvailableStores, setAllItems, toast]);
 
   const deleteItem = useCallback((id: string) => {
     console.log("ShoppingListActions: deleteItem (permanent) called for id:", id);
     setAllItems(prev => prev.filter(i => i.id !== id));
     setManualItems(prev => prev.filter(i => i.id !== id));
-    saveToLocalStorage();
+    // Persistence handled by sync effect
     toast({
       title: "Item Deleted",
       description: "Item has been permanently removed from the list",
     });
-  }, [setAllItems, setManualItems, saveToLocalStorage, toast]);
+  }, [setAllItems, setManualItems, toast]);
 
   const getCurrentItems = useCallback(() => allItems, [allItems]);
 

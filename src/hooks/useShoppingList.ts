@@ -37,7 +37,6 @@ export function useShoppingList(meals: Meal[], pantryItems: string[] = []) {
     setArchivedItems,
     setAvailableStores,
     storeAssignments,
-    saveToLocalStorage
   });
 
   // Update global state reference
