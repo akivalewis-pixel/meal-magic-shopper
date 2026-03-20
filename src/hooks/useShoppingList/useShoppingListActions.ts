@@ -56,16 +56,7 @@ export function useShoppingListActions({
     
     // Use the consolidated update function
     consolidatedUpdateItem(normalizedItem);
-    
-    // Only show toast for significant updates, not minor field changes
-    const hasSignificantChange = updatedItem.quantity !== undefined || updatedItem.store !== undefined;
-    if (hasSignificantChange) {
-      toast({
-        title: "Item Updated",
-        description: `${normalizedItem.name} updated successfully`,
-      });
-    }
-  }, [consolidatedUpdateItem, toast]);
+  }, [consolidatedUpdateItem]);
 
   const toggleItem = useCallback((id: string) => {
     const item = allItems.find(i => i.id === id);
