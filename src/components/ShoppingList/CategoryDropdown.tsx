@@ -59,7 +59,6 @@ export const CategoryDropdown = ({
 
   const handleCategorySelect = (category: string) => {
     onCategoryChange(item, category);
-    onCategoryChange(item, category);
     setIsOpen(false);
   };
 
