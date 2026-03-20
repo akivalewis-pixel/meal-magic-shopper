@@ -53,13 +53,14 @@ export const AddItemForm = ({
       quantity: quantity || "1",
       category: category as any,
       checked: false,
-      store: store // Use the selected store value directly
+      store: store
     };
 
     console.log("AddItemForm: Creating new item:", newItem);
     onAddItem(newItem);
-    onOpenChange(false);
     resetForm();
+    // Close dialog after a microtask to let state settle
+    setTimeout(() => onOpenChange(false), 0);
   };
 
   const resetForm = () => {

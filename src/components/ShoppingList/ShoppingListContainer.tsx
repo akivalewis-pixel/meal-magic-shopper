@@ -77,7 +77,6 @@ export const ShoppingListContainer = ({
       data: { item: newItem }
     });
     addItem(newItem);
-    actions.setIsAddingItem(false);
   };
 
   const handleAddItems = (newItems: Omit<GroceryItem, 'id' | 'checked'>[]) => {

@@ -59,13 +59,11 @@ export const CategoryDropdown = ({
 
   const handleCategorySelect = (category: string) => {
     onCategoryChange(item, category);
-    onCategoryChange(item, category);
     setIsOpen(false);
   };
 
   const handleAddNewCategory = () => {
     if (newCategoryName.trim()) {
-      addCustomCategory(newCategoryName.trim());
       addCustomCategory(newCategoryName.trim());
       onCategoryChange(item, newCategoryName.trim());
       setNewCategoryName("");
@@ -85,7 +83,6 @@ export const CategoryDropdown = ({
 
   const handleTriggerClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    e.stopPropagation(); // Prevent parent button click
   };
 
   const getCurrentDisplayName = () => {
