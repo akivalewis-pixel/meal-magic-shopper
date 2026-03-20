@@ -83,7 +83,6 @@ export const CategoryDropdown = ({
 
   const handleTriggerClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    e.stopPropagation(); // Prevent parent button click
   };
 
   const getCurrentDisplayName = () => {
