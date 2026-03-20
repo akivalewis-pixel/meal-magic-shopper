@@ -65,7 +65,6 @@ export const CategoryDropdown = ({
   const handleAddNewCategory = () => {
     if (newCategoryName.trim()) {
       addCustomCategory(newCategoryName.trim());
-      addCustomCategory(newCategoryName.trim());
       onCategoryChange(item, newCategoryName.trim());
       setNewCategoryName("");
       setIsAddingNew(false);
