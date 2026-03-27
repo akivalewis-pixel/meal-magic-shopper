@@ -51,6 +51,11 @@ export function useShoppingListSync({ meals, pantryItems }: UseShoppingListSyncP
     allItemsRef.current = allItems;
   }, [allItems]);
 
+  // Keep archivedItemsRef in sync
+  useEffect(() => {
+    archivedItemsRef.current = archivedItems;
+  }, [archivedItems]);
+
   // Load from storage on mount
   useEffect(() => {
     if (isInitializedRef.current || loadingRef.current) return;
@@ -106,39 +111,39 @@ export function useShoppingListSync({ meals, pantryItems }: UseShoppingListSyncP
   }, []);
 
   // Smart merge function to preserve user assignments
-  const mergeItemsPreservingAssignments = (newGeneratedItems: GroceryItem[], currentItems: GroceryItem[], manualItems: GroceryItem[]) => {
+  const mergeItemsPreservingAssignments = (newGeneratedItems: GroceryItem[], currentItems: GroceryItem[], manualItems: GroceryItem[], archivedNames: Set<string>) => {
     console.log("useShoppingListSync: Merging items while preserving assignments");
     console.log("New generated items:", newGeneratedItems.length);
     console.log("Current items:", currentItems.length);
     console.log("Manual items:", manualItems.length);
+    console.log("Archived names to exclude:", archivedNames.size);
+    
+    // Filter out generated items that match archived/checked-off items
+    const filteredGeneratedItems = newGeneratedItems.filter(item => {
+      const key = item.name.toLowerCase().trim();
+      return !archivedNames.has(key);
+    });
     
     // Create a map of existing items for quick lookup
     const existingItemsMap = new Map<string, GroceryItem>();
     currentItems.forEach(item => {
-      // Use normalized name as key to match items even if they come from different sources
       const key = item.name.toLowerCase().trim();
       existingItemsMap.set(key, item);
     });
     
-    // Process generated items, preserving existing assignments
-    const mergedGeneratedItems = newGeneratedItems.map(newItem => {
+    // Process generated items, preserving existing assignments AND checked state
+    const mergedGeneratedItems = filteredGeneratedItems.map(newItem => {
       const key = newItem.name.toLowerCase().trim();
       const existingItem = existingItemsMap.get(key);
       
       if (existingItem) {
-        console.log(`useShoppingListSync: Preserving assignments for ${newItem.name}:`, {
-          store: existingItem.store,
-          category: existingItem.category,
-          quantity: existingItem.quantity
-        });
-        
-        // Preserve user assignments while keeping meal source info
         return {
-          ...newItem, // Keep meal source and base properties
-          store: existingItem.store || newItem.store, // Preserve store assignment
-          category: existingItem.category || newItem.category, // Preserve category assignment
-          quantity: existingItem.quantity || newItem.quantity, // Preserve quantity if user changed it
-          __updateTimestamp: Date.now() // Force re-render
+          ...newItem,
+          store: existingItem.store || newItem.store,
+          category: existingItem.category || newItem.category,
+          quantity: existingItem.quantity || newItem.quantity,
+          checked: existingItem.checked ?? newItem.checked,
+          __updateTimestamp: Date.now()
         };
       }
       
@@ -146,19 +151,17 @@ export function useShoppingListSync({ meals, pantryItems }: UseShoppingListSyncP
     });
     
     // Find orphaned non-manual items (exist in current but not in generated set)
-    const generatedNames = new Set(newGeneratedItems.map(i => i.name.toLowerCase().trim()));
+    const generatedNames = new Set(filteredGeneratedItems.map(i => i.name.toLowerCase().trim()));
     const orphanedItems = currentItems.filter(item => {
       const key = item.name.toLowerCase().trim();
-      return !generatedNames.has(key);
+      return !generatedNames.has(key) && !archivedNames.has(key);
     });
     
     if (orphanedItems.length > 0) {
-      logger.log("useShoppingListSync: Preserving", orphanedItems.length, "orphaned items:", orphanedItems.map(i => i.name));
+      logger.log("useShoppingListSync: Preserving", orphanedItems.length, "orphaned items");
     }
 
-    // Combine: generated (with preserved assignments) + orphaned non-manual items + manual items
     const finalItems = [...mergedGeneratedItems, ...orphanedItems, ...manualItems];
-    
     console.log("useShoppingListSync: Final merged items:", finalItems.length);
     return finalItems;
   };
