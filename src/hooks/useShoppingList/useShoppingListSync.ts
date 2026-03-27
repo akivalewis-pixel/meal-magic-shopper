@@ -86,7 +86,8 @@ export function useShoppingListSync({ meals, pantryItems }: UseShoppingListSyncP
           
           if (generatedMealItems.length > 0) {
             const savedMealItems = stored.items.filter(item => !item.id.startsWith('manual-'));
-            const mergedItems = mergeItemsPreservingAssignments(generatedMealItems, savedMealItems, savedManualItems);
+            const archivedNames = new Set((stored.archived || []).map((a: GroceryItem) => a.name.toLowerCase().trim()));
+            const mergedItems = mergeItemsPreservingAssignments(generatedMealItems, savedMealItems, savedManualItems, archivedNames);
             setAllItems(mergedItems);
           } else {
             setAllItems(savedManualItems);
@@ -177,7 +178,8 @@ export function useShoppingListSync({ meals, pantryItems }: UseShoppingListSyncP
       const currentManualItems = currentItems.filter(item => item.id.startsWith('manual-'));
       const currentMealItems = currentItems.filter(item => !item.id.startsWith('manual-'));
       
-      const mergedItems = mergeItemsPreservingAssignments(generatedMealItems, currentMealItems, currentManualItems);
+      const archivedNames = new Set(archivedItemsRef.current.map(a => a.name.toLowerCase().trim()));
+      const mergedItems = mergeItemsPreservingAssignments(generatedMealItems, currentMealItems, currentManualItems, archivedNames);
       
       setAllItems(mergedItems);
       setManualItems(currentManualItems);
