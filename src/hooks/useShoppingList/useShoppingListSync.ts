@@ -22,6 +22,7 @@ export function useShoppingListSync({ meals, pantryItems }: UseShoppingListSyncP
   const loadingRef = useRef(false);
   const lastMealChangeRef = useRef<string>('');
   const allItemsRef = useRef<GroceryItem[]>([]);
+  const archivedItemsRef = useRef<GroceryItem[]>([]);
 
   // Persistence with store assignments
   const { storeAssignments, loadFromStorage, saveToLocalStorage, saveToDatabase } = useShoppingListPersistence(
