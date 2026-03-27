@@ -86,7 +86,7 @@ export function useShoppingListSync({ meals, pantryItems }: UseShoppingListSyncP
           
           if (generatedMealItems.length > 0) {
             const savedMealItems = stored.items.filter(item => !item.id.startsWith('manual-'));
-            const archivedNames = new Set((stored.archived || []).map((a: GroceryItem) => a.name.toLowerCase().trim()));
+            const archivedNames = new Set<string>((stored.archived || []).map((a: GroceryItem) => a.name.toLowerCase().trim()));
             const mergedItems = mergeItemsPreservingAssignments(generatedMealItems, savedMealItems, savedManualItems, archivedNames);
             setAllItems(mergedItems);
           } else {
