@@ -159,6 +159,58 @@ export const WeeklyMealPlansSection = ({
           </Button>
         </div>
 
+        {/* Most Common Meals panel */}
+        {frequentMeals.length > 0 && (
+          <div className="bg-white rounded-lg shadow p-6 mb-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-medium flex items-center gap-2">
+                <TrendingUp className="h-5 w-5 text-carrot-dark" />
+                Most Common Meals
+              </h3>
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" onClick={() => setFrequentDialogOpen(true)}>
+                  View all
+                </Button>
+                <Button variant="ghost" size="sm" onClick={() => setShowCommonMeals(s => !s)}>
+                  {showCommonMeals ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                </Button>
+              </div>
+            </div>
+            {showCommonMeals && (
+              <>
+                <p className="text-sm text-gray-600 mb-3">
+                  Meals you've used most often across saved plans — great inspiration for this week.
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                  {frequentMeals.slice(0, 8).map(({ meal, count }) => (
+                    <div key={meal.title} className="border rounded-lg p-3 hover:shadow-sm transition-shadow">
+                      <div className="flex items-start justify-between gap-2">
+                        <h4 className="font-medium text-sm flex-1">{meal.title}</h4>
+                        <Badge variant="secondary" className="shrink-0">{count}x</Badge>
+                      </div>
+                      {meal.rating ? (
+                        <div className="flex items-center gap-0.5 mt-1">
+                          {renderStars(meal.rating)}
+                        </div>
+                      ) : null}
+                      {onAddMealToCurrentPlan && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="w-full mt-2 h-7 text-xs"
+                          onClick={() => handleAddFrequentMeal(meal)}
+                        >
+                          <Plus className="h-3 w-3 mr-1" /> Add to plan
+                        </Button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+        )}
+
         <div className="bg-white rounded-lg shadow p-6 mb-6">
           <div className="flex flex-col sm:flex-row gap-4 mb-6">
             <div className="flex-1">
