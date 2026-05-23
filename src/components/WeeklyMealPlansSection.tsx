@@ -96,13 +96,6 @@ export const WeeklyMealPlansSection = ({
     setPlanName("");
   };
 
-  const handlePlanClick = (plan: WeeklyMealPlan) => {
-    // Create a query parameter with the plan ID for new tab functionality
-    const currentUrl = new URL(window.location.href);
-    currentUrl.searchParams.set('planId', plan.id);
-    window.open(currentUrl.toString(), '_blank');
-  };
-
   const handlePlanSelect = (plan: WeeklyMealPlan) => {
     setSelectedPlan(plan);
   };
@@ -117,6 +110,18 @@ export const WeeklyMealPlansSection = ({
       setSelectedPlan(null);
     }
   };
+
+  const frequentMeals = useMemo(
+    () => getFrequentlyUsedMeals(weeklyPlans).filter(m => m.count >= 1),
+    [weeklyPlans]
+  );
+
+  const handleAddFrequentMeal = (meal: Meal) => {
+    if (!onAddMealToCurrentPlan) return;
+    const targetDay = daysOfWeek.find(d => !currentMeals.some(m => m.day === d)) || 'Sunday';
+    onAddMealToCurrentPlan({ ...meal, day: targetDay }, targetDay);
+  };
+
 
   const handleDeleteClick = (plan: WeeklyMealPlan, e: React.MouseEvent) => {
     e.stopPropagation();
