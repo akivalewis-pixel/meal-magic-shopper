@@ -237,9 +237,7 @@ export const WeeklyMealPlansSection = ({
                   {filteredPlans.map((plan) => (
                     <div
                       key={plan.id}
-                      className={`border rounded-lg p-4 cursor-pointer hover:bg-gray-50 transition-colors relative ${
-                        selectedPlan?.id === plan.id ? "bg-blue-50 border-blue-300" : ""
-                      }`}
+                      className="border rounded-lg p-4 cursor-pointer hover:bg-gray-50 transition-colors relative"
                       onClick={() => handlePlanSelect(plan)}
                     >
                       <Button
@@ -255,19 +253,7 @@ export const WeeklyMealPlansSection = ({
                       <p className="text-sm mt-2">
                         {plan.meals.filter(m => m.day).length} meals planned
                       </p>
-                      <div className="flex gap-2 mt-3">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handlePlanClick(plan);
-                          }}
-                          className="text-xs h-7"
-                        >
-                          Open in New Tab
-                        </Button>
-                      </div>
+                      <p className="text-xs text-blue-600 mt-2">Click to view full plan →</p>
                     </div>
                   ))}
                 </div>
@@ -275,32 +261,6 @@ export const WeeklyMealPlansSection = ({
                 <p className="text-center text-gray-500 py-8">
                   {searchTerm ? "No plans match your search." : "No saved meal plans yet."}
                 </p>
-              )}
-
-              {selectedPlan && (
-                <div className="mt-8 pt-6 border-t">
-                  <div className="flex justify-between items-center mb-4">
-                    <div>
-                      <h3 className="text-lg font-medium">{selectedPlan.name}</h3>
-                      <p className="text-sm text-gray-600">
-                        {formatWeekRange(selectedPlan.weekStartDate)}
-                      </p>
-                    </div>
-                    <Button onClick={handleLoadPlan}>
-                      Load This Plan
-                    </Button>
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                    {selectedPlan.meals
-                      .filter(meal => meal.day)
-                      .map((meal) => (
-                        <div key={meal.id} className="bg-gray-50 p-3 rounded-lg">
-                          <p className="font-medium">{meal.day}</p>
-                          <p>{meal.title}</p>
-                        </div>
-                      ))}
-                  </div>
-                </div>
               )}
             </div>
           ) : searchType === "meal" ? (
