@@ -56,6 +56,7 @@ export const WeeklyMealPlansSection = ({
   onSaveCurrentPlan,
   onLoadPlan,
   onDeletePlan,
+  onAddMealToCurrentPlan,
 }: WeeklyMealPlansSectionProps) => {
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -64,6 +65,8 @@ export const WeeklyMealPlansSection = ({
   const [searchTerm, setSearchTerm] = useState("");
   const [searchType, setSearchType] = useState<"week" | "meal" | "rating">("week");
   const [selectedPlan, setSelectedPlan] = useState<WeeklyMealPlan | null>(null);
+  const [showCommonMeals, setShowCommonMeals] = useState(true);
+  const [frequentDialogOpen, setFrequentDialogOpen] = useState(false);
   const [mealSearchResults, setMealSearchResults] = useState<Meal[]>([]);
   const [ratingSearchResults, setRatingSearchResults] = useState<Meal[]>([]);
   const [selectedMeal, setSelectedMeal] = useState<string | null>(null);
