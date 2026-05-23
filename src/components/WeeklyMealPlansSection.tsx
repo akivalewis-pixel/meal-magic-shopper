@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { 
   WeeklyMealPlan, 
   Meal 
@@ -25,7 +25,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { MealCard } from "./MealCard";
+import { Badge } from "@/components/ui/badge";
+import { FrequentMealsDialog } from "./FrequentMealsDialog";
 import { 
   formatWeekRange, 
   formatWeekStartDate 
@@ -33,10 +34,12 @@ import {
 import { 
   searchMealsByTitle, 
   countMealUsage,
-  searchMealsByRating 
+  searchMealsByRating,
+  getFrequentlyUsedMeals
 } from "@/utils/mealUtils";
 import { findLastUsedDate } from "@/utils/dateUtils";
-import { Search, Calendar, Trash2, Star } from "lucide-react";
+import { daysOfWeek } from "@/utils/constants";
+import { Search, Calendar, Trash2, Star, TrendingUp, Plus, ExternalLink, ChevronDown, ChevronUp } from "lucide-react";
 
 interface WeeklyMealPlansSectionProps {
   weeklyPlans: WeeklyMealPlan[];
@@ -44,6 +47,7 @@ interface WeeklyMealPlansSectionProps {
   onSaveCurrentPlan: (name: string) => void;
   onLoadPlan: (plan: WeeklyMealPlan) => void;
   onDeletePlan: (planId: string) => void;
+  onAddMealToCurrentPlan?: (meal: Meal, day: string) => void;
 }
 
 export const WeeklyMealPlansSection = ({
@@ -52,6 +56,7 @@ export const WeeklyMealPlansSection = ({
   onSaveCurrentPlan,
   onLoadPlan,
   onDeletePlan,
+  onAddMealToCurrentPlan,
 }: WeeklyMealPlansSectionProps) => {
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -60,6 +65,8 @@ export const WeeklyMealPlansSection = ({
   const [searchTerm, setSearchTerm] = useState("");
   const [searchType, setSearchType] = useState<"week" | "meal" | "rating">("week");
   const [selectedPlan, setSelectedPlan] = useState<WeeklyMealPlan | null>(null);
+  const [showCommonMeals, setShowCommonMeals] = useState(true);
+  const [frequentDialogOpen, setFrequentDialogOpen] = useState(false);
   const [mealSearchResults, setMealSearchResults] = useState<Meal[]>([]);
   const [ratingSearchResults, setRatingSearchResults] = useState<Meal[]>([]);
   const [selectedMeal, setSelectedMeal] = useState<string | null>(null);
@@ -89,13 +96,6 @@ export const WeeklyMealPlansSection = ({
     setPlanName("");
   };
 
-  const handlePlanClick = (plan: WeeklyMealPlan) => {
-    // Create a query parameter with the plan ID for new tab functionality
-    const currentUrl = new URL(window.location.href);
-    currentUrl.searchParams.set('planId', plan.id);
-    window.open(currentUrl.toString(), '_blank');
-  };
-
   const handlePlanSelect = (plan: WeeklyMealPlan) => {
     setSelectedPlan(plan);
   };
@@ -110,6 +110,18 @@ export const WeeklyMealPlansSection = ({
       setSelectedPlan(null);
     }
   };
+
+  const frequentMeals = useMemo(
+    () => getFrequentlyUsedMeals(weeklyPlans).filter(m => m.count >= 1),
+    [weeklyPlans]
+  );
+
+  const handleAddFrequentMeal = (meal: Meal) => {
+    if (!onAddMealToCurrentPlan) return;
+    const targetDay = daysOfWeek.find(d => !currentMeals.some(m => m.day === d)) || 'Sunday';
+    onAddMealToCurrentPlan({ ...meal, day: targetDay }, targetDay);
+  };
+
 
   const handleDeleteClick = (plan: WeeklyMealPlan, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -146,6 +158,58 @@ export const WeeklyMealPlansSection = ({
             Save Current Plan
           </Button>
         </div>
+
+        {/* Most Common Meals panel */}
+        {frequentMeals.length > 0 && (
+          <div className="bg-white rounded-lg shadow p-6 mb-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-medium flex items-center gap-2">
+                <TrendingUp className="h-5 w-5 text-carrot-dark" />
+                Most Common Meals
+              </h3>
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" onClick={() => setFrequentDialogOpen(true)}>
+                  View all
+                </Button>
+                <Button variant="ghost" size="sm" onClick={() => setShowCommonMeals(s => !s)}>
+                  {showCommonMeals ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                </Button>
+              </div>
+            </div>
+            {showCommonMeals && (
+              <>
+                <p className="text-sm text-gray-600 mb-3">
+                  Meals you've used most often across saved plans — great inspiration for this week.
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                  {frequentMeals.slice(0, 8).map(({ meal, count }) => (
+                    <div key={meal.title} className="border rounded-lg p-3 hover:shadow-sm transition-shadow">
+                      <div className="flex items-start justify-between gap-2">
+                        <h4 className="font-medium text-sm flex-1">{meal.title}</h4>
+                        <Badge variant="secondary" className="shrink-0">{count}x</Badge>
+                      </div>
+                      {meal.rating ? (
+                        <div className="flex items-center gap-0.5 mt-1">
+                          {renderStars(meal.rating)}
+                        </div>
+                      ) : null}
+                      {onAddMealToCurrentPlan && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="w-full mt-2 h-7 text-xs"
+                          onClick={() => handleAddFrequentMeal(meal)}
+                        >
+                          <Plus className="h-3 w-3 mr-1" /> Add to plan
+                        </Button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+        )}
 
         <div className="bg-white rounded-lg shadow p-6 mb-6">
           <div className="flex flex-col sm:flex-row gap-4 mb-6">
@@ -225,9 +289,7 @@ export const WeeklyMealPlansSection = ({
                   {filteredPlans.map((plan) => (
                     <div
                       key={plan.id}
-                      className={`border rounded-lg p-4 cursor-pointer hover:bg-gray-50 transition-colors relative ${
-                        selectedPlan?.id === plan.id ? "bg-blue-50 border-blue-300" : ""
-                      }`}
+                      className="border rounded-lg p-4 cursor-pointer hover:bg-gray-50 transition-colors relative"
                       onClick={() => handlePlanSelect(plan)}
                     >
                       <Button
@@ -243,19 +305,7 @@ export const WeeklyMealPlansSection = ({
                       <p className="text-sm mt-2">
                         {plan.meals.filter(m => m.day).length} meals planned
                       </p>
-                      <div className="flex gap-2 mt-3">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handlePlanClick(plan);
-                          }}
-                          className="text-xs h-7"
-                        >
-                          Open in New Tab
-                        </Button>
-                      </div>
+                      <p className="text-xs text-blue-600 mt-2">Click to view full plan →</p>
                     </div>
                   ))}
                 </div>
@@ -263,32 +313,6 @@ export const WeeklyMealPlansSection = ({
                 <p className="text-center text-gray-500 py-8">
                   {searchTerm ? "No plans match your search." : "No saved meal plans yet."}
                 </p>
-              )}
-
-              {selectedPlan && (
-                <div className="mt-8 pt-6 border-t">
-                  <div className="flex justify-between items-center mb-4">
-                    <div>
-                      <h3 className="text-lg font-medium">{selectedPlan.name}</h3>
-                      <p className="text-sm text-gray-600">
-                        {formatWeekRange(selectedPlan.weekStartDate)}
-                      </p>
-                    </div>
-                    <Button onClick={handleLoadPlan}>
-                      Load This Plan
-                    </Button>
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                    {selectedPlan.meals
-                      .filter(meal => meal.day)
-                      .map((meal) => (
-                        <div key={meal.id} className="bg-gray-50 p-3 rounded-lg">
-                          <p className="font-medium">{meal.day}</p>
-                          <p>{meal.title}</p>
-                        </div>
-                      ))}
-                  </div>
-                </div>
               )}
             </div>
           ) : searchType === "meal" ? (
@@ -472,6 +496,88 @@ export const WeeklyMealPlansSection = ({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Full Plan Detail Dialog */}
+      <Dialog open={!!selectedPlan} onOpenChange={(open) => !open && setSelectedPlan(null)}>
+        <DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto">
+          {selectedPlan && (
+            <>
+              <DialogHeader>
+                <DialogTitle>{selectedPlan.name}</DialogTitle>
+                <DialogDescription>
+                  {formatWeekRange(selectedPlan.weekStartDate)} · {selectedPlan.meals.filter(m => m.day).length} meals
+                </DialogDescription>
+              </DialogHeader>
+              <div className="mt-4 space-y-4">
+                {daysOfWeek.map(day => {
+                  const dayMeals = selectedPlan.meals.filter(m => m.day === day);
+                  if (dayMeals.length === 0) return null;
+                  return (
+                    <div key={day} className="border rounded-lg p-4">
+                      <h4 className="font-semibold text-carrot-dark mb-2">{day}</h4>
+                      {dayMeals.map(meal => (
+                        <div key={meal.id} className="mb-3 last:mb-0">
+                          <div className="flex items-center justify-between flex-wrap gap-2">
+                            <div className="flex items-center gap-2">
+                              <span className="font-medium">{meal.title}</span>
+                              {meal.recipeUrl && (
+                                <a
+                                  href={meal.recipeUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-blue-600 hover:text-blue-800"
+                                  title="Open recipe"
+                                >
+                                  <ExternalLink className="h-4 w-4" />
+                                </a>
+                              )}
+                            </div>
+                            {meal.rating ? (
+                              <div className="flex">{renderStars(meal.rating)}</div>
+                            ) : null}
+                          </div>
+                          {meal.dietaryPreferences && meal.dietaryPreferences.length > 0 && (
+                            <div className="flex flex-wrap gap-1 mt-1">
+                              {meal.dietaryPreferences
+                                .filter(p => p && p !== 'none')
+                                .map(p => (
+                                  <Badge key={p} variant="outline" className="text-xs">{p}</Badge>
+                                ))}
+                            </div>
+                          )}
+                          {meal.ingredients && meal.ingredients.length > 0 && (
+                            <div className="mt-2">
+                              <p className="text-xs font-medium text-gray-700">Ingredients:</p>
+                              <p className="text-sm text-gray-600">{meal.ingredients.join(', ')}</p>
+                            </div>
+                          )}
+                          {meal.notes && (
+                            <p className="text-sm text-gray-600 mt-2 italic">"{meal.notes}"</p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })}
+                {selectedPlan.meals.filter(m => m.day).length === 0 && (
+                  <p className="text-center text-gray-500 py-8">This plan has no meals assigned to days.</p>
+                )}
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setSelectedPlan(null)}>Close</Button>
+                <Button onClick={handleLoadPlan}>Load This Plan</Button>
+              </DialogFooter>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      <FrequentMealsDialog
+        open={frequentDialogOpen}
+        onOpenChange={setFrequentDialogOpen}
+        weeklyPlans={weeklyPlans}
+        onAddMealToCurrentPlan={(meal, day) => onAddMealToCurrentPlan?.(meal, day)}
+      />
     </section>
   );
 };

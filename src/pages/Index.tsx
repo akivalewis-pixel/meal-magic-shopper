@@ -154,6 +154,7 @@ const Index = () => {
             onSaveCurrentPlan={handleSaveWeeklyPlanMemo}
             onLoadPlan={handleLoadWeeklyPlan}
             onDeletePlan={handleDeleteWeeklyPlan}
+            onAddMealToCurrentPlan={handleAddMealToDay}
           />
         )}
       </main>
