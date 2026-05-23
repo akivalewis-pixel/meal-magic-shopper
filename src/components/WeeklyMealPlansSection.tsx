@@ -496,6 +496,88 @@ export const WeeklyMealPlansSection = ({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Full Plan Detail Dialog */}
+      <Dialog open={!!selectedPlan} onOpenChange={(open) => !open && setSelectedPlan(null)}>
+        <DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto">
+          {selectedPlan && (
+            <>
+              <DialogHeader>
+                <DialogTitle>{selectedPlan.name}</DialogTitle>
+                <DialogDescription>
+                  {formatWeekRange(selectedPlan.weekStartDate)} · {selectedPlan.meals.filter(m => m.day).length} meals
+                </DialogDescription>
+              </DialogHeader>
+              <div className="mt-4 space-y-4">
+                {daysOfWeek.map(day => {
+                  const dayMeals = selectedPlan.meals.filter(m => m.day === day);
+                  if (dayMeals.length === 0) return null;
+                  return (
+                    <div key={day} className="border rounded-lg p-4">
+                      <h4 className="font-semibold text-carrot-dark mb-2">{day}</h4>
+                      {dayMeals.map(meal => (
+                        <div key={meal.id} className="mb-3 last:mb-0">
+                          <div className="flex items-center justify-between flex-wrap gap-2">
+                            <div className="flex items-center gap-2">
+                              <span className="font-medium">{meal.title}</span>
+                              {meal.recipeUrl && (
+                                <a
+                                  href={meal.recipeUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-blue-600 hover:text-blue-800"
+                                  title="Open recipe"
+                                >
+                                  <ExternalLink className="h-4 w-4" />
+                                </a>
+                              )}
+                            </div>
+                            {meal.rating ? (
+                              <div className="flex">{renderStars(meal.rating)}</div>
+                            ) : null}
+                          </div>
+                          {meal.dietaryPreferences && meal.dietaryPreferences.length > 0 && (
+                            <div className="flex flex-wrap gap-1 mt-1">
+                              {meal.dietaryPreferences
+                                .filter(p => p && p !== 'none')
+                                .map(p => (
+                                  <Badge key={p} variant="outline" className="text-xs">{p}</Badge>
+                                ))}
+                            </div>
+                          )}
+                          {meal.ingredients && meal.ingredients.length > 0 && (
+                            <div className="mt-2">
+                              <p className="text-xs font-medium text-gray-700">Ingredients:</p>
+                              <p className="text-sm text-gray-600">{meal.ingredients.join(', ')}</p>
+                            </div>
+                          )}
+                          {meal.notes && (
+                            <p className="text-sm text-gray-600 mt-2 italic">"{meal.notes}"</p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })}
+                {selectedPlan.meals.filter(m => m.day).length === 0 && (
+                  <p className="text-center text-gray-500 py-8">This plan has no meals assigned to days.</p>
+                )}
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setSelectedPlan(null)}>Close</Button>
+                <Button onClick={handleLoadPlan}>Load This Plan</Button>
+              </DialogFooter>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      <FrequentMealsDialog
+        open={frequentDialogOpen}
+        onOpenChange={setFrequentDialogOpen}
+        weeklyPlans={weeklyPlans}
+        onAddMealToCurrentPlan={(meal, day) => onAddMealToCurrentPlan?.(meal, day)}
+      />
     </section>
   );
 };
