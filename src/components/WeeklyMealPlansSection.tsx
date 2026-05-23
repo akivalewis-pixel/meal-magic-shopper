@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { 
   WeeklyMealPlan, 
   Meal 
@@ -25,7 +25,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { MealCard } from "./MealCard";
+import { Badge } from "@/components/ui/badge";
+import { FrequentMealsDialog } from "./FrequentMealsDialog";
 import { 
   formatWeekRange, 
   formatWeekStartDate 
@@ -33,10 +34,12 @@ import {
 import { 
   searchMealsByTitle, 
   countMealUsage,
-  searchMealsByRating 
+  searchMealsByRating,
+  getFrequentlyUsedMeals
 } from "@/utils/mealUtils";
 import { findLastUsedDate } from "@/utils/dateUtils";
-import { Search, Calendar, Trash2, Star } from "lucide-react";
+import { daysOfWeek } from "@/utils/constants";
+import { Search, Calendar, Trash2, Star, TrendingUp, Plus, ExternalLink, ChevronDown, ChevronUp } from "lucide-react";
 
 interface WeeklyMealPlansSectionProps {
   weeklyPlans: WeeklyMealPlan[];
@@ -44,6 +47,7 @@ interface WeeklyMealPlansSectionProps {
   onSaveCurrentPlan: (name: string) => void;
   onLoadPlan: (plan: WeeklyMealPlan) => void;
   onDeletePlan: (planId: string) => void;
+  onAddMealToCurrentPlan?: (meal: Meal, day: string) => void;
 }
 
 export const WeeklyMealPlansSection = ({
