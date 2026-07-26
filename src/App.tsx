@@ -7,6 +7,7 @@ import { CustomCategoriesProvider } from "@/contexts/CustomCategoriesContext";
 import { AuthGuard } from "@/components/AuthGuard";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
+import OAuthConsent from "./pages/OAuthConsent";
 import "./App.css";
 
 const queryClient = new QueryClient();
@@ -19,6 +20,7 @@ function App() {
           <Router>
             <Routes>
               <Route path="/auth" element={<Auth />} />
+              <Route path="/.lovable/oauth/consent" element={<OAuthConsent />} />
               <Route 
                 path="/" 
                 element={

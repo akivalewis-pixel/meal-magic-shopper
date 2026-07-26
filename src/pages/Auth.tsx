@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -16,13 +16,21 @@ const Auth = () => {
   const [loading, setLoading] = useState(false);
   const { user, signIn, signUp } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const nextParam = searchParams.get('next');
+  // Only honor same-origin relative paths.
+  const safeNext = nextParam && nextParam.startsWith('/') && !nextParam.startsWith('//') ? nextParam : null;
 
-  // Redirect authenticated users to home page
+  // Redirect authenticated users to home page (or to the requested next path).
   useEffect(() => {
     if (user) {
-      navigate('/');
+      if (safeNext) {
+        window.location.href = safeNext;
+      } else {
+        navigate('/');
+      }
     }
-  }, [user, navigate]);
+  }, [user, navigate, safeNext]);
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
